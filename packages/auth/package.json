@@ -1,0 +1,24 @@
+{
+  "name": "@07nghiep/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@07nghiep/db": "workspace:*",
+    "@07nghiep/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@07nghiep/config": "workspace:*",
+    "typescript": "^5"
+  }
+}
