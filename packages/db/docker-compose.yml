@@ -2,14 +2,14 @@ name: 07nghiep
 
 services:
   postgres:
-    image: postgres
+    image: postgres:17.9-alpine
     container_name: 07nghiep-postgres
     environment:
       POSTGRES_DB: 07nghiep
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - 07nghiep_postgres_data:/var/lib/postgresql
     healthcheck:
