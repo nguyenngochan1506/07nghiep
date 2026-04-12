@@ -40,6 +40,7 @@ When working on this project, use the corresponding skill files for guidance:
 
 | Technology | Skill File | When to Use |
 |------------|------------|-------------|
+| **TanStack Router** | `.agents/skills/tanstack-router/SKILL.md` | File-based routing, type-safe navigation, route loaders, TanStack Query integration |
 | **Turborepo** | `.agents/skills/turborepo/SKILL.md` | Build pipelines, caching, task orchestration, monorepo structure |
 | **Hono** | `.agents/skills/hono/SKILL.md` | Server routing, middleware, validation, streaming |
 | **tRPC** | `.agents/skills/hono/SKILL.md` (Section: Hono Client/RPC) | Type-safe API client, router setup |
