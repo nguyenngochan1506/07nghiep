@@ -187,17 +187,26 @@ await signIn.email({
 
 ### Adding a New Shared Component
 
-1. Add to `packages/ui`:
+**IMPORTANT:** Shared components (used across multiple apps) MUST be added to `packages/ui`.
+
+1. Add to `packages/ui` from project root:
 ```bash
-cd packages/ui
-npx shadcn@latest add button card
+pnpm dlx shadcn@latest add button card -c packages/ui
 ```
 
 2. Export from `packages/ui/src/index.ts`
 
-3. Import in apps:
+3. Import in any app:
 ```typescript
 import { Button, Card } from "@07nghiep/ui/components";
+```
+
+### Adding an App-Specific Component
+
+If a component is only for one app (e.g., admin dashboard), add it directly to that app:
+```bash
+cd apps/admin
+pnpm dlx shadcn@latest add admin-specific-component
 ```
 
 ### Adding a New API Endpoint
