@@ -11,7 +11,7 @@ export function createAuth() {
       provider: "postgresql",
     }),
 
-    trustedOrigins: [env.CORS_ORIGIN],
+    trustedOrigins: env.CORS_ORIGIN,
     emailAndPassword: {
       enabled: true,
     },
