@@ -46,6 +46,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootComponent() {
   const location = useLocation();
+  const { session } = Route.useRouteContext();
+
   const isLoginPage = location.pathname === "/login";
 
   return (
@@ -57,7 +59,7 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        {isLoginPage ? (
+        {isLoginPage || !session.data ? (
           <Outlet />
         ) : (
           <Sidebar>
