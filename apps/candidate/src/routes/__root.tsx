@@ -1,3 +1,4 @@
+import { NotFoundComponent } from "@/components/not-found";
 import { Toaster } from "@07nghiep/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -17,6 +18,7 @@ export interface RouterAppContext {
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
+  notFoundComponent: NotFoundComponent,
   head: () => ({
     meta: [
       {
