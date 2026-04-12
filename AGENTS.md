@@ -189,6 +189,8 @@ await signIn.email({
 
 **IMPORTANT:** Shared components (used across multiple apps) MUST be added to `packages/ui`.
 
+**Prefer shadcn/ui built-in components first.** Check if shadcn already provides a suitable component before creating custom ones. shadcn/ui offers 50+ production-ready components (Button, Card, Dialog, DropdownMenu, Table, Form, etc.) that are fully styled and accessible.
+
 1. Add to `packages/ui` from project root:
 ```bash
 pnpm dlx shadcn@latest add button card -c packages/ui
