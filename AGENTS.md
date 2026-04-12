@@ -265,3 +265,55 @@ packages/db → @07nghiep/env
 3. `packages/auth`, `packages/api` (depend on above)
 4. `apps/server` (depends on api, auth, db)
 5. `apps/*` (depend on api, auth, ui)
+
+## Design System
+
+### Color System
+Uses oklch color space for consistent light/dark mode.
+
+**Brand Colors:**
+| Token | Light Mode | Dark Mode | Usage |
+|-------|------------|-----------|-------|
+| `--primary` | `oklch(0.55 0.15 235)` | `oklch(0.70 0.12 235)` | Main brand blue (#0369A1) |
+| `--secondary` | `oklch(0.95 0.02 200)` | `oklch(0.25 0.02 200)` | Secondary elements |
+| `--accent` | `oklch(0.95 0.03 145)` | `oklch(0.30 0.03 145)` | Accent/CTA green |
+| `--success` | `oklch(0.65 0.15 145)` | `oklch(0.70 0.12 145)` | Success state (#22C55E) |
+| `--warning` | `oklch(0.75 0.15 85)` | `oklch(0.75 0.12 85)` | Warning state (#F59E0B) |
+| `--destructive` | `oklch(0.58 0.22 27)` | `oklch(0.70 0.19 22)` | Error/Delete |
+
+**Rules:**
+- **No gradients** - Solid colors only
+- **Contrast ratio >= 4.5:1** for text readability
+- Use `--success` instead of hardcoded green
+- Use `--warning` instead of hardcoded amber/orange
+
+### Border Radius
+Consistent border-radius throughout:
+| Size | Value | Usage |
+|------|-------|-------|
+| `--radius-sm` | 0.375rem (6px) | Badges, small elements |
+| `--radius-md` | 0.5rem (8px) | Buttons, inputs |
+| `--radius-lg` | 0.625rem (10px) | Default (shadcn) |
+| `--radius-xl` | 0.75rem (12px) | Cards, larger elements |
+| `--radius-2xl` | 1rem (16px) | Modal, large containers |
+
+**Current:** `--radius: 0.75rem` (global setting)
+
+### Box Shadow
+Subtle shadows for elevation:
+```css
+--shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05);
+--shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
+--shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
+```
+
+### Typography
+- Font: Inter Variable (via `@font-sans`)
+- Consistent scale throughout
+
+### Components Styling
+- Cards: `rounded-xl` (12px) with `shadow-sm`
+- Buttons: `rounded-md` (8px)
+- Inputs: `rounded-md` (8px)
+- Badges: `rounded-sm` (6px)
+- Pill buttons: `rounded-full`
