@@ -20,11 +20,11 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {
-        title: "07nghiep",
+        title: "Tìm việc | 07nghiep",
       },
       {
         name: "description",
-        content: "07nghiep is a web application",
+        content: "Cổng tìm việc 07nghiep - Tìm kiếm việc làm và ứng tuyển trực tuyến",
       },
     ],
     links: [

@@ -1,11 +1,13 @@
 import { Toaster } from "@07nghiep/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { HeadContent, Outlet, createRootRouteWithContext, redirect } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { useLocation } from "@tanstack/react-router";
 
-import Header from "@/components/header";
+import Sidebar from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { authClient } from "@/lib/auth-client";
 import type { trpc } from "@/utils/trpc";
 
 import "../index.css";
@@ -17,14 +19,18 @@ export interface RouterAppContext {
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
+  beforeLoad: async () => {
+    const session = await authClient.getSession();
+    return { session };
+  },
   head: () => ({
     meta: [
       {
-        title: "07nghiep",
+        title: "Admin | 07nghiep",
       },
       {
         name: "description",
-        content: "07nghiep is a web application",
+        content: "Trang quản trị 07nghiep - Quản lý người dùng, việc làm và hệ thống",
       },
     ],
     links: [
@@ -37,6 +43,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+
   return (
     <>
       <HeadContent />
@@ -46,10 +55,13 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        <div className="grid grid-rows-[auto_1fr] h-svh">
-          <Header />
+        {isLoginPage ? (
           <Outlet />
-        </div>
+        ) : (
+          <Sidebar>
+            <Outlet />
+          </Sidebar>
+        )}
         <Toaster richColors />
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-left" />
