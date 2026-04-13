@@ -26,7 +26,12 @@ jobs:
           cache: "pnpm"
 
       - name: Enable pnpm via corepack
-        run: corepack enable && corepack prepare pnpm@10 --activate && pnpm --version
+        run: |
+          export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+          corepack enable
+          corepack prepare pnpm@10 --activate
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -50,7 +55,12 @@ jobs:
           cache: "pnpm"
 
       - name: Enable pnpm via corepack
-        run: corepack enable && corepack prepare pnpm@10 --activate && pnpm --version
+        run: |
+          export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+          corepack enable
+          corepack prepare pnpm@10 --activate
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
