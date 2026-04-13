@@ -1,0 +1,85 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - review
+          - staging
+          - production
+      ref:
+        description: "Git ref (branch, tag, or commit SHA)"
+        required: true
+        default: main
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      # TODO: Thêm các bước deploy tùy theo environment
+      # Ví dụ:
+      # - Build Docker image
+      # - Push to registry
+      # - Deploy to Kubernetes/Cloud
+      # - Run database migrations
+
+      - name: Placeholder
+        run: |
+          echo "Deploy to ${{ inputs.environment }} - not implemented yet"
+
+# =============================================================================
+# Usage examples:
+# =============================================================================
+#
+# Deploy review environment:
+# ```yaml
+# jobs:
+#   deploy-review:
+#     uses: ./.github/workflows/_deploy-template.yml
+#     with:
+#       environment: review
+#       ref: ${{ github.head_ref }}
+# ```
+#
+# Deploy staging on tag:
+# ```yaml
+# on:
+#   push:
+#     tags: ["v*"]
+# jobs:
+#   deploy-staging:
+#     uses: ./.github/workflows/_deploy-template.yml
+#     with:
+#       environment: staging
+#       ref: ${{ github.ref_name }}
+# ```
+#
+# Deploy production on release:
+# ```yaml
+# on:
+#   release:
+#     types: [published]
+# jobs:
+#   deploy-production:
+#     uses: ./.github/workflows/_deploy-template.yml
+#     with:
+#       environment: production
+#       ref: ${{ github.ref_name }}
+# ```
+#
+# =============================================================================

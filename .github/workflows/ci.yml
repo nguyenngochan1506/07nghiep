@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm check-types
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: typecheck
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Upload admin artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: admin-dist
+          path: apps/admin/dist
+          retention-days: 7
+
+      - name: Upload candidate artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: candidate-dist
+          path: apps/candidate/dist
+          retention-days: 7
+
+      - name: Upload employer artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: employer-dist
+          path: apps/employer/dist
+          retention-days: 7
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: server-dist
+          path: apps/server/dist
+          retention-days: 7
