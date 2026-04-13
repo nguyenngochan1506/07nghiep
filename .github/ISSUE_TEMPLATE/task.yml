@@ -1,0 +1,77 @@
+name: Task
+description: General task or chore
+title: "[Task] "
+labels: ["type/chore"]
+assignees: []
+
+body:
+  - type: markdown
+    id: description
+    attributes:
+      label: Task Description
+      description: Describe the task in detail
+      placeholder: |
+        ## Overview
+        [What needs to be done]
+
+        ## Context
+        [Why is this task needed? Any relevant background?]
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Task Type
+      options:
+        - Documentation
+        - Code refactor
+        - Configuration
+        - Research/Investigation
+        - Setup/Infrastructure
+        - Testing
+        - Other
+      validations:
+        required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - apps/candidate
+        - apps/employer
+        - apps/admin
+        - apps/server
+        - packages/api
+        - packages/db
+        - packages/auth
+        - packages/ui
+        - Cross-cutting (multiple)
+      validations:
+        required: true
+
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimated Time
+      description: Estimated hours to complete (e.g., 4h)
+      placeholder: "4h"
+
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Steps to complete this task
+      placeholder: |
+        - [ ] Step 1
+        - [ ] Step 2
+        - [ ] Step 3
+
+  - type: checkboxes
+    id: dependencies
+    attributes:
+      label: Dependencies
+      options:
+        - label: Depends on another issue
+          required: false
+        - label: Blocks other work
+          required: false

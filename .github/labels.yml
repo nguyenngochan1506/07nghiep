@@ -1,0 +1,57 @@
+# GitHub Labels Configuration for 07nghiep Job Board
+
+## App Labels
+| Name | Color | Description |
+|------|-------|-------------|
+| app/candidate | 22C55E | Candidate App (ứng viên) |
+| app/employer | 3B82F6 | Employer App (nhà tuyển dụng) |
+| app/admin | A855F7 | Admin Dashboard |
+
+## Shared/Package Labels
+| Name | Color | Description |
+|------|-------|-------------|
+| shared/api | FACC15 | API/tRPC endpoints |
+| shared/db | F97316 | Database/Prisma schema |
+| shared/auth | 6B7280 | Authentication system |
+| shared/ui | 14B8A6 | Shared UI components |
+
+## Type Labels
+| Name | Color | Description |
+|------|-------|-------------|
+| type/feature | 10B981 | New feature |
+| type/bugfix | EF4444 | Bug fix |
+| type/refactor | 6B7280 | Code refactoring |
+| type/docs | D97706 | Documentation |
+| type/chore | 9CA3AF | Maintenance tasks |
+
+## Priority Labels
+| Name | Color | Description |
+|------|-------|-------------|
+| priority/critical | DC2626 | Critical - must fix immediately |
+| priority/high | F59E0B | High priority |
+| priority/medium | 3B82F6 | Medium priority |
+| priority/low | 6B7280 | Low priority |
+
+## Size Labels
+| Name | Color | Description |
+|------|-------|-------------|
+| size/xs | CAD2C5 | Extra Small (1-2 hours) |
+| size/s | 84A98C | Small (3-5 hours) |
+| size/m | 52796F | Medium (6-10 hours) |
+| size/l | 354F52 | Large (11-20 hours) |
+| size/xl | 2F3E46 | Extra Large (21-40 hours) |
+
+## Status Labels
+| Name | Color | Description |
+|------|-------|-------------|
+| status/blocked | DC2626 | Blocked - waiting on something |
+| status/needs-design | F59E0B | Needs design decision |
+| status/needs-discussion | 8B5CF6 | Needs team discussion |
+| status/ready | 10B981 | Ready to work on |
+| wip | FACC15 | Work in Progress |
+
+## Good First Issue
+| Name | Color | Description |
+|------|-------|-------------|
+| good first issue | 10B981 | Good for newcomers |
+| help wanted | 10B981 | Help wanted |

@@ -1,0 +1,84 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature] "
+labels: ["type/feature"]
+assignees: []
+
+body:
+  - type: markdown
+    id: description
+    attributes:
+      label: Description
+      description: Describe the feature in detail
+      placeholder: |
+        ## Problem/Motivation
+        [Explain the problem or motivation behind this feature]
+
+        ## Proposed Solution
+        [Describe your proposed solution]
+
+        ## User Stories
+        - As a [user type], I want [goal] so that [benefit]
+        - ...
+
+  - type: dropdown
+    id: app
+    attributes:
+      label: Affected Application
+      description: Which app does this feature affect?
+      options:
+        - Candidate App (ứng viên tìm việc)
+        - Employer App (nhà tuyển dụng)
+        - Admin Dashboard
+        - Shared (affects multiple apps)
+        - Backend/API only
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: requirements
+    attributes:
+      label: Requirements
+      description: Check all that apply
+      options:
+        - label: API endpoint needed
+          required: false
+        - label: Database changes needed
+          required: false
+        - label: UI/UX changes needed
+          required: false
+        - label: New component needed
+          required: false
+        - label: Testing needed
+          required: false
+
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimated Time
+      description: Estimated hours to implement (e.g., 8h)
+      placeholder: "8h"
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Define when this feature is considered complete
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] ...
+
+  - type: checkboxes
+    id: assignee
+    attributes:
+      label: Assignment
+      description: |
+        Note: Dev assignment will be done by team lead based on ownership rules:
+        - Dev 1: packages/db, packages/auth, packages/api
+        - Dev 2: apps/candidate
+        - Dev 3: apps/employer
+        - Dev 4: apps/admin, shared infrastructure
+      options:
+        - label: I have discussed this with the relevant team member(s)
+          required: true
