@@ -29,6 +29,8 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm install --frozen-lockfile
 
       - name: Type check
@@ -53,6 +55,8 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm install --frozen-lockfile
 
       - name: Build
