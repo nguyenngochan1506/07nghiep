@@ -60,25 +60,25 @@ When working on this project, use the corresponding skill files for guidance:
 #### `apps/admin`
 - **Purpose**: Administrative dashboard for platform management
 - **Framework**: React + Vite + TanStack Router
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/ui`
+- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
 - **Dev Command**: `pnpm dev:admin`
 
 #### `apps/candidate`
 - **Purpose**: Job seeker portal for finding and applying to jobs
 - **Framework**: React + Vite + TanStack Router
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/ui`
+- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
 - **Dev Command**: `pnpm dev:candidate`
 
 #### `apps/employer`
 - **Purpose**: Employer portal for posting jobs and managing applications
 - **Framework**: React + Vite + TanStack Router
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/ui`
+- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
 - **Dev Command**: `pnpm dev:employer`
 
 #### `apps/server`
 - **Purpose**: Backend API server
 - **Framework**: Hono + tRPC
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/db`
+- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/db`, `@07nghiep/env`
 - **Dev Command**: `pnpm dev:server`
 - **Build**: `tsdown` for production
 
@@ -87,7 +87,7 @@ When working on this project, use the corresponding skill files for guidance:
 #### `packages/api`
 - **Purpose**: tRPC router definitions shared between server and clients
 - **Exports**: API procedures and types
-- **Dependencies**: `@07nghiep/auth`, `@07nghiep/db`
+- **Dependencies**: `@07nghiep/auth`, `@07nghiep/db`, `@07nghiep/env`
 
 #### `packages/auth`
 - **Purpose**: Better Auth configuration
@@ -104,14 +104,19 @@ When working on this project, use the corresponding skill files for guidance:
 - **Purpose**: Shared shadcn/ui components
 - **Exports**: Button, Card, Dialog, Form, etc.
 - **Style**: TailwindCSS v4 + shadcn primitives
+- **Dependencies**: (no production dependencies)
+- **DevDependencies**: `@07nghiep/config`
 
 #### `packages/env`
 - **Purpose**: Zod-based environment variable validation
 - **Exports**: Validated env object for type-safe access
+- **Dependencies**: `@t3-oss/env-core`, `zod`
+- **DevDependencies**: `@07nghiep/config`
 
 #### `packages/config`
 - **Purpose**: Shared TypeScript and ESLint configuration
 - **Usage**: All packages extend from this
+- **Dependencies**: (no dependencies)
 
 ## Available Scripts
 
@@ -145,7 +150,7 @@ pnpm db:watch         # Watch mode for migrations
 ## Database
 
 ### Schema
-- **Location**: `packages/db/prisma/schema.prisma`
+- **Location**: `packages/db/prisma/schema/schema.prisma`
 - **ORM**: Prisma v7
 - **Adapter**: `@prisma/adapter-pg` with native `pg` driver
 - **Migration**: Docker-based PostgreSQL setup
@@ -231,7 +236,7 @@ const jobs = await apiClient.jobs.list.useQuery();
 
 ### Adding a Database Model
 
-1. Update `packages/db/prisma/schema.prisma`
+1. Update `packages/db/prisma/schema/schema.prisma`
 
 2. Push changes:
 ```bash
@@ -265,18 +270,23 @@ packages/auth/.env       # Auth secrets
 
 ### Package Dependencies
 ```
-apps/* → @07nghiep/api, @07nghiep/auth, @07nghiep/ui
-packages/api → @07nghiep/auth, @07nghiep/db
+apps/* → @07nghiep/api, @07nghiep/auth, @07nghiep/env, @07nghiep/ui
+packages/api → @07nghiep/auth, @07nghiep/db, @07nghiep/env
 packages/auth → @07nghiep/db, @07nghiep/env
 packages/db → @07nghiep/env
+packages/ui → @07nghiep/config (devDependency)
+packages/env → @07nghiep/config (devDependency)
+packages/config → (no dependencies)
 ```
 
 ### Build Order (Turborepo)
 1. `packages/config` (no dependencies)
-2. `packages/env`, `packages/db`, `packages/ui` (depend on config)
-3. `packages/auth`, `packages/api` (depend on above)
-4. `apps/server` (depends on api, auth, db)
-5. `apps/*` (depend on api, auth, ui)
+2. `packages/env`, `packages/ui` (devDependency on config)
+3. `packages/db` (depends on env)
+4. `packages/auth` (depends on db, env)
+5. `packages/api` (depends on auth, db, env)
+6. `apps/server` (depends on api, auth, db)
+7. `apps/*` (depend on api, auth, env, ui)
 
 ## Design System
 
