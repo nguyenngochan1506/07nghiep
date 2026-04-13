@@ -25,12 +25,10 @@ jobs:
           node-version: "24"
           cache: "pnpm"
 
-      - name: Enable pnpm via corepack
+      - name: Install pnpm
         run: |
-          export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-          corepack enable
-          corepack prepare pnpm@10 --activate
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          npm install -g pnpm@10
+          echo "$(npm root -g)" >> $GITHUB_PATH
           pnpm --version
 
       - name: Install dependencies
@@ -54,12 +52,10 @@ jobs:
           node-version: "24"
           cache: "pnpm"
 
-      - name: Enable pnpm via corepack
+      - name: Install pnpm
         run: |
-          export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-          corepack enable
-          corepack prepare pnpm@10 --activate
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          npm install -g pnpm@10
+          echo "$(npm root -g)" >> $GITHUB_PATH
           pnpm --version
 
       - name: Install dependencies
