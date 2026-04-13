@@ -77,13 +77,20 @@ If you want to add app-specific blocks instead of shared primitives, run the sha
 ```
 07nghiep/
 ├── apps/
-│   ├── web/         # Frontend application (React + TanStack Router)
-│   └── server/      # Backend API (Hono, TRPC)
+│   ├── admin/           # Admin dashboard (React + Vite)
+│   ├── candidate/       # Candidate portal (React + Vite)
+│   ├── employer/        # Employer portal (React + Vite)
+│   └── server/          # Backend API (Hono + tRPC)
 ├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
+│   ├── api/             # tRPC router definitions
+│   ├── auth/            # Better Auth configuration
+│   ├── config/          # TypeScript & ESLint configs
+│   ├── db/              # Prisma schema & database utilities
+│   ├── env/             # Environment variable validation
+│   └── ui/              # Shared shadcn/ui components
+├── turbo.json           # Turborepo build configuration
+├── package.json         # Workspace root
+└── pnpm-workspace.yaml  # pnpm workspace config
 ```
 
 ## Available Scripts
