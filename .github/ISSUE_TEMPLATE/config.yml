@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & Discussions
+    url: https://github.com/your-org/07nghiep/discussions
+    about: Ask questions, share ideas, and discuss with the team
+  - name: Documentation
+    url: https://github.com/your-org/07nghiep/wiki
+    about: Check our wiki for guides and documentation

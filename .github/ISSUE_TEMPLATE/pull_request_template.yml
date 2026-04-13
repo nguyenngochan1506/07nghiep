@@ -1,0 +1,116 @@
+name: Pull Request
+description: Submit changes for review
+title: "[PR] "
+labels: ["status/needs-review"]
+assignees: []
+
+body:
+  - type: markdown
+    id: summary
+    attributes:
+      label: Summary
+      description: Brief summary of changes
+      placeholder: |
+        ## Summary
+        [1-3 sentence summary of what this PR does]
+
+        ## Type of Change
+        - [ ] Feature
+        - [ ] Bug fix
+        - [ ] Refactor
+        - [ ] Documentation
+        - [ ] Chore
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: Changes Made
+      description: Detailed list of changes
+      placeholder: |
+        ### Added
+        - [List of additions]
+
+        ### Changed
+        - [List of changes]
+
+        ### Fixed
+        - [List of fixes]
+
+        ### Removed
+        - [List of removals]
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation & Context
+      description: Why are these changes needed?
+      placeholder: |
+        [Explain the motivation for this change]
+
+        Related issue: Closes #XX
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing
+      description: How was this tested?
+      placeholder: |
+        ### Test Cases
+        - [ ] Test case 1
+        - [ ] Test case 2
+        - [ ] Test case 3
+
+        ### Manual Testing
+        - [ ] Tested locally
+        - [ ] Tested on staging (if applicable)
+
+  - type: textarea
+    id: breaking
+    attributes:
+      label: Breaking Changes
+      description: Any breaking changes?
+      placeholder: |
+        - [ ] No breaking changes
+        - [ ] Breaking changes (describe below)
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Code follows the project's style guidelines
+          required: true
+        - label: No console.log or debug code left
+          required: true
+        - label: Types are complete and accurate
+          required: true
+        - label: Tests added/updated (if applicable)
+          required: false
+        - label: Documentation updated (if applicable)
+          required: false
+        - label: Any new environment variables documented
+          required: false
+
+  - type: input
+    id: reviewers
+    attributes:
+      label: Requested Reviewers
+      description: Tag team members who should review
+      placeholder: "@username1 @username2"
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots (for UI changes)
+      description: Before/After screenshots if applicable
+      placeholder: |
+        | Before | After |
+        |--------|--------|
+        | ![before]() | ![after]() |
+
+  - type: input
+    id: deployment
+    attributes:
+      label: Deployment Notes
+      description: Any special instructions for deployment?
+      placeholder: "e.g., Run migration, clear cache, etc."

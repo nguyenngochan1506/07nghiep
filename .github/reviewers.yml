@@ -1,0 +1,62 @@
+# Reviewers Configuration
+
+## Default Reviewers Pool
+Thêm cấu hình này vào repository settings (.github/reviewers.yml):
+
+```yaml
+version: 1
+rules:
+  # Core packages - Dev 1
+  - name: core-packages
+    patterns:
+      - packages/db/**
+      - packages/auth/**
+      - packages/api/**
+      - packages/env/**
+    reviewers:
+      team: dev-1
+
+  # Shared UI - Dev 2
+  - name: shared-ui
+    patterns:
+      - packages/ui/**
+    reviewers:
+      team: dev-2
+
+  # Candidate App - Dev 2
+  - name: candidate-app
+    patterns:
+      - apps/candidate/**
+    reviewers:
+      team: dev-2
+
+  # Employer App - Dev 3
+  - name: employer-app
+    patterns:
+      - apps/employer/**
+    reviewers:
+      team: dev-3
+
+  # Admin App - Dev 4
+  - name: admin-app
+    patterns:
+      - apps/admin/**
+    reviewers:
+      team: dev-4
+
+  # Infrastructure - Dev 4
+  - name: infrastructure
+    patterns:
+      - .github/**
+      - turbo.json
+      - package.json
+    reviewers:
+      team: dev-4
+      team: dev-1
+```
+
+## Review Requirements
+- Minimum 2 approvals required for merge
+- At least 1 approval must be from the owner of the affected area
+- All status checks must pass (CI)
+- No unresolved conversations

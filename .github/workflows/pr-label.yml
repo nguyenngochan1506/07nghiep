@@ -1,0 +1,86 @@
+name: Auto Label PR
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+  pull_request_target:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label-pr:
+    name: Auto Label PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Label PR based on branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref;
+            
+            const labels = [];
+            
+            // Branch type detection
+            if (branch.startsWith('feature/')) {
+              labels.push('type/feature');
+            } else if (branch.startsWith('fix/')) {
+              labels.push('type/bugfix');
+            } else if (branch.startsWith('chore/')) {
+              labels.push('type/chore');
+            } else if (branch.startsWith('docs/')) {
+              labels.push('type/docs');
+            } else if (branch.startsWith('refactor/')) {
+              labels.push('type/refactor');
+            }
+            
+            // App detection from files changed
+            const files = context.payload.pull_request?.title || '';
+            
+            if (files.includes('[Candidate]') || branch.includes('candidate')) {
+              labels.push('app/candidate');
+            }
+            if (files.includes('[Employer]') || branch.includes('employer')) {
+              labels.push('app/employer');
+            }
+            if (files.includes('[Admin]') || branch.includes('admin')) {
+              labels.push('app/admin');
+            }
+            if (files.includes('[DB]') || files.includes('[API]') || files.includes('[Auth]')) {
+              labels.push('shared/api');
+            }
+            
+            // Size estimation based on files changed count
+            const additions = pr.additions || 0;
+            if (additions < 50) {
+              labels.push('size/xs');
+            } else if (additions < 150) {
+              labels.push('size/s');
+            } else if (additions < 400) {
+              labels.push('size/m');
+            } else if (additions < 800) {
+              labels.push('size/l');
+            } else {
+              labels.push('size/xl');
+            }
+            
+            // Set status label
+            if (pr.draft) {
+              labels.push('wip');
+            } else if (pr.review_requested) {
+              labels.push('status/needs-review');
+            }
+            
+            // Apply labels
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: labels
+              });
+            }

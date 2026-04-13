@@ -1,0 +1,91 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug] "
+labels: ["type/bugfix"]
+assignees: []
+
+body:
+  - type: markdown
+    id: description
+    attributes:
+      label: Bug Description
+      placeholder: |
+        ## Summary
+        [A clear and concise description of what the bug is]
+
+        ## Steps to Reproduce
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+
+  - type: markdown
+    id: expected
+    attributes:
+      label: Expected vs Actual Behavior
+      placeholder: |
+        ## Expected Behavior
+        [What you expected to happen]
+
+        ## Actual Behavior
+        [What actually happened]
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Code/Steps
+      description: Provide minimal code to reproduce or detailed steps
+      placeholder: |
+        ```typescript
+        // Minimal reproduction code (if applicable)
+        ```
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical - App crashes, data loss
+        - High - Major feature broken
+        - Medium - Feature partially works
+        - Low - Minor issue, workaround exists
+      validations:
+        required: true
+
+  - type: dropdown
+    id: app
+    attributes:
+      label: Affected Application
+      options:
+        - Candidate App
+        - Employer App
+        - Admin Dashboard
+        - API/Backend
+        - Multiple apps
+    validations:
+        required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, OS, Node version, etc.
+      placeholder: "Chrome 122, macOS 14, Node 20"
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots/Logs
+      description: Attach screenshots or paste error logs
+      placeholder: |
+        ```
+        Paste error logs here
+        ```
+
+  - type: checkboxes
+    id: assignee
+    attributes:
+      label: Assignment
+      options:
+        - label: I have verified this bug exists
+          required: true

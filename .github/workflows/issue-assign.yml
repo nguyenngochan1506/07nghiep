@@ -1,0 +1,62 @@
+name: Auto Assign Issue
+on:
+  issues:
+    types: [opened, assigned]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  assign-issue:
+    name: Auto Assign based on Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign based on labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+            
+            // Default team members (update these with actual GitHub usernames)
+            const team = {
+              dev1: 'developer1', // DB, Auth, API lead
+              dev2: 'developer2', // Candidate app
+              dev3: 'developer3', // Employer app
+              dev4: 'developer4'  // Admin, Infrastructure
+            };
+            
+            let assignee = null;
+            
+            // Auto-assign based on labels
+            if (labels.includes('app/candidate')) {
+              assignee = team.dev2;
+            } else if (labels.includes('app/employer')) {
+              assignee = team.dev3;
+            } else if (labels.includes('app/admin')) {
+              assignee = team.dev4;
+            } else if (labels.includes('shared/db') || labels.includes('shared/auth') || labels.includes('shared/api')) {
+              assignee = team.dev1;
+            } else if (labels.includes('shared/ui')) {
+              // UI shared - assign based on context
+              assignee = team.dev2;
+            }
+            
+            // Only assign if not already assigned
+            if (assignee && issue.assignees.length === 0) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: [assignee]
+              });
+              
+              // Add comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `Assigned to @${assignee} based on issue labels. If this is incorrect, please reassign.`
+              });
+            }
