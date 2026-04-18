@@ -40,18 +40,19 @@ When working on this project, use the corresponding skill files for guidance:
 
 | Technology | Skill File | When to Use |
 |------------|------------|-------------|
-| **TanStack Router** | `.agents/skills/tanstack-router/SKILL.md` | File-based routing, type-safe navigation, route loaders, TanStack Query integration |
-| **Turborepo** | `.agents/skills/turborepo/SKILL.md` | Build pipelines, caching, task orchestration, monorepo structure |
-| **Hono** | `.agents/skills/hono/SKILL.md` | Server routing, middleware, validation, streaming |
-| **tRPC** | `.agents/skills/hono/SKILL.md` (Section: Hono Client/RPC) | Type-safe API client, router setup |
-| **shadcn/ui** | `.agents/skills/shadcn/SKILL.md` | Component usage, forms, composition, styling |
-| **TailwindCSS v4** | `.agents/skills/shadcn/rules/styling.md` | Class conventions, semantic colors, responsive design |
-| **Better Auth** | `.agents/skills/better-auth-best-practices/SKILL.md` | Authentication setup, sessions, OAuth providers |
-| **Prisma** | `.agents/skills/prisma-postgres/SKILL.md` | Schema design, migrations, queries |
-| **Email/Password Auth** | `.agents/skills/email-and-password-best-practices/SKILL.md` | Registration, password reset, email verification |
-| **Organization** | `.agents/skills/organization-best-practices/SKILL.md` | Multi-tenant setup, roles, permissions |
-| **Two-Factor Auth** | `.agents/skills/two-factor-authentication-best-practices/SKILL.md` | TOTP, backup codes, trusted devices |
-| **UI/UX** | `.agents/skills/ui-ux-pro-max/SKILL.md` | Design patterns, accessibility, best practices |
+| **TanStack Router** | `.cursor/skills/tanstack-router/SKILL.md` | File-based routing, type-safe navigation, route loaders, TanStack Query integration |
+| **Turborepo** | `.cursor/skills/turborepo/SKILL.md` | Build pipelines, caching, task orchestration, monorepo structure |
+| **Hono** | `.cursor/skills/hono/SKILL.md` | Server routing, middleware, validation, streaming |
+| **tRPC** | `.cursor/skills/hono/SKILL.md` (Section: Hono Client/RPC) | Type-safe API client, router setup |
+| **shadcn/ui** | `.cursor/skills/shadcn/SKILL.md` | Component usage, forms, composition, styling |
+| **TailwindCSS v4** | `.cursor/skills/shadcn/rules/styling.md` | Class conventions, semantic colors, responsive design |
+| **Better Auth** | `.cursor/skills/better-auth-best-practices/SKILL.md` | Authentication setup, sessions, OAuth providers |
+| **Prisma** | `.cursor/skills/prisma-postgres/SKILL.md` | Schema design, migrations, queries |
+| **Email/Password Auth** | `.cursor/skills/email-and-password-best-practices/SKILL.md` | Registration, password reset, email verification |
+| **Organization** | `.cursor/skills/organization-best-practices/SKILL.md` | Multi-tenant setup, roles, permissions |
+| **Two-Factor Auth** | `.cursor/skills/two-factor-authentication-best-practices/SKILL.md` | TOTP, backup codes, trusted devices |
+| **UI/UX** | `.cursor/skills/ui-ux-pro-max/SKILL.md` | Design patterns, accessibility, best practices |
+| **Agent Team** | `.cursor/skills/agent-team-workflow/SKILL.md` | 3-agent team (manager, implementer, reviewer) orchestration |
 
 ## Apps & Packages
 
@@ -247,6 +248,69 @@ pnpm db:push
 ```bash
 pnpm db:generate
 ```
+
+## Agent Team System
+
+This project uses a **3-agent development team** powered by Cursor agents, hooks, and skills.
+
+### Team Members
+
+| Agent | File | Role |
+|-------|------|------|
+| **Manager** | `.cursor/agents/manager.md` | Plans with user, assigns tasks, validates final output |
+| **Implementer** | `.cursor/agents/implementer.md` | Writes code, runs tests, fixes issues |
+| **Reviewer** | `.cursor/agents/reviewer.md` | Reviews code, checks quality, reports PASS/FAIL |
+
+### How It Works
+
+```
+User → Manager (plan) → Implementer (code) → Reviewer (check)
+                                                         ↓
+                                    [PASS? NO] → Implementer (fix) → ...
+                                    [PASS? YES] → Manager (validate) → User
+```
+
+1. **Manager** collaborates with you to create a plan
+2. **Implementer** executes the plan and writes code
+3. **Reviewer** validates the code against the plan
+4. If review **fails**: loop back to implementer with feedback
+5. If review **passes**: manager presents results to you
+6. Maximum **5 iterations** before escalation
+
+### Continuous Review Loop
+
+The cycle runs automatically via Cursor hooks:
+
+- `subagentStop` — after implementer finishes, reviewer is triggered
+- `afterFileEdit` — tracks file changes for review context
+- `afterShellExecution` — runs verification (type check, build)
+
+### Key Files
+
+```
+.cursor/
+├── agents/
+│   ├── manager.md          # Manager agent definition
+│   ├── implementer.md      # Implementer agent definition
+│   └── reviewer.md        # Reviewer agent definition
+├── hooks.json              # Hook automation configuration
+├── hooks/
+│   ├── subagent-notify.sh  # Subagent completion notifications
+│   ├── file-changed.sh     # File change tracking
+│   └── check-permissions.sh # Write permission warnings
+├── skills/
+│   └── agent-team-workflow/SKILL.md  # Team workflow skill
+└── rules/
+    └── agent-team-workflow.mdc        # Team conventions rule
+```
+
+### Workflow Skill
+
+Read `.cursor/skills/agent-team-workflow/SKILL.md` for the complete workflow protocol including:
+- State machine (IDLE → PLANNING → IMPLEMENTING → REVIEWING → ITERATING → APPROVED)
+- Task assignment format
+- Review report format (PASS/FAIL)
+- Communication protocol between agents
 
 ## Environment Setup
 
