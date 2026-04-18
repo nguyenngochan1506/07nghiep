@@ -10,22 +10,13 @@
 
 ## Problem Statement
 
-We need to enhance the Better Auth configuration to support role-based access control, email verification, and proper session management for our three user types: Candidate, Employer, and Admin.
+We need to enhance the Better Auth configuration to support role-based access control, email verification, password reset, and organization management for three user types: Candidate, Employer, and Admin. The `User` model with Better Auth tables already exists in `packages/db/prisma/schema/auth.prisma`, but the auth configuration, email flows, and role-based tRPC procedures are not yet implemented.
 
 ## Requirements
 
 ### 1. Role-Based Access Control
 
-Add role management to Better Auth:
-
-```typescript
-// Role enum should be added to User model in Prisma
-enum Role {
-  CANDIDATE
-  EMPLOYER
-  ADMIN
-}
-```
+The `UserRole` enum (`CANDIDATE`, `EMPLOYER`, `ADMIN`) already exists in `packages/db/prisma/schema/schema.prisma` and is used by the `User` model. The task is to wire up role checking in tRPC procedures.
 
 ### 2. Organization Plugin Setup
 
@@ -45,17 +36,19 @@ const auth = betterAuth({
 })
 ```
 
+Requires adding Better Auth internal tables: `organization`, `member`, `invitation`, `team`, `team_member` to `auth.prisma`.
+
 ### 3. Email Verification
 
 Setup email verification flow:
-- Verification email on signup
+- Verification email on signup via `emailVerification.sendVerificationEmail`
 - Resend verification option
-- Verified status tracking
+- `emailVerified` field already exists on `User` model (defaults to `false`)
 
 ### 4. Password Reset
 
 Setup password reset flow:
-- Forgot password endpoint
+- Forgot password endpoint via `emailAndPassword.sendResetPassword`
 - Reset email with token
 - Password reset form
 
@@ -102,40 +95,93 @@ Configure session handling:
 - Session duration: 7 days (default)
 - Refresh token rotation
 - Multiple sessions support
+- Cookie `sameSite` configuration for dev (localhost) vs production
 
 ## Tasks Checklist
 
 ```markdown
-- [ ] 1. Add role field to User model in schema
-- [ ] 2. Setup organization plugin
-- [ ] 3. Configure email verification
-- [ ] 4. Configure password reset
-- [ ] 5. Create role-specific procedures
-- [ ] 6. Add role check middleware
-- [ ] 7. Update session handling
-- [ ] 8. Add OAuth providers (optional - Google, GitHub)
-- [ ] 9. Write tests for auth flows
-- [ ] 10. Document auth configuration
+- [ ] Task 1: Schema & Database Foundation
+  - [ ] 1.1. Add Better Auth organization plugin tables to auth.prisma (organization, member, invitation, team, team_member)
+  - [ ] 1.2. Update env schema: add EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD, EMAIL_FROM, optional GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+  - [ ] 1.3. Run `npx @better-auth/cli migrate` to generate auth tables
+  - [ ] 1.4. Write unit tests for Zod env schema validation
+- [ ] Task 2: Better Auth Configuration
+  - [ ] 2.1. Configure emailVerification.sendVerificationEmail with email utility
+  - [ ] 2.2. Configure emailAndPassword.sendResetPassword with email utility
+  - [ ] 2.3. Configure session options: 7-day expiry, refresh token rotation
+  - [ ] 2.4. Add organization() plugin for employers
+  - [ ] 2.5. Add Google OAuth provider (if env vars present)
+  - [ ] 2.6. Export typed session/user types from auth package
+  - [ ] 2.7. Write unit tests for email utility
+- [ ] Task 3: Role-Based tRPC Procedures
+  - [ ] 3.1. Create candidateProcedure, employerProcedure, adminProcedure middleware chains
+  - [ ] 3.2. Create role-check utility functions
+  - [ ] 3.3. Export all procedures from packages/api/src/index.ts
+  - [ ] 3.4. Write unit tests for role middleware
 ```
 
 ## Files to Modify
 
+### Task 1: Schema & Database Foundation
+- `packages/db/prisma/schema/auth.prisma`
+- `packages/env/src/server.ts`
+
+### Task 2: Better Auth Configuration
 - `packages/auth/src/index.ts`
-- `packages/db/prisma/schema/schema.prisma`
+- New: `packages/auth/src/email.ts` (email sending utility)
+- New: `packages/auth/src/types.ts` (re-export Better Auth session types with role)
+
+### Task 3: Role-Based tRPC Procedures
 - `packages/api/src/index.ts`
+- New: `packages/api/src/procedures/role.ts` (role middleware helpers)
+- New: `packages/api/src/procedures/candidate.ts`
+- New: `packages/api/src/procedures/employer.ts`
+- New: `packages/api/src/procedures/admin.ts`
 
 ## Dependencies
 
-- **Blocked By:** #1 (Database Schema) - need User model
+- **Blocked By:** #1 (Database Schema) - User model and UserRole enum needed
 
 ## Technical Notes
 
+### Current Schema State
+
+The `User` model and Better Auth tables (`Session`, `Account`, `Verification`) already exist in `packages/db/prisma/schema/auth.prisma`:
+
+```prisma
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          UserRole  @default(CANDIDATE)
+  // ...relations
+  @@unique([email])
+}
+
+model Session {
+  id, expiresAt, token, ipAddress, userAgent, userId
+}
+
+model Account {
+  id, accountId, providerId, userId, accessToken, refreshToken, idToken, ...
+}
+
+model Verification {
+  id, identifier, value, expiresAt
+}
+```
+
 ### Environment Variables Required
 
-```env
-BETTER_AUTH_SECRET=<32+ character secret>
-BETTER_AUTH_URL=http://localhost:3000
+Already defined in `packages/env/src/server.ts`:
+- `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `CORS_ORIGIN`, `NODE_ENV`
 
+Need to add:
+```env
 # Email (for verification/reset)
 EMAIL_HOST=smtp.example.com
 EMAIL_PORT=587
@@ -146,8 +192,6 @@ EMAIL_FROM=noreply@07nghiep.com
 # OAuth (optional)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
 ```
 
 ### Better Auth Client Usage
@@ -170,14 +214,18 @@ if (user.role === 'CANDIDATE') {
 }
 ```
 
+### Cookie Configuration Note
+
+Cookie `sameSite: "none"` requires HTTPS in production. Adjust for dev (localhost) vs production environments.
+
 ## Success Criteria
 
 1. Users can sign up with role selection
 2. Email verification works
 3. Password reset works
 4. Role-specific procedures enforce access
-5. Sessions properly managed
-6. All tests passing
+5. Sessions properly managed (7-day expiry)
+6. All tests passing (`pnpm check-types` + `pnpm build` + `pnpm test`)
 
 ## Related Issues
 
