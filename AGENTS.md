@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: true
+---
+
 # 07nghiep - Job Board System
 
 A modern monorepo job board application built with TypeScript, featuring three frontend applications (Admin, Candidate, Employer) and a unified backend server.
