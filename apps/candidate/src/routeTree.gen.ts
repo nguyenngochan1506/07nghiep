@@ -13,6 +13,8 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileIndexRouteImport } from './routes/profile/index'
+import { Route as ProfileEditRouteImport } from './routes/profile/edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -34,18 +36,32 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileEditRoute = ProfileEditRouteImport.update({
+  id: '/profile/edit',
+  path: '/profile/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/profile/edit': typeof ProfileEditRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/profile/edit': typeof ProfileEditRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +69,28 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/profile/edit': typeof ProfileEditRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/home' | '/login'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/home'
+    | '/login'
+    | '/profile/edit'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/home' | '/login'
-  id: '__root__' | '/' | '/dashboard' | '/home' | '/login'
+  to: '/' | '/dashboard' | '/home' | '/login' | '/profile/edit' | '/profile'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/home'
+    | '/login'
+    | '/profile/edit'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +98,8 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
+  ProfileEditRoute: typeof ProfileEditRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +132,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/edit': {
+      id: '/profile/edit'
+      path: '/profile/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +154,8 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
+  ProfileEditRoute: ProfileEditRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
