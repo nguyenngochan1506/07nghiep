@@ -2,7 +2,7 @@ import { createPrismaClient } from "@07nghiep/db";
 import { env } from "@07nghiep/env/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { emailOTP, organization } from "better-auth/plugins";
+import { customSession, emailOTP, organization } from "better-auth/plugins";
 import { sendEmail, generateOTPEmail, type OTPType } from "./plugins/email-templates";
 
 export function createAuth() {
@@ -14,11 +14,20 @@ export function createAuth() {
     }),
 
     session: {
-      expiresIn: (env.SESSION_EXPIRY_DAYS ?? 7) * 24 * 60 * 60, // Convert days to seconds
+      expiresIn: (env.SESSION_EXPIRY_DAYS ?? 7) * 24 * 60 * 60,
     },
     trustedOrigins: env.CORS_ORIGIN,
     emailAndPassword: {
       enabled: true,
+    },
+    user: {
+      additionalFields: {
+        role: {
+          type: "string",
+          defaultValue: "CANDIDATE",
+          input: false,
+        },
+      },
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
@@ -31,7 +40,7 @@ export function createAuth() {
     },
     plugins: [
       emailOTP({
-        expiresIn: 300, // 5 minutes for OTP
+        expiresIn: 300,
         async sendVerificationOTP({ email, otp, type }) {
           const { subject, html } = generateOTPEmail(otp, type as OTPType);
           await sendEmail({ to: email, subject, html });
@@ -40,6 +49,14 @@ export function createAuth() {
       organization({
         allowUserToCreateOrganization: false,
         organizationOwnershipRequired: false,
+      }),
+      customSession(async ({ user }) => {
+        return {
+          user: {
+            ...user,
+            role: (user as any).role ?? "CANDIDATE",
+          },
+        };
       }),
     ],
   });

@@ -1,5 +1,5 @@
-import { createContext } from "@07nghiep/api/context";
-import { appRouter } from "@07nghiep/api/routers/index";
+import { createContext } from "./lib/api/context";
+import { appRouter } from "./routers";
 import { auth } from "@07nghiep/auth";
 import { env } from "@07nghiep/env/server";
 import { trpcServer } from "@hono/trpc-server";

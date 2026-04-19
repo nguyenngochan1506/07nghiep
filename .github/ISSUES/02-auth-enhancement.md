@@ -1,3 +1,13 @@
+# Issue #2: Authentication Enhancement - RBAC & Email Verification
+
+## Metadata
+- **Issue Number:** #2
+- **Labels:** `shared/auth`, `priority/high`, `size/l`
+- **Assignee:** Dev 1 (Database & Auth Lead)
+- **Milestone:** M1 - Foundation
+- **Epic:** Foundation
+- **Estimate:** 8-10h
+
 ## Problem Statement
 
 We need to enhance the Better Auth configuration to support role-based access control, email verification, and proper session management for our three user types: Candidate, Employer, and Admin.
@@ -37,16 +47,18 @@ Create role-based middleware:
 
 Configure session handling with 7-day expiration.
 
-## Tasks
+## Tasks Checklist
 
-- [x] Add role field to User model in schema (already existed)
-- [x] Setup organization plugin
-- [x] Configure email verification (using emailOTP plugin)
-- [x] Configure password reset (using emailOTP plugin)
-- [x] Create role-specific procedures
-- [x] Add role check middleware
-- [x] Update session handling (7-day expiry)
-- [ ] Write tests for auth flows (skipped per user request)
+```markdown
+- [x] 1. Add role field to User model in schema
+- [x] 2. Setup organization plugin
+- [x] 3. Configure email verification (using emailOTP plugin)
+- [x] 4. Configure password reset (using emailOTP plugin)
+- [x] 5. Create role-specific procedures (candidateProcedure, employerProcedure, adminProcedure)
+- [x] 6. Add role check middleware
+- [x] 7. Update session handling (7-day expiry)
+- [ ] 8. Write tests for auth flows (skipped per user request)
+```
 
 ## Files to Modify
 
@@ -56,13 +68,19 @@ Configure session handling with 7-day expiration.
 
 ## Dependencies
 
-Blocked by: #1 (Database Schema)
+- **Blocked By:** #1 (Database Schema)
 
-## Estimate
+## Success Criteria
 
-8-10h
+1. Role-based procedures correctly enforce access control
+2. Email verification flow works end-to-end
+3. Password reset flow works end-to-end
+4. Sessions expire after 7 days of inactivity
+5. All procedures properly typed with role context
 
 ## Related Issues
 
 - #1 (Database Schema) - prerequisite
 - #3 (API Foundation) - will use these procedures
+- #4 (Job Search) - will use role-based access
+- #6 (Application Flow) - will use role-based access

@@ -26,9 +26,8 @@ This is a job searching platform with role-based access:
 │   ├── admin/           # Admin dashboard (React + Vite)
 │   ├── candidate/       # Candidate portal (React + Vite)
 │   ├── employer/        # Employer portal (React + Vite)
-│   └── server/          # Backend API (Hono + tRPC)
+│   └── server/          # Backend API (Hono + tRPC + WebSocket)
 ├── packages/
-│   ├── api/             # tRPC router definitions
 │   ├── auth/            # Better Auth configuration
 │   ├── config/          # TypeScript & ESLint configs
 │   ├── db/              # Prisma schema & database utilities
@@ -65,34 +64,30 @@ When working on this project, use the corresponding skill files for guidance:
 #### `apps/admin`
 - **Purpose**: Administrative dashboard for platform management
 - **Framework**: React + Vite + TanStack Router
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
+- **Dependencies**: `@07nghiep/server`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
 - **Dev Command**: `pnpm dev:admin`
 
 #### `apps/candidate`
 - **Purpose**: Job seeker portal for finding and applying to jobs
 - **Framework**: React + Vite + TanStack Router
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
+- **Dependencies**: `@07nghiep/server`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
 - **Dev Command**: `pnpm dev:candidate`
 
 #### `apps/employer`
 - **Purpose**: Employer portal for posting jobs and managing applications
 - **Framework**: React + Vite + TanStack Router
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
+- **Dependencies**: `@07nghiep/server`, `@07nghiep/auth`, `@07nghiep/env`, `@07nghiep/ui`
 - **Dev Command**: `pnpm dev:employer`
 
 #### `apps/server`
-- **Purpose**: Backend API server
+- **Purpose**: Backend API server with business logic, tRPC routers, and WebSocket handlers
 - **Framework**: Hono + tRPC
-- **Dependencies**: `@07nghiep/api`, `@07nghiep/auth`, `@07nghiep/db`, `@07nghiep/env`
+- **Dependencies**: `@07nghiep/auth`, `@07nghiep/db`, `@07nghiep/env`
 - **Dev Command**: `pnpm dev:server`
 - **Build**: `tsdown` for production
+- **Note**: Routers are defined locally in `src/routers/`. tRPC types are exported for frontend consumption.
 
 ### Packages (Shared Libraries)
-
-#### `packages/api`
-- **Purpose**: tRPC router definitions shared between server and clients
-- **Exports**: API procedures and types
-- **Dependencies**: `@07nghiep/auth`, `@07nghiep/db`, `@07nghiep/env`
 
 #### `packages/auth`
 - **Purpose**: Better Auth configuration
@@ -223,20 +218,24 @@ pnpm dlx shadcn@latest add admin-specific-component
 
 ### Adding a New API Endpoint
 
-1. Define router in `packages/api/src/`:
+1. Define router in `apps/server/src/routers/`:
 ```typescript
-// packages/api/src/jobs.ts
+// apps/server/src/routers/jobs.ts
 export const jobsRouter = router({
-  list: procedure.query(async () => { ... }),
-  get: procedure.input(z.object({ id: z.string() })).query(async ({ input }) => { ... }),
+  list: publicProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.job.findMany();
+  }),
+  get: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => { ... }),
 });
 ```
 
-2. Merge into main router in `packages/api/src/index.ts`
+2. Merge into main router in `apps/server/src/routers/index.ts`
 
-3. Call from clients:
+3. Frontend imports type from `@07nghiep/server/routers/index`:
 ```typescript
-const jobs = await apiClient.jobs.list.useQuery();
+import type { AppRouter } from "@07nghiep/server/routers/index";
 ```
 
 ### Adding a Database Model
@@ -270,13 +269,14 @@ packages/auth/.env       # Auth secrets
 
 ### API Communication
 - All frontend apps communicate with `apps/server` via tRPC
-- Client is generated from shared `packages/api` types
+- Client types are imported from `@07nghiep/server/routers/index`
 - Auth headers are automatically forwarded
+- `apps/server` contains all business logic, Prisma queries, and WebSocket handlers
 
 ### Package Dependencies
 ```
-apps/* → @07nghiep/api, @07nghiep/auth, @07nghiep/env, @07nghiep/ui
-packages/api → @07nghiep/auth, @07nghiep/db, @07nghiep/env
+apps/* → @07nghiep/server, @07nghiep/auth, @07nghiep/env, @07nghiep/ui
+apps/server → @07nghiep/auth, @07nghiep/db, @07nghiep/env
 packages/auth → @07nghiep/db, @07nghiep/env
 packages/db → @07nghiep/env
 packages/ui → @07nghiep/config (devDependency)
@@ -289,9 +289,8 @@ packages/config → (no dependencies)
 2. `packages/env`, `packages/ui` (devDependency on config)
 3. `packages/db` (depends on env)
 4. `packages/auth` (depends on db, env)
-5. `packages/api` (depends on auth, db, env)
-6. `apps/server` (depends on api, auth, db)
-7. `apps/*` (depend on api, auth, env, ui)
+5. `apps/server` (depends on auth, db, env)
+6. `apps/*` (depend on server, auth, env, ui)
 
 ## Design System
 

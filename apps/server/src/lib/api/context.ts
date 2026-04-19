@@ -1,4 +1,5 @@
 import { auth } from "@07nghiep/auth";
+import prisma from "@07nghiep/db";
 import type { Context as HonoContext } from "hono";
 
 export type CreateContextOptions = {
@@ -14,10 +15,10 @@ export async function createContext({ context }: CreateContextOptions) {
   const role = (user as any)?.role ?? null;
 
   return {
-    auth: null,
     session,
     user,
     role,
+    prisma,
   };
 }
 
