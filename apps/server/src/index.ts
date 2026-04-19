@@ -90,7 +90,9 @@ app.use(
     origin: (origin) => {
       if (!origin) return "*";
       const allowedOrigins = env.CORS_ORIGIN;
-      if (allowedOrigins.includes(origin)) return origin;
+      if (allowedOrigins.includes(origin)) {
+        return origin;
+      }
       return allowedOrigins[0] ?? "*";
     },
     allowMethods: ["GET", "POST", "OPTIONS"],
