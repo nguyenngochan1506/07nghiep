@@ -16,6 +16,7 @@
     "@07nghiep/env": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "better-auth": "^1.6.5",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
