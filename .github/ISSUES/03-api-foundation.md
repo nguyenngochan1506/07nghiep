@@ -291,9 +291,9 @@ mutation uploadResume(input: { filename: string }) {
 - [x] 7. Add input validation middleware (via Zod schemas)
 - [x] 8. Add pagination to list endpoints
 - [x] 9. Add error handling with TRPCError
-- [ ] 10. Create tRPC client utilities
-- [ ] 11. Write API documentation
-- [ ] 12. Add unit tests
+- [ ] 10. Create tRPC client utilities (deferred)
+- [ ] 11. Write API documentation (deferred)
+- [ ] 12. Add unit tests (deferred)
 ```
 
 ## Files to Create/Modify

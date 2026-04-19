@@ -15,14 +15,23 @@ export const userRouter = router({
         image: z.string().url().optional(),
       })
     )
-    .mutation(async ({ ctx, input: _input }) => {
+    .mutation(async ({ ctx, input }) => {
       if (!ctx.session?.user) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Not authenticated",
         });
       }
-      return ctx.session.user;
+
+      const user = await ctx.prisma.user.update({
+        where: { id: ctx.session.user.id },
+        data: {
+          ...(input.name && { name: input.name }),
+          ...(input.image && { image: input.image }),
+        },
+      });
+
+      return user;
     }),
 
   getById: publicProcedure
