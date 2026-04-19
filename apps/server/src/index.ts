@@ -6,7 +6,6 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { scrypt, randomBytes } from "node:crypto";
 
 // ============================================================
 // Seed
@@ -17,20 +16,9 @@ const SEED_USERS = [
   { email: "admin_user@gmail.com", password: "admin_user", name: "Admin User", role: "ADMIN" as const },
 ];
 
-function hashPassword(password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const salt = randomBytes(16);
-    scrypt(password, salt, 32, { N: 2 ** 14, r: 8, p: 1, maxmem: 128 * 2 ** 14 * 8 * 2 }, (err, derivedKey) => {
-      if (err) return reject(err);
-      resolve(Buffer.concat([salt, derivedKey]).toString("base64"));
-    });
-  });
-}
-
 async function seedUsers() {
   const { createPrismaClient } = await import("@07nghiep/db");
   const prisma = createPrismaClient();
-  const now = new Date();
 
   for (const user of SEED_USERS) {
     const existing = await prisma.user.findUnique({ where: { email: user.email } });
@@ -44,34 +32,35 @@ async function seedUsers() {
       continue;
     }
 
-    const userId = crypto.randomUUID();
-    const passwordHash = await hashPassword(user.password);
-
-    await prisma.$transaction(async (tx) => {
-      await tx.user.create({
-        data: {
-          id: userId,
-          name: user.name,
-          email: user.email,
-          emailVerified: true,
-          role: user.role,
-          createdAt: now,
-          updatedAt: now,
-        },
-      });
-      await tx.account.create({
-        data: {
-          id: crypto.randomUUID(),
-          accountId: user.email,
-          providerId: "credential",
-          userId,
-          password: passwordHash,
-          createdAt: now,
-          updatedAt: now,
-        },
-      });
+    // Create user + account via Better Auth API (handles password hashing correctly)
+    const res = await fetch("http://localhost:3000/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "http://localhost:3000" },
+      body: JSON.stringify({
+        email: user.email,
+        password: user.password,
+        name: user.name,
+        confirmPassword: user.password,
+      }),
     });
 
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = typeof data?.message === "string" ? data.message : JSON.stringify(data);
+      // USER_ALREADY_EXISTS is ok — race condition between parallel checks
+      if (msg.includes("already") || msg.includes("exists") || msg.includes("CONFLICT")) {
+        console.log(`  [SKIP]    ${user.email} (already exists)`);
+      } else {
+        console.error(`  [ERROR]   ${user.email}: ${msg}`);
+      }
+      continue;
+    }
+
+    // Update role to the correct one
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: user.role, emailVerified: true },
+    });
     console.log(`  [CREATED] ${user.email} (${user.role})`);
   }
 
@@ -90,9 +79,7 @@ app.use(
     origin: (origin) => {
       if (!origin) return "*";
       const allowedOrigins = env.CORS_ORIGIN;
-      if (allowedOrigins.includes(origin)) {
-        return origin;
-      }
+      if (allowedOrigins.includes(origin)) return origin;
       return allowedOrigins[0] ?? "*";
     },
     allowMethods: ["GET", "POST", "OPTIONS"],
@@ -115,14 +102,16 @@ app.all("/trpc/:path(*)", async (c) => {
 app.get("/", (c) => c.text("OK"));
 
 async function main() {
+  const { serve } = await import("@hono/node-server");
+
+  serve({ fetch: app.fetch, port: 3000 });
+  console.log(`Server running on http://localhost:3000`);
+
+  // Give the server a moment to start listening
+  await new Promise((r) => setTimeout(r, 100));
+
   console.log("Seeding users...");
   await seedUsers();
-
-  const { serve } = await import("@hono/node-server");
-  serve(
-    { fetch: app.fetch, port: 3000 },
-    (info) => console.log(`Server running on http://localhost:${info.port}`),
-  );
 }
 
 main().catch((err) => {
