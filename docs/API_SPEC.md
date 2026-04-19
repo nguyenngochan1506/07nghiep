@@ -312,7 +312,7 @@ Same as `getMyProfile`.
 
 ### `profile.uploadResume`
 
-Generate a signed URL for resume upload.
+Generate a presigned URL for resume upload to R2.
 
 **Procedure**: `candidateProcedure.mutation()`
 
@@ -320,7 +320,8 @@ Generate a signed URL for resume upload.
 
 ```typescript
 {
-  filename: string;  // Required, non-empty
+  filename: string;    // Required, non-empty
+  contentType: string;  // Required, must be "application/pdf"
 }
 ```
 
@@ -328,11 +329,49 @@ Generate a signed URL for resume upload.
 
 ```typescript
 {
-  url: string;  // Signed upload URL (currently placeholder path)
+  uploadUrl: string;   // Presigned PUT URL, expires in 15 min
+  publicUrl: string;   // Final public URL after upload
+  key: string;         // R2 object key
+  expiresIn: number;   // TTL in seconds (900)
 }
 ```
 
-**Status**: Not implemented — requires S3/R2 configuration.
+**Errors**
+- `UNAUTHORIZED` — Not authenticated as candidate
+- `INTERNAL_SERVER_ERROR` — R2 not configured
+- `BAD_REQUEST` — Invalid content type
+
+**Status**: ✅ Implemented with R2
+
+---
+
+### `profile.uploadAvatar`
+
+Generate a presigned URL for avatar image upload to R2.
+
+**Procedure**: `candidateProcedure.mutation()`
+
+**Input**
+
+```typescript
+{
+  filename: string;    // Required, non-empty
+  contentType: string; // Required, must be image/jpeg|png|webp
+}
+```
+
+**Response**
+
+```typescript
+{
+  uploadUrl: string;
+  publicUrl: string;
+  key: string;
+  expiresIn: number;
+}
+```
+
+**Status**: ✅ Implemented with R2
 
 ---
 

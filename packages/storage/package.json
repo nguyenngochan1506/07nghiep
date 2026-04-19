@@ -1,0 +1,20 @@
+{
+  "name": "@07nghiep/storage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@07nghiep/env": "workspace:*",
+    "@aws-sdk/client-s3": "^3.800.0",
+    "@aws-sdk/s3-request-presigner": "^3.800.0",
+    "dotenv": "catalog:"
+  },
+  "devDependencies": {
+    "@07nghiep/config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "^5"
+  }
+}

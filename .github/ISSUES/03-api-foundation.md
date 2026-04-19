@@ -286,7 +286,7 @@ mutation uploadResume(input: { filename: string }) {
 - [x] 2. Create profile router with CRUD
 - [x] 3. Create organization router with CRUD
 - [x] 4. Create Zod schemas for validation
-- [ ] 5. Implement file upload helpers (resume, avatar) - S3/R2 setup pending
+- [x] 5. Implement file upload helpers (resume, avatar) - S3/R2 setup ✅
 - [x] 6. Update context to include Prisma
 - [x] 7. Add input validation middleware (via Zod schemas)
 - [x] 8. Add pagination to list endpoints
@@ -299,17 +299,21 @@ mutation uploadResume(input: { filename: string }) {
 ## Files to Create/Modify
 
 ### New Files
-- `packages/api/src/routers/user.ts`
-- `packages/api/src/routers/profile.ts`
-- `packages/api/src/routers/organization.ts`
-- `packages/api/src/schemas/index.ts`
-- `packages/api/src/schemas/profile.ts`
-- `packages/api/src/schemas/organization.ts`
+- `apps/server/src/routers/user.ts`
+- `apps/server/src/routers/profile.ts`
+- `apps/server/src/routers/organization.ts`
+- `apps/server/src/lib/api/schemas/index.ts`
+- `apps/server/src/lib/api/schemas/profile.ts`
+- `apps/server/src/lib/api/schemas/organization.ts`
+- `packages/storage/src/index.ts`
 
 ### Modify Files
-- `packages/api/src/routers/index.ts` - merge all routers
-- `packages/api/src/context.ts` - add Prisma to context
-- `packages/api/src/index.ts` - export schemas
+- `apps/server/src/routers/index.ts` - merge all routers
+- `apps/server/src/lib/api/context.ts` - add Prisma to context
+- `apps/server/src/lib/api/index.ts` - export schemas
+- `packages/env/src/server.ts` - add R2 env vars
+- `apps/server/.env` - add R2 credentials
+- `apps/server/package.json` - add @07nghiep/storage dep
 
 ## Dependencies
 
