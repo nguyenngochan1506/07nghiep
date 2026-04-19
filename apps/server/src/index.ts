@@ -44,9 +44,9 @@ async function seedUsers() {
       }),
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
-      const msg = typeof data?.message === "string" ? data.message : JSON.stringify(data);
+      const msg = typeof data.message === "string" ? data.message : JSON.stringify(data);
       // USER_ALREADY_EXISTS is ok — race condition between parallel checks
       if (msg.includes("already") || msg.includes("exists") || msg.includes("CONFLICT")) {
         console.log(`  [SKIP]    ${user.email} (already exists)`);
