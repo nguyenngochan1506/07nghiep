@@ -126,20 +126,20 @@ The current Prisma schema is empty. We need to define the core data models for t
 ## Tasks Checklist
 
 ```markdown
-- [ ] 1. Design and create User model extension with role enum
-- [ ] 2. Create Profile model with all fields
-- [ ] 3. Create Organization model with all fields
-- [ ] 4. Create Job model with all fields and enums
-- [ ] 5. Create Application model with all fields
-- [ ] 6. Create SavedJob model
-- [ ] 7. Create Notification model
-- [ ] 8. Create Conversation model
-- [ ] 9. Create Message model
-- [ ] 10. Create JobSkill model (tags)
-- [ ] 11. Add proper indexes for performance
-- [ ] 12. Add relations and constraints
-- [ ] 13. Write seed data for testing
-- [ ] 14. Document schema changes
+- [x] 1. Design and create User model extension with role enum
+- [x] 2. Create Profile model with all fields
+- [x] 3. Create Organization model with all fields
+- [x] 4. Create Job model with all fields and enums
+- [x] 5. Create Application model with all fields
+- [x] 6. Create SavedJob model
+- [x] 7. Create Notification model
+- [x] 8. Create Conversation model
+- [x] 9. Create Message model
+- [x] 10. Create JobSkill model (tags)
+- [x] 11. Add proper indexes for performance
+- [x] 12. Add relations and constraints
+- [ ] 13. Write seed data for testing (deferred)
+- [ ] 14. Document schema changes (deferred)
 ```
 
 ## Files to Modify

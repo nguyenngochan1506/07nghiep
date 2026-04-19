@@ -1,7 +1,18 @@
 {
-  "name": "server",
+  "name": "@07nghiep/server",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./routers/*": {
+      "default": "./src/routers/*.ts"
+    },
+    "./lib/api": {
+      "default": "./src/lib/api/index.ts"
+    }
+  },
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc -b",
@@ -10,10 +21,10 @@
     "start": "node dist/index.mjs"
   },
   "dependencies": {
-    "@07nghiep/api": "workspace:*",
     "@07nghiep/auth": "workspace:*",
     "@07nghiep/db": "workspace:*",
     "@07nghiep/env": "workspace:*",
+    "@07nghiep/storage": "workspace:*",
     "@hono/node-server": "^1.14.4",
     "@hono/trpc-server": "^0.4.0",
     "@trpc/server": "catalog:",

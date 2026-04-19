@@ -2,7 +2,7 @@ import { NotFoundComponent } from "@/components/not-found";
 import { Toaster } from "@07nghiep/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Outlet, createRootRouteWithContext, redirect } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useLocation } from "@tanstack/react-router";
 

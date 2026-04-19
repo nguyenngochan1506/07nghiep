@@ -2,6 +2,19 @@ import { initTRPC, TRPCError } from "@trpc/server";
 
 import type { Context } from "./context";
 
+export { type Context } from "./context";
+
+export {
+  profileUpdateSchema,
+  organizationCreateSchema,
+  organizationUpdateSchema,
+} from "./schemas";
+export type {
+  ProfileUpdateInput,
+  OrganizationCreateInput,
+  OrganizationUpdateInput,
+} from "./schemas";
+
 export const t = initTRPC.context<Context>().create();
 
 export const router = t.router;
