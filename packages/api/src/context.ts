@@ -9,9 +9,15 @@ export async function createContext({ context }: CreateContextOptions) {
   const session = await auth.api.getSession({
     headers: context.req.raw.headers,
   });
+
+  const user = session?.user ?? null;
+  const role = (user as any)?.role ?? null;
+
   return {
     auth: null,
     session,
+    user,
+    role,
   };
 }
 

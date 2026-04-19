@@ -39,14 +39,14 @@ Configure session handling with 7-day expiration.
 
 ## Tasks
 
-- [ ] Add role field to User model in schema
-- [ ] Setup organization plugin
-- [ ] Configure email verification
-- [ ] Configure password reset
-- [ ] Create role-specific procedures
-- [ ] Add role check middleware
-- [ ] Update session handling
-- [ ] Write tests for auth flows
+- [x] Add role field to User model in schema (already existed)
+- [x] Setup organization plugin
+- [x] Configure email verification (using emailOTP plugin)
+- [x] Configure password reset (using emailOTP plugin)
+- [x] Create role-specific procedures
+- [x] Add role check middleware
+- [x] Update session handling (7-day expiry)
+- [ ] Write tests for auth flows (skipped per user request)
 
 ## Files to Modify
 
