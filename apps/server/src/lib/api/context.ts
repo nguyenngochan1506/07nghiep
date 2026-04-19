@@ -12,7 +12,7 @@ export async function createContext({ context }: CreateContextOptions) {
   });
 
   const user = session?.user ?? null;
-  const role = (user as any)?.role ?? null;
+  const role = (user as { role?: string })?.role ?? null;
 
   return {
     session,

@@ -1,9 +1,11 @@
+import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Users, Briefcase, FileText, DollarSign, Settings, Shield, Activity, Server } from "lucide-react";
 
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
+import { authorizedRoles } from "@/lib/role-guard";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
 
@@ -11,10 +13,14 @@ export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) {
-      redirect({
-        to: "/login",
-        throw: true,
-      });
+      redirect({ to: "/login", throw: true });
+    }
+    const user = session.data!.user as { role?: string };
+    const role = user.role ?? "CANDIDATE";
+    if (!authorizedRoles(role)) {
+      toast.error("Bạn không có quyền truy cập trang này");
+      await authClient.signOut();
+      redirect({ to: "/login", throw: true });
     }
     return { session };
   },

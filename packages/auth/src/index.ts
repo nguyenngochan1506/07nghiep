@@ -54,7 +54,7 @@ export function createAuth() {
         return {
           user: {
             ...user,
-            role: (user as any).role ?? "CANDIDATE",
+            role: (user as { role?: string }).role ?? "CANDIDATE",
           },
         };
       }),
