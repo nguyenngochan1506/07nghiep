@@ -11,7 +11,7 @@
     "check-types": "vite build && tsc --noEmit"
   },
   "dependencies": {
-    "@07nghiep/api": "workspace:*",
+    "@07nghiep/server": "workspace:*",
     "@07nghiep/auth": "workspace:*",
     "@07nghiep/env": "workspace:*",
     "@07nghiep/ui": "workspace:*",
@@ -24,7 +24,7 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "^11.13.4",
-    "better-auth": "catalog:",
+    "better-auth": "^1.6.5",
     "dotenv": "catalog:",
     "lucide-react": "catalog:",
     "next-themes": "catalog:",

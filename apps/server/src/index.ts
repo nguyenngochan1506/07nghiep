@@ -1,12 +1,75 @@
-import { createContext } from "@07nghiep/api/context";
-import { appRouter } from "@07nghiep/api/routers/index";
+import { createContext } from "./lib/api/context";
+import { appRouter } from "./routers";
 import { auth } from "@07nghiep/auth";
 import { env } from "@07nghiep/env/server";
-import { trpcServer } from "@hono/trpc-server";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
+// ============================================================
+// Seed
+// ============================================================
+const SEED_USERS = [
+  { email: "candidate_user@gmail.com", password: "candidate_user", name: "Candidate User", role: "CANDIDATE" as const },
+  { email: "employer_user@gmail.com", password: "employer_user", name: "Employer User", role: "EMPLOYER" as const },
+  { email: "admin_user@gmail.com", password: "admin_user", name: "Admin User", role: "ADMIN" as const },
+];
+
+async function seedUsers() {
+  const { createPrismaClient } = await import("@07nghiep/db");
+  const prisma = createPrismaClient();
+
+  for (const user of SEED_USERS) {
+    const existing = await prisma.user.findUnique({ where: { email: user.email } });
+    if (existing) {
+      if (existing.role !== user.role) {
+        await prisma.user.update({ where: { id: existing.id }, data: { role: user.role } });
+        console.log(`  [UPDATED] ${user.email} → role: ${user.role}`);
+      } else {
+        console.log(`  [SKIP]    ${user.email} (already exists)`);
+      }
+      continue;
+    }
+
+    // Create user + account via Better Auth API (handles password hashing correctly)
+    const res = await fetch("http://localhost:3000/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "http://localhost:3000" },
+      body: JSON.stringify({
+        email: user.email,
+        password: user.password,
+        name: user.name,
+        confirmPassword: user.password,
+      }),
+    });
+
+    const data = (await res.json().catch(() => ({}))) as { message?: string };
+    if (!res.ok) {
+      const msg = typeof data.message === "string" ? data.message : JSON.stringify(data);
+      // USER_ALREADY_EXISTS is ok — race condition between parallel checks
+      if (msg.includes("already") || msg.includes("exists") || msg.includes("CONFLICT")) {
+        console.log(`  [SKIP]    ${user.email} (already exists)`);
+      } else {
+        console.error(`  [ERROR]   ${user.email}: ${msg}`);
+      }
+      continue;
+    }
+
+    // Update role to the correct one
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: user.role, emailVerified: true },
+    });
+    console.log(`  [CREATED] ${user.email} (${user.role})`);
+  }
+
+  await prisma.$disconnect();
+}
+
+// ============================================================
+// Server
+// ============================================================
 const app = new Hono();
 
 app.use(logger());
@@ -16,9 +79,7 @@ app.use(
     origin: (origin) => {
       if (!origin) return "*";
       const allowedOrigins = env.CORS_ORIGIN;
-      if (allowedOrigins.includes(origin)) {
-        return origin;
-      }
+      if (allowedOrigins.includes(origin)) return origin;
       return allowedOrigins[0] ?? "*";
     },
     allowMethods: ["GET", "POST", "OPTIONS"],
@@ -29,28 +90,31 @@ app.use(
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-app.use(
-  "/trpc/*",
-  trpcServer({
+app.all("/trpc/:path(*)", async (c) => {
+  return fetchRequestHandler({
+    endpoint: "/trpc",
     router: appRouter,
-    createContext: (_opts, context) => {
-      return createContext({ context });
-    },
-  }),
-);
-
-app.get("/", (c) => {
-  return c.text("OK");
+    req: c.req.raw,
+    createContext: async () => createContext({ context: c }),
+  });
 });
 
-import { serve } from "@hono/node-server";
+app.get("/", (c) => c.text("OK"));
 
-serve(
-  {
-    fetch: app.fetch,
-    port: 3000,
-  },
-  (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`);
-  },
-);
+async function main() {
+  const { serve } = await import("@hono/node-server");
+
+  serve({ fetch: app.fetch, port: 3000 });
+  console.log(`Server running on http://localhost:3000`);
+
+  // Give the server a moment to start listening
+  await new Promise((r) => setTimeout(r, 100));
+
+  console.log("Seeding users...");
+  await seedUsers();
+}
+
+main().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
+});

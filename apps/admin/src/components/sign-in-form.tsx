@@ -11,7 +11,7 @@ import { authClient } from "@/lib/auth-client";
 
 import Loader from "./loader";
 
-export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
+export default function SignInForm() {
   const navigate = useNavigate({
     from: "/",
   });
@@ -127,13 +127,6 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
             )}
           </form.Subscribe>
         </form>
-
-        <div className="mt-6 text-center text-sm">
-          <span className="text-muted-foreground">Chưa có tài khoản? </span>
-          <Button variant="link" onClick={onSwitchToSignUp} className="h-auto p-0 text-sm font-medium">
-            Đăng ký ngay
-          </Button>
-        </div>
       </Card>
     </div>
   );

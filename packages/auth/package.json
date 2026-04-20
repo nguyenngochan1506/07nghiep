@@ -13,12 +13,15 @@
   "dependencies": {
     "@07nghiep/db": "workspace:*",
     "@07nghiep/env": "workspace:*",
-    "better-auth": "catalog:",
+    "@trpc/server": "catalog:",
+    "better-auth": "^1.6.5",
     "dotenv": "catalog:",
+    "nodemailer": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@07nghiep/config": "workspace:*",
+    "@types/nodemailer": "catalog:",
     "typescript": "^5"
   }
 }
