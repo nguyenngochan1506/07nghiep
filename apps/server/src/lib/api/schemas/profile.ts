@@ -26,6 +26,7 @@ export const profileUpdateSchema = z.object({
         location: z.string().max(100).optional(),
         startYear: z.number().int().min(1950).max(2030),
         endYear: z.number().int().min(1950).max(2030).optional(),
+        gpa: z.string().max(20).nullable().optional(),
       })
     )
     .max(10)

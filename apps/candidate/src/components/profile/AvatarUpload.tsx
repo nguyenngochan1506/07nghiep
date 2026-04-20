@@ -5,7 +5,7 @@ import { useEffect, useId, useState, type ChangeEvent } from "react";
 
 type AvatarUploadProps = {
   value?: string;
-  onChange: (nextValue: string, file: File) => void;
+  onChange: (file: File) => void | Promise<void>;
   label?: string;
   maxSize?: number;
 };
@@ -62,7 +62,7 @@ export default function AvatarUpload({ value, onChange, label = "Ảnh đại di
     const objectUrl = URL.createObjectURL(selectedFile);
     setPreviewUrl(objectUrl);
     setFileName(selectedFile.name);
-    onChange(objectUrl, selectedFile);
+    onChange(selectedFile);
   };
 
   const fallbackText = fileName ? fileName.slice(0, 1).toUpperCase() : "A";

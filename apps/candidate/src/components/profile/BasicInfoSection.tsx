@@ -22,6 +22,7 @@ type FormLike = {
 type BasicInfoSectionProps = {
   form: FormLike;
   email?: string;
+  onAvatarChange: (file: File) => void | Promise<void>;
 };
 
 function FieldError({ message }: { message?: string }) {
@@ -32,20 +33,14 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-xs text-destructive">{message}</p>;
 }
 
-export default function BasicInfoSection({ form, email }: BasicInfoSectionProps) {
+export default function BasicInfoSection({ form, email, onAvatarChange }: BasicInfoSectionProps) {
   const avatarUrl = form.watch("avatarUrl");
 
   return (
     <div className="flex flex-col gap-6">
       <AvatarUpload
         value={avatarUrl}
-        onChange={(nextValue) => {
-          form.setValue("avatarUrl", nextValue, {
-            shouldDirty: true,
-            shouldTouch: true,
-            shouldValidate: true,
-          });
-        }}
+        onChange={onAvatarChange}
       />
 
       <Card>
