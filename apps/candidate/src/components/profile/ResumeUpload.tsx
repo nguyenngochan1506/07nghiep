@@ -5,7 +5,8 @@ import { useEffect, useId, useMemo, useRef, useState, type DragEvent, type Chang
 
 type ResumeUploadProps = {
   value?: string;
-  onChange: (nextValue: string, file: File) => void;
+  onChange: (file: File) => void | Promise<void>;
+  onRemove?: () => void | Promise<void>;
   label?: string;
   fileName?: string;
   fileSize?: number;
@@ -39,7 +40,7 @@ function isPdfFile(file: File) {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 }
 
-export default function ResumeUpload({ value, onChange, label = "Resume Upload", fileName, fileSize }: ResumeUploadProps) {
+export default function ResumeUpload({ value, onChange, onRemove, label = "Resume Upload", fileName, fileSize }: ResumeUploadProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -86,7 +87,7 @@ export default function ResumeUpload({ value, onChange, label = "Resume Upload",
     setPreviewUrl(objectUrl);
     setSelectedName(selectedFile.name);
     setSelectedSize(selectedFile.size);
-    onChange(objectUrl, selectedFile);
+    onChange(selectedFile);
   };
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +110,7 @@ export default function ResumeUpload({ value, onChange, label = "Resume Upload",
     handleSelectedFile(event.dataTransfer.files?.[0]);
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     if (previewUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl);
     }
@@ -120,7 +121,7 @@ export default function ResumeUpload({ value, onChange, label = "Resume Upload",
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-    onChange("", new File([], ""));
+    await onRemove?.();
   };
 
   const emptyState = useMemo(

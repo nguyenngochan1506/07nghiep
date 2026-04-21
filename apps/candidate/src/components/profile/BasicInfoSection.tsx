@@ -35,6 +35,7 @@ function FieldError({ message }: { message?: string }) {
 
 export default function BasicInfoSection({ form, email, onAvatarChange }: BasicInfoSectionProps) {
   const avatarUrl = form.watch("avatarUrl");
+  const aboutMe = form.watch("aboutMe") ?? "";
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,6 +115,7 @@ export default function BasicInfoSection({ form, email, onAvatarChange }: BasicI
               className="min-h-30 w-full rounded-md border border-input bg-transparent p-3 text-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20"
               {...form.register("aboutMe")}
             />
+            <p className="text-xs text-muted-foreground">{aboutMe.length}/2000 ký tự</p>
             <FieldError message={form.formState.errors.aboutMe?.message} />
           </div>
         </CardContent>

@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -208,6 +208,25 @@ function ProfileEditPage() {
   const { mutateAsync: requestAvatarUpload } = useMutation(
     trpc.profile.uploadAvatar.mutationOptions(),
   );
+  const { mutateAsync: requestResumeUpload } = useMutation(
+    trpc.profile.uploadResume.mutationOptions(),
+  );
+  const { mutateAsync: deleteResume } = useMutation(
+    trpc.profile.deleteResume.mutationOptions(),
+  );
+
+  const isDirty = form.formState.isDirty;
+
+  const handleBackToProfileClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!isDirty) {
+      return;
+    }
+
+    const shouldLeave = window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc muốn rời trang?");
+    if (!shouldLeave) {
+      event.preventDefault();
+    }
+  };
 
   const handleAvatarUpload = async (file: File) => {
     try {
@@ -246,6 +265,55 @@ function ProfileEditPage() {
     }
   };
 
+  const handleResumeUpload = async (file: File) => {
+    try {
+      toast.info("Đang tải CV...");
+
+      const uploadResult = await requestResumeUpload({
+        filename: file.name,
+        contentType: file.type,
+      });
+
+      const uploadResponse = await fetch(uploadResult.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Không thể tải CV lên máy chủ lưu trữ.");
+      }
+
+      form.setValue("resumeUrl", uploadResult.publicUrl, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+
+      toast.success("Tải CV thành công");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định.";
+      toast.error("Không thể tải CV: " + message);
+    }
+  };
+
+  const handleResumeRemove = async () => {
+    try {
+      await deleteResume();
+      form.setValue("resumeUrl", "", {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+      toast.success("Đã xóa CV");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định.";
+      toast.error("Không thể xóa CV: " + message);
+    }
+  };
+
   useEffect(() => {
     if (!profileData || initializedRef.current) {
       return;
@@ -254,6 +322,23 @@ function ProfileEditPage() {
     form.reset(mapProfileApiToFormValues(profileData, sessionName));
     initializedRef.current = true;
   }, [form, profileData, sessionName]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty) {
+        return;
+      }
+
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
 
   useEffect(() => {
     const subscription = form.watch((data) => {
@@ -302,7 +387,7 @@ function ProfileEditPage() {
       >
         <div className="flex flex-col gap-4">
           <Button asChild variant="outline" className="w-fit">
-            <Link to="/profile">Quay lại Profile</Link>
+            <Link to="/profile" onClick={handleBackToProfileClick}>Quay lại Profile</Link>
           </Button>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -325,21 +410,10 @@ function ProfileEditPage() {
         <EducationSection form={form} />
         <SkillsSection form={form} />
         <PortfolioSection form={form} />
-        <button
-          type="button"
-          onClick={() => toast.success("Meo meo! Toast chạy rồi nè!")}
-        >
-          Bấm để Test Toast
-        </button>
         <ResumeUpload
           value={form.watch("resumeUrl")}
-          onChange={(nextValue) => {
-            form.setValue("resumeUrl", nextValue, {
-              shouldDirty: true,
-              shouldTouch: true,
-              shouldValidate: true,
-            });
-          }}
+          onChange={handleResumeUpload}
+          onRemove={handleResumeRemove}
         />
       </form>
     </div>
