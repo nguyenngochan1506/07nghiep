@@ -8,11 +8,17 @@ export {
   profileUpdateSchema,
   organizationCreateSchema,
   organizationUpdateSchema,
+  jobCreateSchema,
+  jobUpdateSchema,
+  jobListQuerySchema,
 } from "./schemas";
 export type {
   ProfileUpdateInput,
   OrganizationCreateInput,
   OrganizationUpdateInput,
+  JobCreateInput,
+  JobUpdateInput,
+  JobListQuery,
 } from "./schemas";
 
 export const t = initTRPC.context<Context>().create();
