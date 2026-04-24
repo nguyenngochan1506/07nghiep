@@ -107,6 +107,25 @@ export const profileRouter = router({
       return result;
     }),
 
+  deleteResume: candidateProcedure.mutation(async ({ ctx }) => {
+    if (!ctx.user)
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+
+    const profile = await ctx.prisma.profile.upsert({
+      where: { userId: ctx.user.id },
+      update: {
+        resumeUrl: null,
+      },
+      create: {
+        userId: ctx.user.id,
+        resumeUrl: null,
+        skills: [],
+      },
+    });
+
+    return profile;
+  }),
+
   uploadAvatar: candidateProcedure
     .input(
       z.object({

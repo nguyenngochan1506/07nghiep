@@ -40,6 +40,20 @@ export default function UserMenu() {
           <DropdownMenuSeparator />
           <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
           <DropdownMenuItem
+            onClick={() => {
+              navigate({ to: "/profile" });
+            }}
+          >
+            Hồ sơ của tôi
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              navigate({ to: "/profile/edit" });
+            }}
+          >
+            Chỉnh sửa hồ sơ
+          </DropdownMenuItem>
+          <DropdownMenuItem
             variant="destructive"
             onClick={() => {
               authClient.signOut({
