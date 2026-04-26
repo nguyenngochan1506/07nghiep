@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import {
-  employerProcedure,
+  employerOrAdminProcedure,
   jobCreateSchema,
   jobListQuerySchema,
   jobUpdateSchema,
@@ -12,7 +12,7 @@ import {
 
 export const jobRouter = router({
   // ── Employer: Get my jobs ─────────────────────────────────────────────────
-  getMyJobs: employerProcedure
+  getMyJobs: employerOrAdminProcedure
     .input(jobListQuerySchema)
     .query(async ({ ctx, input }) => {
       const { page, pageSize, status, search } = input;
@@ -70,7 +70,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Get stats ───────────────────────────────────────────────────
-  getMyStats: employerProcedure.query(async ({ ctx }) => {
+  getMyStats: employerOrAdminProcedure.query(async ({ ctx }) => {
     const org = await ctx.prisma.organization.findUnique({
       where: { userId: ctx.user!.id },
       select: { id: true },
@@ -115,7 +115,7 @@ export const jobRouter = router({
   }),
 
   // ── Employer: Get single job for editing ─────────────────────────────────
-  getById: employerProcedure
+  getById: employerOrAdminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -143,7 +143,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Create job ──────────────────────────────────────────────────
-  create: employerProcedure
+  create: employerOrAdminProcedure
     .input(jobCreateSchema.extend({ status: z.enum(["DRAFT", "OPEN"]).default("DRAFT") }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -178,7 +178,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Update job ──────────────────────────────────────────────────
-  update: employerProcedure.input(jobUpdateSchema).mutation(async ({ ctx, input }) => {
+  update: employerOrAdminProcedure.input(jobUpdateSchema).mutation(async ({ ctx, input }) => {
     const org = await ctx.prisma.organization.findUnique({
       where: { userId: ctx.user!.id },
       select: { id: true },
@@ -220,7 +220,7 @@ export const jobRouter = router({
   }),
 
   // ── Employer: Publish job ─────────────────────────────────────────────────
-  publish: employerProcedure
+  publish: employerOrAdminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -245,7 +245,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Close job ───────────────────────────────────────────────────
-  close: employerProcedure
+  close: employerOrAdminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -266,7 +266,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Delete (Archive) job ───────────────────────────────────────
-  delete: employerProcedure
+  delete: employerOrAdminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -287,7 +287,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Clone job ───────────────────────────────────────────────────
-  clone: employerProcedure
+  clone: employerOrAdminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({

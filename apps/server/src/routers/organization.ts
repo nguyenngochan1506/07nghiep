@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import {
-  employerProcedure,
+  employerOrAdminProcedure,
   organizationCreateSchema,
   organizationUpdateSchema,
   publicProcedure,
@@ -10,7 +10,7 @@ import {
 } from "../lib/api";
 
 export const organizationRouter = router({
-  getMyOrganization: employerProcedure.query(async ({ ctx }) => {
+  getMyOrganization: employerOrAdminProcedure.query(async ({ ctx }) => {
     if (!ctx.user)
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
@@ -28,7 +28,7 @@ export const organizationRouter = router({
     return org;
   }),
 
-  create: employerProcedure
+  create: employerOrAdminProcedure
     .input(organizationCreateSchema)
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user)
@@ -53,7 +53,7 @@ export const organizationRouter = router({
       });
     }),
 
-  update: employerProcedure
+  update: employerOrAdminProcedure
     .input(organizationUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user)
@@ -160,7 +160,7 @@ export const organizationRouter = router({
       };
     }),
 
-  requestVerification: employerProcedure.mutation(async ({ ctx }) => {
+  requestVerification: employerOrAdminProcedure.mutation(async ({ ctx }) => {
     if (!ctx.user)
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 

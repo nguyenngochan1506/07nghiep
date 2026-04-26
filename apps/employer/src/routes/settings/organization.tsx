@@ -110,24 +110,22 @@ function OrganizationSettingsPage() {
     validators: {
       onSubmit: z.object({
         name: z.string().min(2, "Tên công ty phải có ít nhất 2 ký tự"),
-        description: z.string().optional(),
-        website: z.union([z.literal(""), z.string().url("Website không hợp lệ")]).optional(),
-        industry: z.string().optional(),
-        companySize: z.string().optional(),
-        foundedYear: z
-          .union([
-            z.literal(""),
-            z
-              .string()
-              .regex(/^\d{4}$/, "Năm phải có 4 chữ số")
-              .refine(
-                (v) => !v || (parseInt(v, 10) >= 1800 && parseInt(v, 10) <= new Date().getFullYear()),
-                "Năm thành lập không hợp lệ"
-              ),
-          ])
-          .optional(),
-        location: z.string().optional(),
-        logoUrl: z.union([z.literal(""), z.string().url("URL không hợp lệ")]).optional(),
+        description: z.string(),
+        website: z.union([z.literal(""), z.string().url("Website không hợp lệ")]),
+        industry: z.string(),
+        companySize: z.string(),
+        foundedYear: z.union([
+          z.literal(""),
+          z
+            .string()
+            .regex(/^\d{4}$/, "Năm phải có 4 chữ số")
+            .refine(
+              (v) => !v || (parseInt(v, 10) >= 1800 && parseInt(v, 10) <= new Date().getFullYear()),
+              "Năm thành lập không hợp lệ"
+            ),
+        ]),
+        location: z.string(),
+        logoUrl: z.union([z.literal(""), z.string().url("URL không hợp lệ")]),
       }),
     },
   });
@@ -236,7 +234,7 @@ function OrganizationSettingsPage() {
                       <Label htmlFor={field.name}>Quy mô nhân sự</Label>
                       <Select
                         value={field.state.value}
-                        onValueChange={(val) => field.handleChange(val)}
+                        onValueChange={(val) => field.handleChange(val ?? "")}
                       >
                         <SelectTrigger id={field.name}>
                           <SelectValue placeholder="Chọn quy mô" />
