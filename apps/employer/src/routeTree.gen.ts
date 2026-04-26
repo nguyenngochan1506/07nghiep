@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MyJobsIndexRouteImport } from './routes/my-jobs/index'
+import { Route as SettingsOrganizationRouteImport } from './routes/settings/organization'
+import { Route as JobsNewRouteImport } from './routes/jobs/new'
+import { Route as MyJobsJobIdEditRouteImport } from './routes/my-jobs/$jobId/edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -28,35 +32,93 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyJobsIndexRoute = MyJobsIndexRouteImport.update({
+  id: '/my-jobs/',
+  path: '/my-jobs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsOrganizationRoute = SettingsOrganizationRouteImport.update({
+  id: '/settings/organization',
+  path: '/settings/organization',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JobsNewRoute = JobsNewRouteImport.update({
+  id: '/jobs/new',
+  path: '/jobs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyJobsJobIdEditRoute = MyJobsJobIdEditRouteImport.update({
+  id: '/my-jobs/$jobId/edit',
+  path: '/my-jobs/$jobId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/jobs/new': typeof JobsNewRoute
+  '/settings/organization': typeof SettingsOrganizationRoute
+  '/my-jobs/': typeof MyJobsIndexRoute
+  '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/jobs/new': typeof JobsNewRoute
+  '/settings/organization': typeof SettingsOrganizationRoute
+  '/my-jobs': typeof MyJobsIndexRoute
+  '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/jobs/new': typeof JobsNewRoute
+  '/settings/organization': typeof SettingsOrganizationRoute
+  '/my-jobs/': typeof MyJobsIndexRoute
+  '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/jobs/new'
+    | '/settings/organization'
+    | '/my-jobs/'
+    | '/my-jobs/$jobId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login'
-  id: '__root__' | '/' | '/dashboard' | '/login'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/jobs/new'
+    | '/settings/organization'
+    | '/my-jobs'
+    | '/my-jobs/$jobId/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/jobs/new'
+    | '/settings/organization'
+    | '/my-jobs/'
+    | '/my-jobs/$jobId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  JobsNewRoute: typeof JobsNewRoute
+  SettingsOrganizationRoute: typeof SettingsOrganizationRoute
+  MyJobsIndexRoute: typeof MyJobsIndexRoute
+  MyJobsJobIdEditRoute: typeof MyJobsJobIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +144,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-jobs/': {
+      id: '/my-jobs/'
+      path: '/my-jobs'
+      fullPath: '/my-jobs/'
+      preLoaderRoute: typeof MyJobsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/organization': {
+      id: '/settings/organization'
+      path: '/settings/organization'
+      fullPath: '/settings/organization'
+      preLoaderRoute: typeof SettingsOrganizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jobs/new': {
+      id: '/jobs/new'
+      path: '/jobs/new'
+      fullPath: '/jobs/new'
+      preLoaderRoute: typeof JobsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-jobs/$jobId/edit': {
+      id: '/my-jobs/$jobId/edit'
+      path: '/my-jobs/$jobId/edit'
+      fullPath: '/my-jobs/$jobId/edit'
+      preLoaderRoute: typeof MyJobsJobIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  JobsNewRoute: JobsNewRoute,
+  SettingsOrganizationRoute: SettingsOrganizationRoute,
+  MyJobsIndexRoute: MyJobsIndexRoute,
+  MyJobsJobIdEditRoute: MyJobsJobIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
