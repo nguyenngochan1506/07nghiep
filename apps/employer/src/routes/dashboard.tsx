@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Plus, FileText, Eye, Briefcase, TrendingUp, Calendar, Users } from "lucide-react";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { Plus, FileText, Eye, Briefcase, TrendingUp, Calendar, Users, Building, AlertCircle } from "lucide-react";
 
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
@@ -43,7 +43,21 @@ const RECENT_ACTIVITY = [
 
 function DashboardComponent() {
   const { session } = Route.useRouteContext();
-  const privateData = useQuery(trpc.privateData.queryOptions());
+  const statsQuery = useQuery(trpc.job.getMyStats.queryOptions());
+  const stats = statsQuery.data;
+
+  const orgQuery = useQuery({
+    ...trpc.organization.getMyOrganization.queryOptions(),
+    retry: false,
+  });
+  const isOrgMissing = orgQuery.isError && (orgQuery.error as any)?.data?.code === "NOT_FOUND";
+
+  const STAT_CARDS = [
+    { icon: Briefcase, label: "Đang tuyển", value: stats?.openJobs ?? 0, change: `${stats?.draftJobs ?? 0} nháp` },
+    { icon: FileText, label: "Đơn ứng tuyển", value: stats?.totalApplications ?? 0, change: "Tất cả tin" },
+    { icon: Eye, label: "Tổng lượt xem", value: stats?.totalViews ?? 0, change: "Tất cả tin" },
+    { icon: Users, label: "Tổng tin đăng", value: stats?.totalJobs ?? 0, change: `${stats?.closedJobs ?? 0} đã đóng` },
+  ];
 
   return (
     <div className="min-h-screen bg-secondary/30 px-4 py-8">
@@ -56,16 +70,39 @@ function DashboardComponent() {
           </p>
         </div>
 
+        {/* Missing Org Alert */}
+        {isOrgMissing && (
+          <Card className="mb-8 border-destructive/50 bg-destructive/10 p-5">
+            <div className="flex items-start gap-4">
+              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/20 text-destructive">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-destructive">Chưa có thông tin công ty</h3>
+                <p className="mt-1 text-sm text-destructive/90">
+                  Bạn cần thiết lập hồ sơ công ty (Tên, Logo, Giới thiệu,...) trước khi có thể đăng tin tuyển dụng.
+                </p>
+                <Link to="/settings/organization" className="mt-3 inline-block">
+                  <Button size="sm" variant="destructive" className="gap-2">
+                    <Building className="h-4 w-4" />
+                    Tạo hồ sơ công ty ngay
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Stats Grid */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STATS.map((stat) => (
+          {STAT_CARDS.map((stat) => (
             <Card key={stat.label} className="p-5">
               <div className="flex items-center justify-between">
                 <stat.icon className="h-5 w-5 text-primary" />
               </div>
-              <p className="mt-3 text-2xl font-bold">{stat.value}</p>
+              <p className="mt-3 text-2xl font-bold">{stat.value.toLocaleString("vi-VN")}</p>
               <p className="text-sm text-muted-foreground">{stat.label}</p>
-              <p className="mt-1 text-xs text-success">{stat.change}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{stat.change}</p>
             </Card>
           ))}
         </div>
@@ -97,14 +134,18 @@ function DashboardComponent() {
               Thao tác nhanh
             </h2>
             <div className="space-y-3">
-              <Button className="w-full justify-start gap-3">
-                <Plus className="h-4 w-4" />
-                Đăng tin mới
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3">
-                <Briefcase className="h-4 w-4" />
-                Quản lý tin đăng
-              </Button>
+              <Link to="/jobs/new">
+                <Button className="w-full justify-start gap-3">
+                  <Plus className="h-4 w-4" />
+                  Đăng tin mới
+                </Button>
+              </Link>
+              <Link to="/my-jobs">
+                <Button variant="outline" className="w-full justify-start gap-3">
+                  <Briefcase className="h-4 w-4" />
+                  Quản lý tin đăng
+                </Button>
+              </Link>
               <Button variant="outline" className="w-full justify-start gap-3">
                 <Users className="h-4 w-4" />
                 Tìm kiếm CV
@@ -123,10 +164,12 @@ function DashboardComponent() {
           <p className="mb-4 text-sm text-muted-foreground">
             Tiếp cận nhiều ứng viên hơn với tin tuyển dụng nổi bật
           </p>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Đăng tin tuyển dụng
-          </Button>
+          <Link to="/jobs/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Đăng tin tuyển dụng
+            </Button>
+          </Link>
         </Card>
       </div>
     </div>
