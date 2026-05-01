@@ -68,7 +68,7 @@ enum ApplicationStatus {
   PENDING
   VIEWED
   SHORTLISTED
-  INTERVIEW
+  INTERVIEWING
   OFFERED
   REJECTED
   WITHDRAWN
@@ -170,6 +170,7 @@ model Application {
   appliedAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   notes       String?           @db.Text
+  histories   ApplicationHistory[]
 
   job       Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
   candidate User   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
@@ -177,6 +178,21 @@ model Application {
   @@index([jobId, status])
   @@index([candidateId, status])
   @@index([appliedAt])
+  @@unique([jobId, candidateId])
+}
+
+model ApplicationHistory {
+  id            String             @id @default(cuid())
+  applicationId String
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  note          String?            @db.Text
+  changedById   String?
+  createdAt     DateTime           @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
 }
 
 model SavedJob {

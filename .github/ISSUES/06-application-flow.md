@@ -134,7 +134,7 @@ apps/candidate/src/components/header.tsx   # Add Applications link
 
 ```typescript
 // applications.ts router
-applications.apply: candidateProcedure
+applications.applyJob: candidateProcedure
   .input(applySchema)
   .mutation(...)
 
