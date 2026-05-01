@@ -33,18 +33,20 @@ type ApplyJobModalProps = {
 	jobStatus: string;
 	hasApplied: boolean;
 	isProfileComplete: boolean;
+	applicationStatus?: string | null;
 };
 
-function getTriggerState(jobStatus: string, hasApplied: boolean, isProfileComplete: boolean) {
+function getTriggerState(jobStatus: string, hasApplied: boolean, isProfileComplete: boolean, applicationStatus: string | null | undefined) {
 	if (jobStatus !== "OPEN") return { disabled: true, label: "Vị trí đã đóng" };
 	if (hasApplied) return { disabled: true, label: "Đã ứng tuyển" };
 	if (!isProfileComplete) return { disabled: true, label: "Hoàn thành hồ sơ để ứng tuyển" };
+	if (applicationStatus === "REJECTED") return { disabled: true, label: "Đơn ứng tuyển bị từ chối" };
 	return { disabled: false, label: "Ứng tuyển ngay" };
 }
 
-export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileComplete }: ApplyJobModalProps) {
+export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileComplete, applicationStatus }: ApplyJobModalProps) {
 	const [open, setOpen] = useState(false);
-	const triggerState = getTriggerState(jobStatus, hasApplied, isProfileComplete);
+	const triggerState = getTriggerState(jobStatus, hasApplied, isProfileComplete, applicationStatus);
 
 	// get profile to display resume option
 	const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
