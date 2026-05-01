@@ -13,8 +13,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MyJobsIndexRouteImport } from './routes/my-jobs/index'
+import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
 import { Route as SettingsOrganizationRouteImport } from './routes/settings/organization'
 import { Route as JobsNewRouteImport } from './routes/jobs/new'
+import { Route as ApplicationsApplicationIdRouteImport } from './routes/applications/$applicationId'
 import { Route as MyJobsJobIdEditRouteImport } from './routes/my-jobs/$jobId/edit'
 
 const LoginRoute = LoginRouteImport.update({
@@ -37,6 +39,11 @@ const MyJobsIndexRoute = MyJobsIndexRouteImport.update({
   path: '/my-jobs/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplicationsIndexRoute = ApplicationsIndexRouteImport.update({
+  id: '/applications/',
+  path: '/applications/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsOrganizationRoute = SettingsOrganizationRouteImport.update({
   id: '/settings/organization',
   path: '/settings/organization',
@@ -47,6 +54,12 @@ const JobsNewRoute = JobsNewRouteImport.update({
   path: '/jobs/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplicationsApplicationIdRoute =
+  ApplicationsApplicationIdRouteImport.update({
+    id: '/applications/$applicationId',
+    path: '/applications/$applicationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MyJobsJobIdEditRoute = MyJobsJobIdEditRouteImport.update({
   id: '/my-jobs/$jobId/edit',
   path: '/my-jobs/$jobId/edit',
@@ -57,8 +70,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
   '/settings/organization': typeof SettingsOrganizationRoute
+  '/applications/': typeof ApplicationsIndexRoute
   '/my-jobs/': typeof MyJobsIndexRoute
   '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
@@ -66,8 +81,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
   '/settings/organization': typeof SettingsOrganizationRoute
+  '/applications': typeof ApplicationsIndexRoute
   '/my-jobs': typeof MyJobsIndexRoute
   '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
@@ -76,8 +93,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
   '/settings/organization': typeof SettingsOrganizationRoute
+  '/applications/': typeof ApplicationsIndexRoute
   '/my-jobs/': typeof MyJobsIndexRoute
   '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
@@ -87,8 +106,10 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/applications/$applicationId'
     | '/jobs/new'
     | '/settings/organization'
+    | '/applications/'
     | '/my-jobs/'
     | '/my-jobs/$jobId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -96,8 +117,10 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/applications/$applicationId'
     | '/jobs/new'
     | '/settings/organization'
+    | '/applications'
     | '/my-jobs'
     | '/my-jobs/$jobId/edit'
   id:
@@ -105,8 +128,10 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/applications/$applicationId'
     | '/jobs/new'
     | '/settings/organization'
+    | '/applications/'
     | '/my-jobs/'
     | '/my-jobs/$jobId/edit'
   fileRoutesById: FileRoutesById
@@ -115,8 +140,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  ApplicationsApplicationIdRoute: typeof ApplicationsApplicationIdRoute
   JobsNewRoute: typeof JobsNewRoute
   SettingsOrganizationRoute: typeof SettingsOrganizationRoute
+  ApplicationsIndexRoute: typeof ApplicationsIndexRoute
   MyJobsIndexRoute: typeof MyJobsIndexRoute
   MyJobsJobIdEditRoute: typeof MyJobsJobIdEditRoute
 }
@@ -151,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyJobsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/applications/': {
+      id: '/applications/'
+      path: '/applications'
+      fullPath: '/applications/'
+      preLoaderRoute: typeof ApplicationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/organization': {
       id: '/settings/organization'
       path: '/settings/organization'
@@ -163,6 +197,13 @@ declare module '@tanstack/react-router' {
       path: '/jobs/new'
       fullPath: '/jobs/new'
       preLoaderRoute: typeof JobsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applications/$applicationId': {
+      id: '/applications/$applicationId'
+      path: '/applications/$applicationId'
+      fullPath: '/applications/$applicationId'
+      preLoaderRoute: typeof ApplicationsApplicationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-jobs/$jobId/edit': {
@@ -179,8 +220,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  ApplicationsApplicationIdRoute: ApplicationsApplicationIdRoute,
   JobsNewRoute: JobsNewRoute,
   SettingsOrganizationRoute: SettingsOrganizationRoute,
+  ApplicationsIndexRoute: ApplicationsIndexRoute,
   MyJobsIndexRoute: MyJobsIndexRoute,
   MyJobsJobIdEditRoute: MyJobsJobIdEditRoute,
 }
