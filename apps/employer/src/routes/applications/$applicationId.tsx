@@ -86,7 +86,7 @@ function ApplicationDetailPage() {
     return <div className="p-8 text-center text-muted-foreground">Application not found</div>;
   }
 
-  const profile = application.candidate.profile;
+  const profile = application.candidate.profile as any;
 
   return (
     <div className="flex flex-col gap-6 p-8 max-w-[1200px] mx-auto w-full">
@@ -162,7 +162,7 @@ function ApplicationDetailPage() {
               <TabsTrigger value="cover-letter" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6">
                 Cover Letter
               </TabsTrigger>
-              {application.answers && (
+              {!!(application as any).answers && (
                 <TabsTrigger value="questions" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6">
                   Screening Questions
                 </TabsTrigger>
@@ -248,7 +248,7 @@ function ApplicationDetailPage() {
                 <Card>
                   <CardContent className="p-6">
                     <pre className="text-sm bg-muted p-4 rounded-lg overflow-auto">
-                      {JSON.stringify(application.answers, null, 2)}
+                      {JSON.stringify((application as any).answers, null, 2)}
                     </pre>
                   </CardContent>
                 </Card>
