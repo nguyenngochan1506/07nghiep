@@ -2,6 +2,7 @@ import { env } from "@07nghiep/env/server";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../prisma/generated/client";
+export { Prisma, ApplicationStatus, JobStatus } from "../prisma/generated/client";
 
 export function createPrismaClient() {
   const adapter = new PrismaPg({
