@@ -68,7 +68,7 @@ enum ApplicationStatus {
   PENDING
   VIEWED
   SHORTLISTED
-  INTERVIEWING
+  INTERVIEW
   OFFERED
   REJECTED
   WITHDRAWN
@@ -167,21 +167,17 @@ model Application {
   appliedAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  notes       String?
-  candidate   User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
   notes       String?           @db.Text
   histories   ApplicationHistory[]
 
-  job       Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  candidate User   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidate   User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId, status])
   @@index([candidateId, status])
   @@index([appliedAt])
   @@unique([jobId, candidateId])
 }
-
 model ApplicationHistory {
   id            String             @id @default(cuid())
   applicationId String
@@ -259,73 +255,4 @@ model JobSkill {
   job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@unique([jobId, skill])
-}
-
-enum UserRole {
-  CANDIDATE
-  EMPLOYER
-  ADMIN
-}
-
-enum CompanySize {
-  STARTUP
-  SMALL
-  MEDIUM
-  LARGE
-  ENTERPRISE
-}
-
-enum SalaryType {
-  HOURLY
-  MONTHLY
-  YEARLY
-}
-
-enum WorkType {
-  REMOTE
-  HYBRID
-  ONSITE
-}
-
-enum JobType {
-  FULLTIME
-  PARTIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
-}
-
-enum ExperienceLevel {
-  ENTRY
-  JUNIOR
-  MIDDLE
-  SENIOR
-  LEAD
-  EXECUTIVE
-}
-
-enum JobStatus {
-  DRAFT
-  PENDING_APPROVAL
-  OPEN
-  CLOSED
-  ARCHIVED
-}
-
-enum ApplicationStatus {
-  PENDING
-  VIEWED
-  SHORTLISTED
-  INTERVIEW
-  OFFERED
-  REJECTED
-  WITHDRAWN
-}
-
-enum NotificationType {
-  APPLICATION_RECEIVED
-  APPLICATION_STATUS
-  MESSAGE
-  JOB_ALERT
-  SYSTEM
 }
