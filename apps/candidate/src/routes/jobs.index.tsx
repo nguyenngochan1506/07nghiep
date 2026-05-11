@@ -5,7 +5,7 @@ import { SearchBar } from "../components/search-bar";
 import { mockJobs } from "../utils/mock-jobs";
 
 // Cấu hình Route cho TanStack Router
-export const Route = createFileRoute("/jobs")({
+export const Route = createFileRoute("/jobs/")({
     component: JobsPage,
 });
 

@@ -9,6 +9,83 @@ datasource db {
   provider = "postgresql"
 }
 
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  CANDIDATE
+  EMPLOYER
+  ADMIN
+}
+
+enum CompanySize {
+  STARTUP
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
+}
+
+enum SalaryType {
+  HOURLY
+  MONTHLY
+  YEARLY
+}
+
+enum WorkType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum JobType {
+  FULLTIME
+  PARTIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum ExperienceLevel {
+  ENTRY
+  JUNIOR
+  MIDDLE
+  SENIOR
+  LEAD
+  EXECUTIVE
+}
+
+enum JobStatus {
+  DRAFT
+  PENDING_APPROVAL
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ApplicationStatus {
+  PENDING
+  VIEWED
+  SHORTLISTED
+  INTERVIEWING
+  OFFERED
+  REJECTED
+  WITHDRAWN
+}
+
+enum NotificationType {
+  APPLICATION_RECEIVED
+  APPLICATION_STATUS
+  MESSAGE
+  JOB_ALERT
+  SYSTEM
+}
+
+// ============================================
+// CUSTOM MODELS
+// ============================================
+
 model Profile {
   id           String   @id @default(cuid())
   userId       String   @unique
@@ -89,13 +166,34 @@ model Application {
   answers     Json?
   appliedAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+
   notes       String?
   candidate   User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  notes       String?           @db.Text
+  histories   ApplicationHistory[]
+
+  job       Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate User   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
   @@index([jobId, status])
   @@index([candidateId, status])
   @@index([appliedAt])
+  @@unique([jobId, candidateId])
+}
+
+model ApplicationHistory {
+  id            String             @id @default(cuid())
+  applicationId String
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  note          String?            @db.Text
+  changedById   String?
+  createdAt     DateTime           @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
 }
 
 model SavedJob {
