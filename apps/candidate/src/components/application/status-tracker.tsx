@@ -1,9 +1,9 @@
 import React from "react";
 import { Check, X } from "lucide-react";
 
-type StepKey = "PENDING" | "VIEWED" | "SHORTLISTED" | "INTERVIEWING" | "OFFERED";
+type StepKey = "PENDING" | "VIEWED" | "SHORTLISTED" | "INTERVIEW" | "OFFERED";
 
-const STEP_ORDER: StepKey[] = ["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEWING", "OFFERED"];
+const STEP_ORDER: StepKey[] = ["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEW", "OFFERED"];
 
 export interface ApplicationStatusTrackerProps {
   currentStatus: string; // ApplicationStatus

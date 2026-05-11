@@ -49,7 +49,7 @@ const STATUS_META: Record<
     label: "Vào shortlist",
     className: "bg-success/10 text-success border-success/20",
   },
-  INTERVIEWING: {
+  INTERVIEW: {
     label: "Phỏng vấn",
     className: "bg-warning/10 text-warning border-warning/20",
   },
@@ -173,7 +173,7 @@ function ApplicationDetailPage() {
               lastKnownStep={
                 // derive last successful step from histories, find last toStatus that is in our step order
                 ((): any => {
-                  const STEP_ORDER = ["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEWING", "OFFERED"] as const;
+                  const STEP_ORDER = ["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEW", "OFFERED"] as const;
                   for (let i = data.histories.length - 1; i >= 0; i--) {
                     const s = data.histories[i].toStatus;
                     if ((STEP_ORDER as readonly string[]).includes(s)) return s;

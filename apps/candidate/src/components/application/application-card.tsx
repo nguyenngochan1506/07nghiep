@@ -45,7 +45,7 @@ const STATUS_META: Record<
 		label: "Vào shortlist",
 		className: "bg-success/10 text-success border-success/20",
 	},
-	INTERVIEWING: {
+	INTERVIEW: {
 		label: "Phỏng vấn",
 		className: "bg-warning/10 text-warning border-warning/20",
 	},
