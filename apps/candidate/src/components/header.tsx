@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { ModeToggle } from "./mode-toggle";
+import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 
 export default function Header() {
@@ -43,6 +44,7 @@ export default function Header() {
           >
             Đăng tin
           </Link>
+          <NotificationBellContainer />
           <ModeToggle />
           <UserMenu />
         </div>

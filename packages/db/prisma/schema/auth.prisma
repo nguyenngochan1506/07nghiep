@@ -16,6 +16,7 @@ model User {
   applications            Application[]
   savedJobs               SavedJob[]
   notifications           Notification[]        @relation("UserNotifications")
+  notificationPreferences NotificationPreference[]
   employerConversations   Conversation[]        @relation("EmployerConversations")
   candidateConversations  Conversation[]        @relation("CandidateConversations")
   sentMessages            Message[]

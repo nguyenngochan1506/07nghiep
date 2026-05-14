@@ -207,6 +207,18 @@ model Notification {
   @@index([userId, read, createdAt])
 }
 
+model NotificationPreference {
+  id           String           @id @default(cuid())
+  userId       String
+  type         NotificationType
+  pushEnabled  Boolean          @default(true)
+  emailEnabled Boolean          @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
 model Conversation {
   id            String    @id @default(cuid())
   jobId         String?
