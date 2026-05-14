@@ -1,6 +1,6 @@
 import { protectedProcedure, publicProcedure, router } from "../lib/api";
-
 import { jobRouter } from "./job";
+import { applicationsRouter } from "./applications";
 import { organizationRouter } from "./organization";
 import { notificationRouter } from "./notification";
 import { profileRouter } from "./profile";
@@ -21,6 +21,7 @@ export const appRouter = router({
   organization: organizationRouter,
   job: jobRouter,
   notification: notificationRouter,
+  applications: applicationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

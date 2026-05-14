@@ -668,7 +668,7 @@ Returns the updated organization object with `verified: false`.
 ### Planned Endpoints
 
 ```typescript
-// applications.apply
+// applications.applyJob
 // Submit a job application
 // Procedure: candidateProcedure.mutation()
 {
