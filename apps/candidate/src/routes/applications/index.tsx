@@ -47,7 +47,7 @@ function ApplicationsPage() {
 		| "PENDING"
 		| "VIEWED"
 		| "SHORTLISTED"
-		| "INTERVIEW"
+		| "INTERVIEWING"
 		| "OFFERED"
 		| "REJECTED"
 		| "WITHDRAWN"
@@ -122,7 +122,7 @@ function ApplicationsPage() {
 									<SelectItem value="PENDING">Chờ duyệt</SelectItem>
 									<SelectItem value="VIEWED">Đã xem</SelectItem>
 									<SelectItem value="SHORTLISTED">Vào shortlist</SelectItem>
-									<SelectItem value="INTERVIEW">Phỏng vấn</SelectItem>
+									<SelectItem value="INTERVIEWING">Phỏng vấn</SelectItem>
 									<SelectItem value="OFFERED">Đề nghị</SelectItem>
 									<SelectItem value="REJECTED">Từ chối</SelectItem>
 									<SelectItem value="WITHDRAWN">Đã rút</SelectItem>

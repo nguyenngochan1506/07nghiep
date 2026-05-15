@@ -1,28 +1,29 @@
 import { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NotificationBell } from "@07nghiep/ui/components/notification-bell";
 import { trpc } from "../utils/trpc";
 import { env } from "@07nghiep/env/employer";
 
 export function NotificationBellContainer() {
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
 
-  const { data: unreadCount = 0 } = trpc.notification.getUnreadCount.useQuery();
-  const { data: notificationsData } = trpc.notification.list.useQuery({ limit: 10 });
+  const { data: unreadCount = 0 } = useQuery(trpc.notification.getUnreadCount.queryOptions());
+  const { data: notificationsData } = useQuery(trpc.notification.list.queryOptions({ limit: 10 }));
   const notifications = notificationsData?.items || [];
 
-  const markAsRead = trpc.notification.markAsRead.useMutation({
+  const markAsRead = useMutation(trpc.notification.markAsRead.mutationOptions({
     onSuccess: () => {
-      utils.notification.getUnreadCount.invalidate();
-      utils.notification.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
+      queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
     },
-  });
+  }));
 
-  const markAllAsRead = trpc.notification.markAllAsRead.useMutation({
+  const markAllAsRead = useMutation(trpc.notification.markAllAsRead.mutationOptions({
     onSuccess: () => {
-      utils.notification.getUnreadCount.invalidate();
-      utils.notification.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
+      queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
     },
-  });
+  }));
 
   useEffect(() => {
     // SSE connection
@@ -31,14 +32,14 @@ export function NotificationBellContainer() {
     });
 
     eventSource.addEventListener("notification", (event) => {
-      utils.notification.getUnreadCount.invalidate();
-      utils.notification.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
+      queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
     });
 
     return () => {
       eventSource.close();
     };
-  }, [utils]);
+  }, [queryClient]);
 
   return (
     <NotificationBell

@@ -23,6 +23,14 @@ export const notificationRouter = router({
         take: limit + 1,
         cursor: cursor ? { id: cursor } : undefined,
         orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          body: true,
+          read: true,
+          createdAt: true,
+        },
       });
 
       let nextCursor: typeof cursor | undefined = undefined;
@@ -57,6 +65,7 @@ export const notificationRouter = router({
           read: true,
           readAt: new Date(),
         },
+        select: { id: true },
       });
     }),
 

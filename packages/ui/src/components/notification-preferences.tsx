@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Switch } from "./switch";
 import { Label } from "./label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
