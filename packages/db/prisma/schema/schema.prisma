@@ -1,8 +1,6 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../generated"
-  moduleFormat = "esm"
-  runtime      = "nodejs"
+  provider = "prisma-client-js"
+  output   = "../generated"
 }
 
 datasource db {
@@ -68,7 +66,7 @@ enum ApplicationStatus {
   PENDING
   VIEWED
   SHORTLISTED
-  INTERVIEW
+  INTERVIEWING
   OFFERED
   REJECTED
   WITHDRAWN
