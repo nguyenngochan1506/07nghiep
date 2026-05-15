@@ -1,4 +1,6 @@
 import { protectedProcedure, publicProcedure, router } from "../lib/api";
+import { applicationRouter } from "./application";
+
 import { jobRouter } from "./job";
 import { applicationsRouter } from "./applications";
 import { organizationRouter } from "./organization";
@@ -19,6 +21,7 @@ export const appRouter = router({
   user: userRouter,
   profile: profileRouter,
   organization: organizationRouter,
+  application: applicationRouter,
   job: jobRouter,
   notification: notificationRouter,
   applications: applicationsRouter,

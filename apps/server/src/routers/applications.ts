@@ -12,7 +12,7 @@ const applySchema = z.object({
 
 const listApplicationsSchema = z.object({
   status: z
-    .enum(["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEWING", "OFFERED", "REJECTED", "WITHDRAWN"])
+    .enum(["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEW", "OFFERED", "REJECTED", "WITHDRAWN"])
     .optional(),
   search: z.string().trim().optional(),
   sortBy: z.enum(["newest", "oldest"]).optional().default("newest"),
