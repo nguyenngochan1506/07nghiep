@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { candidateProcedure, router } from "../lib/api";
+import { candidateProcedure, employerOrAdminProcedure, router } from "../lib/api";
 
 const applySchema = z.object({
   jobId: z.string().min(1),
@@ -88,7 +88,17 @@ export const applicationsRouter = router({
       include: {
         job: {
           include: {
-            organization: true,
+            organization: {
+              select: {
+                userId: true,
+                name: true,
+              },
+            },
+          },
+        },
+        candidate: {
+          select: {
+            name: true,
           },
         },
       },
@@ -104,8 +114,102 @@ export const applicationsRouter = router({
       },
     });
 
+    // Notify Employer
+    const { createNotification } = await import("../lib/notifications/service");
+    await createNotification({
+      userId: created.job.organization.userId,
+      type: "APPLICATION_RECEIVED",
+      title: "Ứng tuyển mới",
+      body: `${created.candidate.name || "Một ứng viên"} đã ứng tuyển vào vị trí "${created.job.title}"`,
+      data: {
+        applicationId: created.id,
+        jobId: created.jobId,
+      },
+    });
+
     return created;
   }),
+
+  // ── Employer: Update application status ───────────────────────────────────
+  employerUpdateStatus: employerOrAdminProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        status: z.enum([
+          "PENDING",
+          "VIEWED",
+          "SHORTLISTED",
+          "INTERVIEWING",
+          "OFFERED",
+          "REJECTED",
+        ]),
+        note: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, status, note } = input;
+
+      const application = await ctx.prisma.application.findUnique({
+        where: { id },
+        include: {
+          job: {
+            include: {
+              organization: true,
+            },
+          },
+          candidate: true,
+        },
+      });
+
+      if (!application) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+      }
+
+      // Verify ownership
+      if (application.job.organization.userId !== ctx.user!.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
+      }
+
+      const updated = await ctx.prisma.application.update({
+        where: { id },
+        data: { status },
+      });
+
+      await ctx.prisma.applicationHistory.create({
+        data: {
+          applicationId: id,
+          fromStatus: application.status,
+          toStatus: status,
+          changedById: ctx.user!.id,
+          note,
+        },
+      });
+
+      // Notify Candidate
+      const { createNotification } = await import("../lib/notifications/service");
+      const statusLabels: Record<string, string> = {
+        VIEWED: "đã xem hồ sơ",
+        SHORTLISTED: "đã đưa hồ sơ của bạn vào danh sách tiềm năng",
+        INTERVIEWING: "mời bạn phỏng vấn",
+        OFFERED: "gửi lời mời làm việc (Offer)",
+        REJECTED: "đã từ chối hồ sơ",
+      };
+
+      await createNotification({
+        userId: application.candidateId,
+        type: "APPLICATION_STATUS",
+        title: "Cập nhật trạng thái ứng tuyển",
+        body: `Nhà tuyển dụng ${application.job.organization.name} ${
+          statusLabels[status] || "đã cập nhật trạng thái ứng tuyển của bạn"
+        } cho vị trí "${application.job.title}"`,
+        data: {
+          applicationId: id,
+          status,
+        },
+      });
+
+      return updated;
+    }),
 
   list: candidateProcedure.input(listApplicationsSchema.optional()).query(async ({ ctx, input }) => {
     if (!ctx.user) {
