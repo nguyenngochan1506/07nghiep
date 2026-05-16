@@ -66,6 +66,14 @@ export const jobRouter = router({
           total,
           totalPages: Math.ceil(total / pageSize),
         },
+      } as {
+        jobs: any[];
+        pagination: {
+          page: number;
+          pageSize: number;
+          total: number;
+          totalPages: number;
+        };
       };
     }),
 
@@ -139,6 +147,26 @@ export const jobRouter = router({
       return {
         ...job,
         skills: job.skills.map((s) => s.skill),
+      } as {
+        id: string;
+        title: string;
+        description: string;
+        requirements: string | null;
+        benefits: string | null;
+        salaryMin: any;
+        salaryMax: any;
+        salaryType: any;
+        salaryNegotiable: boolean;
+        location: string;
+        workType: any;
+        jobType: any;
+        experienceLevel: any;
+        status: any;
+        publishedAt: Date | null;
+        expiresAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        skills: string[];
       };
     }),
 

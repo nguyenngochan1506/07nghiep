@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as JobsNewRouteImport } from './routes/jobs/new'
 import { Route as ApplicationsApplicationIdRouteImport } from './routes/applications/$applicationId'
 import { Route as MyJobsJobIdEditRouteImport } from './routes/my-jobs/$jobId/edit'
 
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
   '/settings/organization': typeof SettingsOrganizationRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
   '/settings/organization': typeof SettingsOrganizationRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
   '/settings/organization': typeof SettingsOrganizationRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/notifications'
     | '/applications/$applicationId'
     | '/jobs/new'
     | '/settings/organization'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/notifications'
     | '/applications/$applicationId'
     | '/jobs/new'
     | '/settings/organization'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/notifications'
     | '/applications/$applicationId'
     | '/jobs/new'
     | '/settings/organization'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  NotificationsRoute: typeof NotificationsRoute
   ApplicationsApplicationIdRoute: typeof ApplicationsApplicationIdRoute
   JobsNewRoute: typeof JobsNewRoute
   SettingsOrganizationRoute: typeof SettingsOrganizationRoute
@@ -150,6 +163,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  NotificationsRoute: NotificationsRoute,
   ApplicationsApplicationIdRoute: ApplicationsApplicationIdRoute,
   JobsNewRoute: JobsNewRoute,
   SettingsOrganizationRoute: SettingsOrganizationRoute,

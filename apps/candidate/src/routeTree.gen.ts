@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SavedJobsRouteImport } from './routes/saved-jobs'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -25,6 +26,11 @@ import { Route as ApplicationsApplicationIdRouteImport } from './routes/applicat
 const SavedJobsRoute = SavedJobsRouteImport.update({
   id: '/saved-jobs',
   path: '/saved-jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/home'
     | '/login'
+    | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/home'
     | '/login'
+    | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/home'
     | '/login'
+    | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
+  NotificationsRoute: typeof NotificationsRoute
   SavedJobsRoute: typeof SavedJobsRoute
   ApplicationsApplicationIdRoute: typeof ApplicationsApplicationIdRoute
   JobsJobIdRoute: typeof JobsJobIdRoute
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       path: '/saved-jobs'
       fullPath: '/saved-jobs'
       preLoaderRoute: typeof SavedJobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
+  NotificationsRoute: NotificationsRoute,
   SavedJobsRoute: SavedJobsRoute,
   ApplicationsApplicationIdRoute: ApplicationsApplicationIdRoute,
   JobsJobIdRoute: JobsJobIdRoute,

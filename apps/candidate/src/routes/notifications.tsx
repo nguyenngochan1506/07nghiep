@@ -7,7 +7,7 @@ import { Badge } from "@07nghiep/ui/components/badge";
 import { Check, Trash2, BellOff } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/notifications" as any)({
+export const Route = createFileRoute("/notifications")({
   component: NotificationsPage,
 });
 
