@@ -13,7 +13,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@07nghiep/ui/*": ["../../packages/ui/src/*"]
+      "@07nghiep/ui/*": ["../../packages/ui/src/*"],
+      "@candidate/*": ["../candidate/src/*"]
     }
-  }
+  },
+  "include": [
+    "src/**/*"
+  ]
 }
