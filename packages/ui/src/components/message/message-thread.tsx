@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MessageBubble, type MessageData } from "./message-bubble";
-import { ScrollArea } from "../scroll-area";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
+import { Button } from "../button";
 
 interface MessageThreadProps {
   messages: MessageData[];
@@ -16,11 +16,40 @@ export function MessageThread({
   isLoading,
   isLoadingMore,
 }: MessageThreadProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevLengthRef = useRef(messages.length);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const scrollToBottom = (smooth = true) => {
+    bottomRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "instant",
+      block: "end",
+    });
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const el = scrollRef.current;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    setShowScrollButton(!isNearBottom);
+  };
+
+  useLayoutEffect(() => {
+    if (prevLengthRef.current === 0 && messages.length > 0) {
+      scrollToBottom(false);
+    } else if (messages.length > prevLengthRef.current && !isLoadingMore) {
+      scrollToBottom(true);
+    }
+    prevLengthRef.current = messages.length;
+  }, [messages.length, isLoadingMore]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
 
   if (isLoading) {
     return (
@@ -50,23 +79,38 @@ export function MessageThread({
   };
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="flex flex-col gap-2 p-4">
-        {isLoadingMore && (
-          <div className="flex justify-center py-2">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          </div>
-        )}
-        {messages.map((msg, i) => (
-          <MessageBubble
-            key={msg.id}
-            message={msg}
-            isOwn={msg.senderId === currentUserId}
-            showAvatar={shouldShowAvatar(i)}
-          />
-        ))}
-        <div ref={bottomRef} />
+    <div className="relative flex-1">
+      <div
+        ref={scrollRef}
+        className="absolute inset-0 overflow-y-auto"
+      >
+        <div className="flex flex-col gap-2 p-4">
+          {isLoadingMore && (
+            <div className="flex justify-center py-2">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {messages.map((msg, i) => (
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              isOwn={msg.senderId === currentUserId}
+              showAvatar={shouldShowAvatar(i)}
+            />
+          ))}
+          <div ref={bottomRef} />
+        </div>
       </div>
-    </ScrollArea>
+      {showScrollButton && (
+        <Button
+          variant="secondary"
+          size="icon"
+          className="absolute bottom-3 right-3 z-10 h-8 w-8 rounded-full shadow-md"
+          onClick={() => scrollToBottom(true)}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
   );
 }
