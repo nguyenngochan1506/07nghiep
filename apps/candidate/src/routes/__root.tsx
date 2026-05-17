@@ -7,16 +7,30 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import Header from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
-import type { trpc } from "@/utils/trpc";
+import { trpc } from "@/utils/trpc";
 
 import "../index.css";
 
-// 1. Import thêm React Hook và dữ liệu mẫu
-import { createContext, useContext, useState } from "react";
-import { mockJobs } from "@/utils/mock-jobs";
+import { createContext, useContext, useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-// 2. Tạo Context và Hook tiện ích để các trang con có thể gọi dữ liệu
-export type JobType = typeof mockJobs[0] & { isSaved?: boolean };
+export type JobType = {
+    id: string;
+    companyName: string;
+    companyLogo: string;
+    isVerified: boolean;
+    title: string;
+    location: string;
+    workType: string;
+    jobType: string;
+    experience: string;
+    salaryRange: string;
+    skills: string[];
+    postedDate: string;
+    viewCount: number;
+    isSaved?: boolean;
+};
+
 export const JobsContext = createContext<{
     jobs: JobType[];
     toggleSave: (id: string) => void;
@@ -31,6 +45,39 @@ export function useJobs() {
 export interface RouterAppContext {
     trpc: typeof trpc;
     queryClient: QueryClient;
+}
+
+function mapJob(raw: any): JobType {
+    const salaryRange =
+        raw.salaryMin && raw.salaryMax
+            ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
+            : "Thỏa thuận";
+
+    const postedAt = new Date(raw.createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - postedAt.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const postedDate =
+        diffDays === 0 ? "Hôm nay" :
+        diffDays === 1 ? "1 ngày trước" :
+        diffDays < 30 ? `${diffDays} ngày trước` :
+        `${Math.floor(diffDays / 30)} tháng trước`;
+
+    return {
+        id: raw.id,
+        companyName: raw.organization?.name ?? "Unknown",
+        companyLogo: raw.organization?.logoUrl ?? "",
+        isVerified: raw.organization?.verified ?? false,
+        title: raw.title,
+        location: raw.location ?? "",
+        workType: raw.workType ?? "",
+        jobType: raw.jobType ?? "",
+        experience: raw.experience ?? "",
+        salaryRange,
+        skills: raw.skills ?? [],
+        postedDate,
+        viewCount: raw.views ?? 0,
+    };
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
@@ -56,17 +103,28 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
-    // Khởi tạo state quản lý danh sách công việc toàn ứng dụng
-    const [jobs, setJobs] = useState<JobType[]>(mockJobs);
+    const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
-    // Hàm xử lý logic Lưu / Bỏ lưu
     const toggleSave = (id: string) => {
-        setJobs((prev) =>
-            prev.map((job) =>
-                job.id === id ? { ...job, isSaved: !job.isSaved } : job
-            )
-        );
+        setSavedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
     };
+
+    const { data, isLoading } = useQuery(
+        trpc.job.getPublicList.queryOptions({ limit: 50 })
+    );
+
+    const jobs: JobType[] = useMemo(() => {
+        if (!data?.jobs) return [];
+        return data.jobs.map((job: any) => ({
+            ...mapJob(job),
+            isSaved: savedIds.has(job.id),
+        }));
+    }, [data, savedIds]);
 
     return (
         <>
@@ -79,7 +137,6 @@ function RootComponent() {
             >
                 <div className="grid grid-rows-[auto_1fr] h-svh">
                     <Header />
-                    {/* 3. Truyền state qua Provider */}
                     <JobsContext.Provider value={{ jobs, toggleSave }}>
                         <Outlet />
                     </JobsContext.Provider>

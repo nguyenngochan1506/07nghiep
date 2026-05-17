@@ -5,55 +5,28 @@ import { Search, Briefcase, Building2, Users, ArrowRight } from "lucide-react";
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
 import { Input } from "@07nghiep/ui/components/input";
+import { useJobs } from "@/routes/__root";
 
 export const Route = createFileRoute("/home")({
     component: HomeComponent,
 });
 
-const FEATURED_JOBS = [
-    {
-        id: 1,
-        title: "Senior Frontend Developer",
-        company: "TechCorp Vietnam",
-        location: "Ho Chi Minh City",
-        salary: "$2,500 - $4,000",
-        tags: ["React", "TypeScript", "Remote"],
-    },
-    {
-        id: 2,
-        title: "Backend Engineer",
-        company: "DataFlow Systems",
-        location: "Hanoi",
-        salary: "$2,000 - $3,500",
-        tags: ["Node.js", "PostgreSQL", "AWS"],
-    },
-    {
-        id: 3,
-        title: "UI/UX Designer",
-        company: "Creative Studio",
-        location: "Da Nang",
-        salary: "$1,500 - $2,500",
-        tags: ["Figma", "Design System", "Mobile"],
-    },
-];
-
 const QUICK_LINKS = [
-    { icon: Briefcase, label: "Tìm việc", href: "/jobs" }, // Cập nhật href trỏ về /jobs
+    { icon: Briefcase, label: "Tìm việc", href: "/jobs" },
     { icon: Building2, label: "Công ty", href: "/" },
     { icon: Users, label: "Đơn ứng tuyển", href: "/" },
 ];
 
 function HomeComponent() {
-    // 1. Khởi tạo Hook điều hướng của TanStack Router
     const navigate = useNavigate({ from: "/home" });
+    const { jobs } = useJobs();
 
-    // 2. Tạo State để lưu trữ dữ liệu người dùng gõ vào
+    const featuredJobs = jobs.slice(0, 3);
+
     const [keyword, setKeyword] = useState("");
     const [location, setLocation] = useState("");
 
-    // 3. Hàm xử lý khi bấm nút "Tìm kiếm"
     const handleSearchSubmit = () => {
-        // Điều hướng sang trang /jobs và đính kèm từ khóa lên thanh URL (Query Parameters)
         navigate({
             to: "/jobs",
             search: {
@@ -63,7 +36,6 @@ function HomeComponent() {
         });
     };
 
-    // 4. Hàm xử lý khi bấm vào các Tag gợi ý (Popular Searches)
     const handleTagClick = (tag: string) => {
         navigate({
             to: "/jobs",
@@ -79,13 +51,13 @@ function HomeComponent() {
             <section className="bg-secondary/30 px-4 py-16 md:py-24">
                 <div className="container mx-auto max-w-4xl text-center">
                     <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">
-                        Cục shit trôi sông...
+                        Tìm việc làm mới
                     </h1>
                     <p className="mb-8 text-lg text-muted-foreground">
-                        Khám phá hàng ngàn cục shit từ các công ty hàng đầu Việt Nam...
+                        Khám phá hàng ngàn cơ hội việc làm từ các công ty hàng đầu
                     </p>
 
-                    {/* Search Bar (Đã tích hợp Logic) */}
+                    {/* Search Bar */}
                     <div className="mx-auto max-w-2xl">
                         <div className="flex flex-col gap-3 sm:flex-row">
                             <div className="relative flex-1">
@@ -95,7 +67,7 @@ function HomeComponent() {
                                     className="pl-10"
                                     value={keyword}
                                     onChange={(e) => setKeyword(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()} // Cho phép bấm Enter để tìm
+                                    onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
                                 />
                             </div>
                             <div className="relative flex-1 sm:flex-none sm:w-48">
@@ -113,9 +85,9 @@ function HomeComponent() {
                         </div>
                     </div>
 
-                    {/* Popular Searches (Đã tích hợp click tự động tìm) */}
+                    {/* Popular Searches */}
                     <div className="mt-6 flex flex-wrap justify-center gap-2">
-                        {["Developer", "Designer", "Marketing", "Sales", "Suger daddy", "Suger baby"].map((tag) => (
+                        {["Developer", "Designer", "Marketing", "Sales", "Node.js", "React"].map((tag) => (
                             <Button
                                 key={tag}
                                 variant="outline"
@@ -142,41 +114,53 @@ function HomeComponent() {
                     </Link>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {FEATURED_JOBS.map((job) => (
-                        <Card key={job.id} className="p-5 transition-shadow hover:shadow-md">
-                            <div className="mb-3 flex items-start justify-between">
-                                <div>
-                                    <h3 className="font-semibold">{job.title}</h3>
-                                    <p className="text-sm text-muted-foreground">{job.company}</p>
+                {featuredJobs.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {featuredJobs.map((job) => (
+                            <Card key={job.id} className="p-5 transition-shadow hover:shadow-md">
+                                <div className="mb-3 flex items-start justify-between">
+                                    <div>
+                                        <h3 className="font-semibold">{job.title}</h3>
+                                        <p className="text-sm text-muted-foreground">{job.companyName}</p>
+                                    </div>
+                                    <span className="rounded-sm bg-accent px-2 py-1 text-xs font-medium text-accent-foreground">
+                                        Moi
+                                    </span>
                                 </div>
-                                <span className="rounded-sm bg-accent px-2 py-1 text-xs font-medium text-accent-foreground">
-                  Mới
-                </span>
-                            </div>
 
-                            <div className="mb-4 text-sm text-muted-foreground">
-                                <p>{job.location}</p>
-                                <p className="font-medium text-primary">{job.salary}</p>
-                            </div>
+                                <div className="mb-4 text-sm text-muted-foreground">
+                                    <p>{job.location}</p>
+                                    <p className="font-medium text-primary">{job.salaryRange}</p>
+                                </div>
 
-                            <div className="flex flex-wrap gap-2">
-                                {job.tags.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        className="rounded-sm bg-secondary px-2 py-1 text-xs text-secondary-foreground"
-                                    >
-                    {tag}
-                  </span>
-                                ))}
-                            </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {job.skills.slice(0, 3).map((skill) => (
+                                        <span
+                                            key={skill}
+                                            className="rounded-sm bg-secondary px-2 py-1 text-xs text-secondary-foreground"
+                                        >
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
 
-                            <Button className="mt-4 w-full" variant="outline" size="sm">
-                                Ứng tuyển ngay
-                            </Button>
-                        </Card>
-                    ))}
-                </div>
+                                <Link
+                                    to="/jobs/$jobId"
+                                    params={{ jobId: job.id }}
+                                    className="mt-4 block"
+                                >
+                                    <Button className="w-full" variant="outline" size="sm">
+                                            Xem chi tiết
+                                    </Button>
+                                </Link>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                        Chưa có việc làm nào được đăng.
+                    </div>
+                )}
             </section>
 
             {/* Quick Links */}
