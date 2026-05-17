@@ -8,6 +8,8 @@ import { organizationRouter } from "./organization";
 import { notificationRouter } from "./notification";
 import { profileRouter } from "./profile";
 import { userRouter } from "./user";
+import { conversationRouter } from "./conversation";
+import { messageRouter } from "./message";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -27,6 +29,8 @@ export const appRouter = router({
   notification: notificationRouter,
   applications: applicationsRouter,
   interview: interviewRouter,
+  conversation: conversationRouter,
+  message: messageRouter,
 });
 
 export type AppRouter = typeof appRouter;

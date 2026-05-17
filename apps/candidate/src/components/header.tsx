@@ -17,6 +17,7 @@ export default function Header() {
     const protectedLinks = [
         { to: "/saved-jobs", label: "Đã lưu" },
         { to: "/applications", label: "Đơn ứng tuyển" },
+        { to: "/messages", label: "Tin nhắn" },
         { to: "/interviews", label: "Lịch PV" },
     ];
 

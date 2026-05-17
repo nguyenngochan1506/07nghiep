@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SavedJobsRouteImport } from './routes/saved-jobs'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InterviewsRouteImport } from './routes/interviews'
 import { Route as HomeRouteImport } from './routes/home'
@@ -23,6 +24,7 @@ import { Route as ApplicationsIndexRouteImport } from './routes/applications/ind
 import { Route as ProfileNotificationsRouteImport } from './routes/profile/notifications'
 import { Route as ProfileEditRouteImport } from './routes/profile/edit'
 import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$orgId'
+import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 import { Route as JobsJobIdRouteImport } from './routes/jobs.$jobId'
 import { Route as ApplicationsApplicationIdRouteImport } from './routes/applications.$applicationId'
 
@@ -34,6 +36,11 @@ const SavedJobsRoute = SavedJobsRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -96,6 +103,11 @@ const OrganizationsOrgIdRoute = OrganizationsOrgIdRouteImport.update({
   path: '/organizations/$orgId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
+  id: '/$conversationId',
+  path: '/$conversationId',
+  getParentRoute: () => MessagesRoute,
+} as any)
 const JobsJobIdRoute = JobsJobIdRouteImport.update({
   id: '/jobs/$jobId',
   path: '/jobs/$jobId',
@@ -114,10 +126,12 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
@@ -132,10 +146,12 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
@@ -151,10 +167,12 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
@@ -171,10 +189,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/interviews'
     | '/login'
+    | '/messages'
     | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
+    | '/messages/$conversationId'
     | '/organizations/$orgId'
     | '/profile/edit'
     | '/profile/notifications'
@@ -189,10 +209,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/interviews'
     | '/login'
+    | '/messages'
     | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
+    | '/messages/$conversationId'
     | '/organizations/$orgId'
     | '/profile/edit'
     | '/profile/notifications'
@@ -207,10 +229,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/interviews'
     | '/login'
+    | '/messages'
     | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
+    | '/messages/$conversationId'
     | '/organizations/$orgId'
     | '/profile/edit'
     | '/profile/notifications'
@@ -226,6 +250,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   InterviewsRoute: typeof InterviewsRoute
   LoginRoute: typeof LoginRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   SavedJobsRoute: typeof SavedJobsRoute
   ApplicationsApplicationIdRoute: typeof ApplicationsApplicationIdRoute
@@ -253,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -339,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrganizationsOrgIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/$conversationId': {
+      id: '/messages/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof MessagesConversationIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
     '/jobs/$jobId': {
       id: '/jobs/$jobId'
       path: '/jobs/$jobId'
@@ -356,12 +395,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MessagesRouteChildren {
+  MessagesConversationIdRoute: typeof MessagesConversationIdRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesConversationIdRoute: MessagesConversationIdRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   HomeRoute: HomeRoute,
   InterviewsRoute: InterviewsRoute,
   LoginRoute: LoginRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   SavedJobsRoute: SavedJobsRoute,
   ApplicationsApplicationIdRoute: ApplicationsApplicationIdRoute,

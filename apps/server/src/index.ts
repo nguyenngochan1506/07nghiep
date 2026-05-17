@@ -8,6 +8,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { streamSSE } from "hono/streaming";
 import { notificationEvents } from "./lib/notifications/events";
+import { messageEvents } from "./lib/messaging/events";
 
 // ============================================================
 // Seed
@@ -130,6 +131,42 @@ app.get("/api/notifications/sse", async (c) => {
         await stream.writeSSE({ data: "ping", event: "ping" });
       } catch (e) {
         // Connection closed
+        break;
+      }
+    }
+  });
+});
+
+app.get("/api/messages/sse", async (c) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  if (!session) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const conversationId = c.req.query("conversation");
+  if (!conversationId) {
+    return c.json({ error: "Missing conversation param" }, 400);
+  }
+
+  return streamSSE(c, async (stream) => {
+    const handler = (payload: any) => {
+      stream.writeSSE({
+        data: JSON.stringify(payload),
+        event: "message",
+      });
+    };
+
+    messageEvents.on(`message:${conversationId}`, handler);
+
+    c.req.raw.signal.addEventListener("abort", () => {
+      messageEvents.off(`message:${conversationId}`, handler);
+    });
+
+    while (true) {
+      await stream.sleep(30000);
+      try {
+        await stream.writeSSE({ data: "ping", event: "ping" });
+      } catch {
         break;
       }
     }
