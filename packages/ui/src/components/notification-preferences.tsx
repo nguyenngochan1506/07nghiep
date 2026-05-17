@@ -2,7 +2,7 @@ import { Switch } from "./switch";
 import { Label } from "./label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
 
-export type NotificationType = "APPLICATION_RECEIVED" | "APPLICATION_STATUS" | "MESSAGE" | "JOB_ALERT" | "SYSTEM";
+export type NotificationType = "APPLICATION_RECEIVED" | "APPLICATION_STATUS" | "MESSAGE" | "JOB_ALERT" | "SYSTEM" | "INTERVIEW_INVITATION";
 
 export interface Preference {
   type: NotificationType;
@@ -36,6 +36,10 @@ const TYPE_LABELS: Record<string, { label: string; description: string }> = {
   SYSTEM: {
     label: "Hệ thống",
     description: "Thông báo về tài khoản và cập nhật từ hệ thống.",
+  },
+  INTERVIEW_INVITATION: {
+    label: "Lịch phỏng vấn",
+    description: "Nhận thông báo khi có lịch phỏng vấn mới hoặc thay đổi.",
   },
 };
 

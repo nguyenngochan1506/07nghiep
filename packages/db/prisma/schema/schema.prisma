@@ -78,6 +78,15 @@ enum NotificationType {
   MESSAGE
   JOB_ALERT
   SYSTEM
+  INTERVIEW_INVITATION
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  CONFIRMED
+  RESCHEDULED
+  CANCELLED
+  COMPLETED
 }
 
 // ============================================
@@ -167,6 +176,7 @@ model Application {
 
   notes       String?           @db.Text
   histories   ApplicationHistory[]
+  interviews  Interview[]
 
   candidate   User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
@@ -188,6 +198,23 @@ model ApplicationHistory {
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId, createdAt])
+}
+
+model Interview {
+  id              String          @id @default(cuid())
+  applicationId   String
+  scheduledAt     DateTime
+  durationMinutes Int             @default(60)
+  location        String?
+  meetingLink     String?
+  notes           String?         @db.Text
+  status          InterviewStatus @default(SCHEDULED)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  application     Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
 }
 
 model SavedJob {

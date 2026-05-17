@@ -9,7 +9,7 @@ import {
 } from "./dropdown-menu";
 import { Badge } from "./badge";
 
-export type NotificationType = "APPLICATION_RECEIVED" | "APPLICATION_STATUS" | "MESSAGE" | "JOB_ALERT" | "SYSTEM";
+export type NotificationType = "APPLICATION_RECEIVED" | "APPLICATION_STATUS" | "MESSAGE" | "JOB_ALERT" | "SYSTEM" | "INTERVIEW_INVITATION";
 
 export interface NotificationItem {
   id: string;

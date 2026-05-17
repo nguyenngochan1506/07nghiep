@@ -125,6 +125,7 @@ export const notificationRouter = router({
           "MESSAGE",
           "JOB_ALERT",
           "SYSTEM",
+          "INTERVIEW_INVITATION",
         ]),
         pushEnabled: z.boolean().optional(),
         emailEnabled: z.boolean().optional(),

@@ -7,7 +7,8 @@ export type NotificationType =
   | "APPLICATION_STATUS"
   | "MESSAGE"
   | "JOB_ALERT"
-  | "SYSTEM";
+  | "SYSTEM"
+  | "INTERVIEW_INVITATION";
 
 export const createNotification = async (params: {
   userId: string;
