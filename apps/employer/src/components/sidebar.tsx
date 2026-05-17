@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
+import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 
 const employerNavItems = [
@@ -69,10 +70,11 @@ export default function Sidebar({ children }: SidebarProps) {
 
         {/* Footer */}
         <div className="border-t p-3">
-          <UserMenu />
-          <div className="mt-2 flex justify-end">
+          <div className="mb-2 flex items-center justify-between">
+            <NotificationBellContainer />
             <ModeToggle />
           </div>
+          <UserMenu />
         </div>
       </aside>
 

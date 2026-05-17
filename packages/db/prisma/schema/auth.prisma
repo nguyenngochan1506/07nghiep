@@ -1,22 +1,25 @@
 model User {
-  id                     String         @id
-  name                   String
-  email                  String         @unique
-  emailVerified          Boolean        @default(false)
-  image                  String?
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
-  role                   UserRole       @default(CANDIDATE)
-  applications           Application[]
-  candidateConversations Conversation[] @relation("CandidateConversations")
-  employerConversations  Conversation[] @relation("EmployerConversations")
-  sentMessages           Message[]
-  notifications          Notification[] @relation("UserNotifications")
-  organization           Organization?
-  profile                Profile?
-  savedJobs              SavedJob[]
-  accounts               Account[]
-  sessions               Session[]
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          UserRole  @default(CANDIDATE)
+  sessions      Session[]
+  accounts      Account[]
+
+  // Custom relations
+  profile                 Profile?
+  organization            Organization?
+  applications            Application[]
+  savedJobs               SavedJob[]
+  notifications           Notification[]        @relation("UserNotifications")
+  notificationPreferences NotificationPreference[]
+  employerConversations   Conversation[]        @relation("EmployerConversations")
+  candidateConversations  Conversation[]        @relation("CandidateConversations")
+  sentMessages            Message[]
 
   @@map("user")
 }

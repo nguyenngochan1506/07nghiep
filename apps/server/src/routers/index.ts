@@ -4,6 +4,7 @@ import { applicationRouter } from "./application";
 import { jobRouter } from "./job";
 import { applicationsRouter } from "./applications";
 import { organizationRouter } from "./organization";
+import { notificationRouter } from "./notification";
 import { profileRouter } from "./profile";
 import { userRouter } from "./user";
 
@@ -22,8 +23,8 @@ export const appRouter = router({
   organization: organizationRouter,
   application: applicationRouter,
   job: jobRouter,
+  notification: notificationRouter,
   applications: applicationsRouter,
 });
 
 export type AppRouter = typeof appRouter;
-

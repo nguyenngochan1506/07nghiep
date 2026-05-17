@@ -15,7 +15,7 @@ export const getStatusColor = (status: ApplicationStatus) => {
       return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-500 dark:border-blue-900";
     case ApplicationStatus.SHORTLISTED:
       return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-500 dark:border-purple-900";
-    case ApplicationStatus.INTERVIEW:
+    case ApplicationStatus.INTERVIEWING:
       return "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-500 dark:border-indigo-900";
     case ApplicationStatus.OFFERED:
       return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-500 dark:border-green-900";
@@ -35,8 +35,8 @@ export const getStatusLabel = (status: ApplicationStatus) => {
       return "Viewed";
     case ApplicationStatus.SHORTLISTED:
       return "Shortlisted";
-    case ApplicationStatus.INTERVIEW:
-      return "Interview";
+    case ApplicationStatus.INTERVIEWING:
+      return "Interviewing";
     case ApplicationStatus.OFFERED:
       return "Offered";
     case ApplicationStatus.REJECTED:
