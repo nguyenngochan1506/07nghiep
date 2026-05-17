@@ -17,14 +17,20 @@ export function MessageThread({
   isLoadingMore,
 }: MessageThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const prevLengthRef = useRef(messages.length);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   const scrollToBottom = (smooth = true) => {
-    bottomRef.current?.scrollIntoView({
-      behavior: smooth ? "smooth" : "instant",
-      block: "end",
+    requestAnimationFrame(() => {
+      if (!scrollRef.current) return;
+      if (smooth) {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      } else {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     });
   };
 
@@ -79,7 +85,7 @@ export function MessageThread({
   };
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex min-h-0 flex-1">
       <div
         ref={scrollRef}
         className="absolute inset-0 overflow-y-auto"
@@ -98,7 +104,6 @@ export function MessageThread({
               showAvatar={shouldShowAvatar(i)}
             />
           ))}
-          <div ref={bottomRef} />
         </div>
       </div>
       {showScrollButton && (

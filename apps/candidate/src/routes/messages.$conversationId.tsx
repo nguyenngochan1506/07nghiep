@@ -178,7 +178,6 @@ function ConversationDetail() {
         onSend={(content) => {
           sendMessage.mutate({ conversationId, content });
         }}
-        disabled={sendMessage.isPending}
       />
     </div>
   );
