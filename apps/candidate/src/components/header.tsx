@@ -8,7 +8,7 @@ export default function Header() {
     const navLinks = [
         { to: "/jobs/", label: "Việc làm" },
         { to: "/saved-jobs", label: "Đã lưu" },
-        { to: "/", label: "Công ty" },
+        { to: "/organizations", label: "Công ty" },
         { to: "/applications", label: "Đơn ứng tuyển" },
         { to: "/profile", label: "Hồ sơ" },
     ];

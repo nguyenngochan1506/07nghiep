@@ -13,7 +13,7 @@ export const Route = createFileRoute("/home")({
 
 const QUICK_LINKS = [
     { icon: Briefcase, label: "Tìm việc", href: "/jobs" },
-    { icon: Building2, label: "Công ty", href: "/" },
+    { icon: Building2, label: "Công ty", href: "/organizations" },
     { icon: Users, label: "Đơn ứng tuyển", href: "/" },
 ];
 

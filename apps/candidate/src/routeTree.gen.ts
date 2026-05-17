@@ -16,10 +16,12 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile/index'
+import { Route as OrganizationsIndexRouteImport } from './routes/organizations/index'
 import { Route as JobsIndexRouteImport } from './routes/jobs.index'
 import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
 import { Route as ProfileNotificationsRouteImport } from './routes/profile/notifications'
 import { Route as ProfileEditRouteImport } from './routes/profile/edit'
+import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$orgId'
 import { Route as JobsJobIdRouteImport } from './routes/jobs.$jobId'
 import { Route as ApplicationsApplicationIdRouteImport } from './routes/applications.$applicationId'
 
@@ -58,6 +60,11 @@ const ProfileIndexRoute = ProfileIndexRouteImport.update({
   path: '/profile/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
+  id: '/organizations/',
+  path: '/organizations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JobsIndexRoute = JobsIndexRouteImport.update({
   id: '/jobs/',
   path: '/jobs/',
@@ -76,6 +83,11 @@ const ProfileNotificationsRoute = ProfileNotificationsRouteImport.update({
 const ProfileEditRoute = ProfileEditRouteImport.update({
   id: '/profile/edit',
   path: '/profile/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationsOrgIdRoute = OrganizationsOrgIdRouteImport.update({
+  id: '/organizations/$orgId',
+  path: '/organizations/$orgId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JobsJobIdRoute = JobsJobIdRouteImport.update({
@@ -99,10 +111,12 @@ export interface FileRoutesByFullPath {
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
+  '/organizations/$orgId': typeof OrganizationsOrgIdRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
   '/applications/': typeof ApplicationsIndexRoute
   '/jobs/': typeof JobsIndexRoute
+  '/organizations/': typeof OrganizationsIndexRoute
   '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
@@ -114,10 +128,12 @@ export interface FileRoutesByTo {
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
+  '/organizations/$orgId': typeof OrganizationsOrgIdRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
   '/applications': typeof ApplicationsIndexRoute
   '/jobs': typeof JobsIndexRoute
+  '/organizations': typeof OrganizationsIndexRoute
   '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
@@ -130,10 +146,12 @@ export interface FileRoutesById {
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
+  '/organizations/$orgId': typeof OrganizationsOrgIdRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
   '/applications/': typeof ApplicationsIndexRoute
   '/jobs/': typeof JobsIndexRoute
+  '/organizations/': typeof OrganizationsIndexRoute
   '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
@@ -147,10 +165,12 @@ export interface FileRouteTypes {
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
+    | '/organizations/$orgId'
     | '/profile/edit'
     | '/profile/notifications'
     | '/applications/'
     | '/jobs/'
+    | '/organizations/'
     | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -162,10 +182,12 @@ export interface FileRouteTypes {
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
+    | '/organizations/$orgId'
     | '/profile/edit'
     | '/profile/notifications'
     | '/applications'
     | '/jobs'
+    | '/organizations'
     | '/profile'
   id:
     | '__root__'
@@ -177,10 +199,12 @@ export interface FileRouteTypes {
     | '/saved-jobs'
     | '/applications/$applicationId'
     | '/jobs/$jobId'
+    | '/organizations/$orgId'
     | '/profile/edit'
     | '/profile/notifications'
     | '/applications/'
     | '/jobs/'
+    | '/organizations/'
     | '/profile/'
   fileRoutesById: FileRoutesById
 }
@@ -193,10 +217,12 @@ export interface RootRouteChildren {
   SavedJobsRoute: typeof SavedJobsRoute
   ApplicationsApplicationIdRoute: typeof ApplicationsApplicationIdRoute
   JobsJobIdRoute: typeof JobsJobIdRoute
+  OrganizationsOrgIdRoute: typeof OrganizationsOrgIdRoute
   ProfileEditRoute: typeof ProfileEditRoute
   ProfileNotificationsRoute: typeof ProfileNotificationsRoute
   ApplicationsIndexRoute: typeof ApplicationsIndexRoute
   JobsIndexRoute: typeof JobsIndexRoute
+  OrganizationsIndexRoute: typeof OrganizationsIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
@@ -251,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/organizations/': {
+      id: '/organizations/'
+      path: '/organizations'
+      fullPath: '/organizations/'
+      preLoaderRoute: typeof OrganizationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs/': {
       id: '/jobs/'
       path: '/jobs'
@@ -279,6 +312,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/organizations/$orgId': {
+      id: '/organizations/$orgId'
+      path: '/organizations/$orgId'
+      fullPath: '/organizations/$orgId'
+      preLoaderRoute: typeof OrganizationsOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs/$jobId': {
       id: '/jobs/$jobId'
       path: '/jobs/$jobId'
@@ -305,10 +345,12 @@ const rootRouteChildren: RootRouteChildren = {
   SavedJobsRoute: SavedJobsRoute,
   ApplicationsApplicationIdRoute: ApplicationsApplicationIdRoute,
   JobsJobIdRoute: JobsJobIdRoute,
+  OrganizationsOrgIdRoute: OrganizationsOrgIdRoute,
   ProfileEditRoute: ProfileEditRoute,
   ProfileNotificationsRoute: ProfileNotificationsRoute,
   ApplicationsIndexRoute: ApplicationsIndexRoute,
   JobsIndexRoute: JobsIndexRoute,
+  OrganizationsIndexRoute: OrganizationsIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
 }
 export const routeTree = rootRouteImport
