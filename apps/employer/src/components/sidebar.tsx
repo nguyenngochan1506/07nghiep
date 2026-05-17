@@ -22,10 +22,8 @@ const employerNavItems = [
   { icon: Plus, label: "Đăng tin mới", href: "/jobs/new" },
   { icon: Briefcase, label: "Quản lý tin đăng", href: "/my-jobs" },
   { icon: FileText, label: "Đơn ứng tuyển", href: "/applications" },
-  { icon: Users, label: "Tìm kiếm CV", href: "/" },
   { icon: MessageSquare, label: "Tin nhắn", href: "/" },
-  { icon: TrendingUp, label: "Thống kê", href: "/" },
-  { icon: Calendar, label: "Lịch phỏng vấn", href: "/" },
+  { icon: Calendar, label: "Lịch phỏng vấn", href: "/interviews" },
   { icon: Settings, label: "Cài đặt", href: "/settings/organization" },
 ];
 

@@ -3,6 +3,62 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../lib/api";
 
 export const interviewRouter = router({
+  // ── Get all interviews for current user ─────────────────────────────────────
+  getMyInterviews: protectedProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    return ctx.prisma.interview.findMany({
+      where: {
+        status: { notIn: ["CANCELLED"] },
+        application: {
+          OR: [
+            { candidateId: ctx.session.user.id },
+            {
+              job: {
+                organization: {
+                  userId: ctx.session.user.id,
+                },
+              },
+            },
+          ],
+        },
+      },
+      include: {
+        application: {
+          select: {
+            id: true,
+            candidateId: true,
+            job: {
+              select: {
+                id: true,
+                title: true,
+                organization: {
+                  select: {
+                    id: true,
+                    name: true,
+                    logoUrl: true,
+                  },
+                },
+              },
+            },
+            candidate: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                profile: {
+                  select: {
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { scheduledAt: "asc" },
+    });
+  }),
+
   // ── List interviews for an application ─────────────────────────────────────
   list: protectedProcedure
     .input(z.object({ applicationId: z.string() }))

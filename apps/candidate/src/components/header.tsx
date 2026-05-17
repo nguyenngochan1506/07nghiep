@@ -10,6 +10,7 @@ export default function Header() {
         { to: "/saved-jobs", label: "Đã lưu" },
         { to: "/organizations", label: "Công ty" },
         { to: "/applications", label: "Đơn ứng tuyển" },
+        { to: "/interviews", label: "Lịch PV" },
         { to: "/profile", label: "Hồ sơ" },
     ];
 
