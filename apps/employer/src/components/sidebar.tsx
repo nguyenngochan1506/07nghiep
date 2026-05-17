@@ -14,18 +14,19 @@ import {
 } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
+import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 
 const employerNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
-  { icon: Plus, label: "Đăng tin mới", href: "/" },
-  { icon: Briefcase, label: "Quản lý tin đăng", href: "/" },
-  { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
+  { icon: Plus, label: "Đăng tin mới", href: "/jobs/new" },
+  { icon: Briefcase, label: "Quản lý tin đăng", href: "/my-jobs" },
+  { icon: FileText, label: "Đơn ứng tuyển", href: "/applications" },
   { icon: Users, label: "Tìm kiếm CV", href: "/" },
   { icon: MessageSquare, label: "Tin nhắn", href: "/" },
   { icon: TrendingUp, label: "Thống kê", href: "/" },
   { icon: Calendar, label: "Lịch phỏng vấn", href: "/" },
-  { icon: Settings, label: "Cài đặt", href: "/" },
+  { icon: Settings, label: "Cài đặt", href: "/settings/organization" },
 ];
 
 interface SidebarProps {
@@ -69,10 +70,11 @@ export default function Sidebar({ children }: SidebarProps) {
 
         {/* Footer */}
         <div className="border-t p-3">
-          <UserMenu />
-          <div className="mt-2 flex justify-end">
+          <div className="mb-2 flex items-center justify-between">
+            <NotificationBellContainer />
             <ModeToggle />
           </div>
+          <UserMenu />
         </div>
       </aside>
 

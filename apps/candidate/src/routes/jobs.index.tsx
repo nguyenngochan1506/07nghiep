@@ -12,49 +12,58 @@ export const Route = createFileRoute("/jobs/")({
 const ITEMS_PER_PAGE = 4;
 
 function JobsPage() {
-    // Gọi dữ liệu từ Context thay vì mockJobs cứng
     const { jobs, toggleSave } = useJobs();
 
     const [keyword, setKeyword] = useState("");
-    const [filters, setFilters] = useState({ location: "", workType: "" });
+    const [location, setLocation] = useState("");
 
-    // State phân trang
+    const [filters, setFilters] = useState({ location: "", workType: "" });
     const [currentPage, setCurrentPage] = useState(1);
 
-    const handleSearch = (newKeyword: string) => {
+    const handleSearch = (newKeyword: string, newLocation: string = "") => {
         setKeyword(newKeyword);
-        setCurrentPage(1); // Trở về trang 1 khi tìm kiếm
+        setLocation(newLocation);
+        setCurrentPage(1);
     };
 
     const filteredJobs = useMemo(() => {
         return jobs.filter((job) => {
             const matchKeyword = keyword === "" || job.title.toLowerCase().includes(keyword.toLowerCase()) || job.companyName.toLowerCase().includes(keyword.toLowerCase());
-            const matchLocation = filters.location === "" || job.location.toLowerCase().includes(filters.location.toLowerCase());
+
+            const searchLocation = location || filters.location;
+            const matchLocation = searchLocation === "" || job.location.toLowerCase().includes(searchLocation.toLowerCase());
+
             const matchWorkType = filters.workType === "" || job.workType === filters.workType;
             return matchKeyword && matchLocation && matchWorkType;
         });
-    }, [keyword, filters, jobs]);
+    }, [keyword, location, filters, jobs]);
 
-    // Logic cắt mảng để hiển thị theo trang
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginatedJobs = filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
-            <div className="bg-white py-8 px-4 border-b border-gray-200">
-                <div className="max-w-6xl mx-auto space-y-6">
-                    <h1 className="text-3xl font-bold text-gray-900">Tìm kiếm công việc</h1>
+            <div className="bg-white py-12 px-4 md:px-8 border-b border-gray-200">
+                <div className="max-w-6xl mx-auto space-y-8">
+                    <div className="text-center space-y-3">
+                        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
+                            Find Your Dream Job
+                        </h1>
+                        <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+                            Khám phá hàng ngàn cơ hội việc làm phù hợp với kỹ năng, vị trí và mức độ kinh nghiệm của bạn.
+                        </p>
+                    </div>
+
                     <SearchBar onSearch={handleSearch} initialKeyword={keyword} />
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto w-full px-4 py-8 flex gap-8">
-                <aside className="shrink-0">
+            <div className="max-w-7xl mx-auto w-full px-4 py-8 flex gap-8 flex-col lg:flex-row">
+                <aside className="shrink-0 w-full lg:w-[280px]">
                     <JobFilters
                         filters={filters}
                         setFilters={(newFilters) => {
-                            // Cập nhật bộ lọc và reset về trang 1
                             if (typeof newFilters === "function") {
                                 setFilters(newFilters);
                             } else {
@@ -74,7 +83,7 @@ function JobsPage() {
 
                     {paginatedJobs.length > 0 ? (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                                 {paginatedJobs.map((job) => (
                                     <JobCardItem
                                         key={job.id}
@@ -84,7 +93,6 @@ function JobsPage() {
                                 ))}
                             </div>
 
-                            {/* Nút điều hướng phân trang */}
                             {totalPages > 1 && (
                                 <div className="flex justify-center items-center gap-4 mt-8">
                                     <button

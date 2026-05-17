@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { ModeToggle } from "./mode-toggle";
+import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 
 export default function Header() {
@@ -8,7 +9,8 @@ export default function Header() {
         { to: "/jobs/", label: "Việc làm" },
         { to: "/saved-jobs", label: "Đã lưu" },
         { to: "/", label: "Công ty" },
-        { to: "/", label: "Đơn ứng tuyển" },
+        { to: "/applications", label: "Đơn ứng tuyển" },
+        { to: "/profile", label: "Hồ sơ" },
     ];
 
     return (
@@ -37,18 +39,19 @@ export default function Header() {
                     ))}
                 </nav>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                    <Link
-                        to="/"
-                        className="rounded-sm px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                    >
-                        Đăng tin
-                    </Link>
-                    <ModeToggle />
-                    <UserMenu />
-                </div>
-            </div>
-        </header>
-    );
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <Link
+            to="/"
+            className="rounded-sm px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            Đăng tin
+          </Link>
+          <NotificationBellContainer />
+          <ModeToggle />
+          <UserMenu />
+        </div>
+      </div>
+    </header>
+  );
 }

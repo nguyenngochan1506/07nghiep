@@ -52,3 +52,5 @@ temp
 
 .cursor/
 .copilot/
+apps/server/src/fix-db.ts
+apps/server/src/seed-job.ts

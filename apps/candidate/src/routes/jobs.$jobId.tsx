@@ -1,5 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useJobs } from "@/routes/__root";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import ApplyJobModal from "@/components/jobs/ApplyJobModal";
+import { trpc } from "@/utils/trpc";
 
 export const Route = createFileRoute("/jobs/$jobId")({
     component: JobDetailPage,
@@ -8,12 +13,40 @@ export const Route = createFileRoute("/jobs/$jobId")({
 function JobDetailPage() {
     const { jobId } = Route.useParams();
 
-    // 2. Lấy danh sách công việc và hàm thả tim từ bộ nhớ toàn cục
+    // 1. Lấy dữ liệu giao diện từ UI của bạn
     const { jobs, toggleSave } = useJobs();
-
-    // 3. Tìm công việc trong danh sách (đã bao gồm các trạng thái isSaved)
     const job = jobs.find((j) => j.id === jobId);
 
+    // Query whether current user has already applied to this job
+    const hasAppliedQuery = useQuery(
+        trpc.applications.list.queryOptions({ search: undefined }),
+    );
+
+    // Query whether profile is complete (use server helper)
+    const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
+
+    const isLoadingTrigger = hasAppliedQuery.isLoading || profileQuery.isLoading;
+
+    const hasApplied = useMemo(() => {
+        if (hasAppliedQuery.data == null) return false;
+        // list returns array, check if any application for this jobId exists
+        return (hasAppliedQuery.data as any[]).some((a) => a.job?.id === jobId);
+    }, [hasAppliedQuery.data, jobId]);
+
+    const applicationStatus = useMemo(() => {
+        if (hasAppliedQuery.data == null) return null;
+        const app = (hasAppliedQuery.data as any[]).find((a) => a.job?.id === jobId);
+        return app?.status ?? null;
+    }, [hasAppliedQuery.data, jobId]);
+
+    const isProfileComplete = useMemo(() => {
+        const p = profileQuery.data as any | undefined;
+        if (!p) return false;
+        // Per requirements: profile must have summary AND resume to be considered complete
+        return Boolean(p.summary && p.resumeUrl);
+    }, [profileQuery.data]);
+
+    // Xử lý trường hợp không tìm thấy job
     if (!job) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
@@ -57,7 +90,6 @@ function JobDetailPage() {
 
                         {/* Các nút hành động */}
                         <div className="flex items-center gap-3 w-full md:w-auto">
-                            {/* 4. Đổi sự kiện onClick để gọi hàm chung toggleSave */}
                             <button
                                 onClick={() => toggleSave(job.id)}
                                 className={`flex-1 md:flex-none px-4 py-2 border rounded-md font-medium transition-colors ${
@@ -68,9 +100,19 @@ function JobDetailPage() {
                             >
                                 {job.isSaved ? "Đã lưu" : "Lưu công việc"}
                             </button>
-                            <button className="flex-1 md:flex-none px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors">
-                                Ứng tuyển ngay
-                            </button>
+
+                            {/* 3. TÍCH HỢP NÚT ỨNG TUYỂN CỦA ĐỒNG ĐỘI VÀO ĐÂY */}
+                            {isLoadingTrigger ? (
+                                <Skeleton className="h-10 w-32 md:w-40 rounded-md" />
+                            ) : (
+                                <ApplyJobModal
+                                    jobId={jobId!}
+                                    jobStatus="OPEN" // Mock status vì context UI chưa có trường này
+                                    hasApplied={hasApplied}
+                                    isProfileComplete={isProfileComplete}
+                                    applicationStatus={applicationStatus}
+                                />
+                            )}
                         </div>
                     </div>
 

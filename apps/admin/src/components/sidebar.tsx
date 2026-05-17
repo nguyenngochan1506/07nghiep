@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
+import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 
 const adminNavItems = [
@@ -65,12 +66,13 @@ export default function Sidebar({ children }: SidebarProps) {
 
         {/* Footer */}
         <div className="border-t p-3">
-          <div className="flex items-center justify-between rounded-md px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-success">
-              <Activity className="h-3 w-3" />
-              Hệ thống hoạt động
-            </div>
+          <div className="mb-2 flex items-center justify-between">
+            <NotificationBellContainer />
             <ModeToggle />
+          </div>
+          <div className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-success">
+            <Activity className="h-3 w-3" />
+            Hệ thống hoạt động
           </div>
           <UserMenu />
         </div>

@@ -11,10 +11,12 @@
     "check-types": "vite build && tsc --noEmit"
   },
   "dependencies": {
-    "@07nghiep/server": "workspace:*",
     "@07nghiep/auth": "workspace:*",
+    "@07nghiep/db": "workspace:*",
     "@07nghiep/env": "workspace:*",
+    "@07nghiep/server": "workspace:*",
     "@07nghiep/ui": "workspace:*",
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.1.1",
     "@prisma/client": "catalog:",
     "@tailwindcss/vite": "^4.1.18",
@@ -25,6 +27,7 @@
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "^11.13.4",
     "better-auth": "^1.6.5",
+    "date-fns": "^4.1.0",
     "dotenv": "catalog:",
     "lucide-react": "catalog:",
     "next-themes": "catalog:",
