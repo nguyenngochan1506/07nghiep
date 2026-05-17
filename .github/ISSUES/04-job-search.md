@@ -103,9 +103,9 @@ Create `/jobs/$jobId` route:
 ```
 apps/candidate/src/
 ├── routes/
-│   ├── jobs.tsx              # Job listing
+│   ├── jobs.index.tsx              # Job listing
 │   ├── jobs.$jobId.tsx       # Job detail
-│   └── saved-jobs.tsx        # Saved jobs
+│   └── saved-jobs.index.tsx        # Saved jobs
 ├── components/
 │   ├── job-card.tsx          # Job card
 │   ├── job-filters.tsx       # Filter sidebar

@@ -5,36 +5,39 @@ import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 
 export default function Header() {
-  const navLinks = [
-    { to: "/", label: "Việc làm" },
-    { to: "/", label: "Công ty" },
-    { to: "/applications", label: "Đơn ứng tuyển" },
-    { to: "/profile", label: "Hồ sơ" },
-  ];
+    const navLinks = [
+        { to: "/jobs/", label: "Việc làm" },
+        { to: "/saved-jobs", label: "Đã lưu" },
+        { to: "/", label: "Công ty" },
+        { to: "/applications", label: "Đơn ứng tuyển" },
+        { to: "/profile", label: "Hồ sơ" },
+    ];
 
-  return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        {/* Logo & Branding */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-bold text-primary-foreground">
-            07
-          </div>
-          <span className="font-semibold">07nghiep</span>
-        </Link>
+    return (
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container mx-auto flex h-14 items-center justify-between px-4">
+                {/* Logo & Branding */}
+                <Link to="/" className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-bold text-primary-foreground">
+                        07
+                    </div>
+                    <span className="font-semibold">07nghiep</span>
+                </Link>
 
-        {/* Navigation */}
-        <nav className="hidden gap-1 md:flex">
-          {navLinks.map(({ to, label }) => (
-            <Link
-              key={label}
-              to={to}
-              className="rounded-sm px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
+                {/* Navigation */}
+                <nav className="hidden gap-1 md:flex">
+                    {navLinks.map(({ to, label }) => (
+                        <Link
+                            key={label}
+                            to={to}
+                            // Active class mặc định của Tanstack để chữ sáng lên khi đang ở đúng trang
+                            activeProps={{ className: "bg-secondary text-foreground font-bold" }}
+                            className="rounded-sm px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                        >
+                            {label}
+                        </Link>
+                    ))}
+                </nav>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
