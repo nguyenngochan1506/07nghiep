@@ -2,6 +2,23 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure, router } from "../lib/api";
 
+const userSelect = {
+  select: {
+    id: true,
+    name: true,
+    image: true,
+    profile: { select: { avatarUrl: true } },
+  },
+} as const;
+
+const messageSelect = {
+  id: true,
+  content: true,
+  senderId: true,
+  read: true,
+  createdAt: true,
+} as const;
+
 export const conversationRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
@@ -15,25 +32,15 @@ export const conversationRouter = router({
     const conversations = await ctx.prisma.conversation.findMany({
       where,
       include: {
-        employer: {
-          select: { id: true, name: true, image: true },
-        },
-        candidate: {
-          select: { id: true, name: true, image: true },
-        },
+        employer: userSelect,
+        candidate: userSelect,
         job: {
           select: { id: true, title: true },
         },
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          select: {
-            id: true,
-            content: true,
-            senderId: true,
-            read: true,
-            createdAt: true,
-          },
+          select: messageSelect,
         },
         _count: {
           select: {
@@ -105,9 +112,7 @@ export const conversationRouter = router({
           appliedAt: true,
           candidateId: true,
           jobId: true,
-          candidate: {
-            select: { id: true, name: true, image: true },
-          },
+          candidate: userSelect,
           job: {
             select: { id: true, title: true },
           },
@@ -138,13 +143,7 @@ export const conversationRouter = router({
           messages: {
             orderBy: { createdAt: "desc" },
             take: 1,
-            select: {
-              id: true,
-              content: true,
-              senderId: true,
-              read: true,
-              createdAt: true,
-            },
+            select: messageSelect,
           },
           _count: {
             select: {
@@ -195,12 +194,8 @@ export const conversationRouter = router({
       const conversation = await ctx.prisma.conversation.findUnique({
         where: { id: input.id },
         include: {
-          employer: {
-            select: { id: true, name: true, image: true },
-          },
-          candidate: {
-            select: { id: true, name: true, image: true },
-          },
+          employer: userSelect,
+          candidate: userSelect,
           job: {
             select: { id: true, title: true },
           },
@@ -291,7 +286,7 @@ export const conversationRouter = router({
             },
             include: {
               sender: {
-                select: { id: true, name: true, image: true },
+                select: { id: true, name: true, image: true, profile: { select: { avatarUrl: true } } },
               },
             },
           });
@@ -330,12 +325,8 @@ export const conversationRouter = router({
             : {}),
         },
         include: {
-          employer: {
-            select: { id: true, name: true, image: true },
-          },
-          candidate: {
-            select: { id: true, name: true, image: true },
-          },
+          employer: userSelect,
+          candidate: userSelect,
           job: {
             select: { id: true, title: true },
           },
@@ -348,7 +339,7 @@ export const conversationRouter = router({
           orderBy: { createdAt: "desc" },
           include: {
             sender: {
-              select: { id: true, name: true, image: true },
+              select: { id: true, name: true, image: true, profile: { select: { avatarUrl: true } } },
             },
           },
         });

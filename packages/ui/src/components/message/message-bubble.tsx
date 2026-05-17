@@ -11,6 +11,7 @@ export interface MessageData {
     id: string;
     name: string | null;
     image: string | null;
+    profile: { avatarUrl: string | null } | null;
   };
 }
 
@@ -38,12 +39,16 @@ function getInitials(name: string | null) {
     .slice(0, 2);
 }
 
+function getAvatarUrl(sender: MessageData["sender"]) {
+  return sender.profile?.avatarUrl || sender.image || undefined;
+}
+
 export function MessageBubble({ message, isOwn, showAvatar = true }: MessageBubbleProps) {
   return (
     <div className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
       {showAvatar && (
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={message.sender.image ?? undefined} alt={message.sender.name ?? ""} />
+          <AvatarImage src={getAvatarUrl(message.sender)} alt={message.sender.name ?? ""} />
           <AvatarFallback className="text-xs">{getInitials(message.sender.name)}</AvatarFallback>
         </Avatar>
       )}

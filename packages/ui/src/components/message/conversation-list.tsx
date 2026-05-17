@@ -4,12 +4,19 @@ import { ScrollArea } from "../scroll-area";
 import { Skeleton } from "../skeleton";
 import { MessageSquare } from "lucide-react";
 
+type UserInfo = {
+  id: string;
+  name: string | null;
+  image: string | null;
+  profile: { avatarUrl: string | null } | null;
+};
+
 export interface ConversationItem {
   id: string;
   jobId: string | null;
   job: { id: string; title: string } | null;
-  employer: { id: string; name: string | null; image: string | null };
-  candidate: { id: string; name: string | null; image: string | null };
+  employer: UserInfo;
+  candidate: UserInfo;
   lastMessage: {
     id: string;
     content: string;
@@ -53,6 +60,10 @@ function getRelativeTime(dateString: string) {
   const diffDay = Math.floor(diffHour / 24);
   if (diffDay < 30) return `${diffDay} ngày`;
   return date.toLocaleDateString("vi-VN");
+}
+
+function getAvatarUrl(user: UserInfo) {
+  return user.profile?.avatarUrl || user.image || undefined;
 }
 
 export function ConversationList({
@@ -105,7 +116,7 @@ export function ConversationList({
             >
               <div className="relative shrink-0">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={otherUser.image ?? undefined} alt={otherUser.name ?? ""} />
+                  <AvatarImage src={getAvatarUrl(otherUser)} alt={otherUser.name ?? ""} />
                   <AvatarFallback>{getInitials(otherUser.name)}</AvatarFallback>
                 </Avatar>
               </div>

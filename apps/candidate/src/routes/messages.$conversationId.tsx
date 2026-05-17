@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/ava
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useEffect, useRef } from "react";
 import { env } from "@07nghiep/env/candidate";
+import type { MessageData } from "@07nghiep/ui/components/message/message-bubble";
 
 export const Route = createFileRoute("/messages/$conversationId")({
   component: ConversationDetail,
@@ -23,12 +24,20 @@ function getInitials(name: string | null) {
     .slice(0, 2);
 }
 
+function getAvatarUrl(user: { image: string | null; profile: { avatarUrl: string | null } | null } | undefined) {
+  if (!user) return undefined;
+  return user.profile?.avatarUrl || user.image || undefined;
+}
+
 function ConversationDetail() {
   const { conversationId } = Route.useParams();
   const { data: sessionData } = authClient.useSession();
   const currentUserId = sessionData?.user?.id ?? "";
+  const currentUserName = sessionData?.user?.name ?? null;
   const queryClient = useQueryClient();
   const markAsReadCalled = useRef(false);
+
+  const messagesQueryKey = trpc.message.list.queryKey({ conversationId });
 
   const { data: conversation, isLoading: convLoading } = useQuery(
     trpc.conversation.getById.queryOptions({ id: conversationId }, {
@@ -53,8 +62,38 @@ function ConversationDetail() {
 
   const sendMessage = useMutation(
     trpc.message.send.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.message.list.queryKey({ conversationId }) });
+      onMutate: async (newMsg) => {
+        await queryClient.cancelQueries({ queryKey: messagesQueryKey });
+        const previous = queryClient.getQueryData(messagesQueryKey);
+
+        const optimisticMsg: MessageData = {
+          id: `temp-${Date.now()}`,
+          content: newMsg.content,
+          senderId: currentUserId,
+          read: false,
+          createdAt: new Date().toISOString(),
+          sender: {
+            id: currentUserId,
+            name: currentUserName,
+            image: null,
+            profile: null,
+          },
+        };
+
+        queryClient.setQueryData(messagesQueryKey, (old: any) => {
+          if (!old) return { items: [optimisticMsg], nextCursor: null };
+          return { ...old, items: [...old.items, optimisticMsg] };
+        });
+
+        return { previous };
+      },
+      onError: (_err, _msg, context) => {
+        if (context?.previous) {
+          queryClient.setQueryData(messagesQueryKey, context.previous);
+        }
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: messagesQueryKey });
         queryClient.invalidateQueries({ queryKey: trpc.conversation.list.queryKey() });
       },
     })
@@ -77,22 +116,27 @@ function ConversationDetail() {
       `${env.VITE_SERVER_URL}/api/messages/sse?conversation=${conversationId}`
     );
 
-    eventSource.addEventListener("message", (event) => {
+    const handleMessage = (event: MessageEvent) => {
       try {
         const msg = JSON.parse(event.data);
         if (msg.senderId !== currentUserId) {
           markAsRead.mutate({ id: conversationId });
         }
-        queryClient.invalidateQueries({ queryKey: trpc.message.list.queryKey({ conversationId }) });
+        queryClient.invalidateQueries({ queryKey: messagesQueryKey });
         queryClient.invalidateQueries({ queryKey: trpc.conversation.list.queryKey() });
+        queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
       } catch {}
-    });
+    };
 
-    return () => eventSource.close();
-  }, [conversationId, currentUserId, queryClient, markAsRead]);
+    eventSource.addEventListener("message", handleMessage);
+    return () => {
+      eventSource.removeEventListener("message", handleMessage);
+      eventSource.close();
+    };
+  }, [conversationId, currentUserId, queryClient, markAsRead, messagesQueryKey]);
 
   const otherUser =
-    conversation?.employer.id === currentUserId
+    conversation?.employer?.id === currentUserId
       ? conversation?.candidate
       : conversation?.employer;
 
@@ -109,7 +153,7 @@ function ConversationDetail() {
       ) : otherUser ? (
         <div className="flex items-center gap-3 border-b px-4 py-3">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={otherUser.image ?? undefined} alt={otherUser.name ?? ""} />
+            <AvatarImage src={getAvatarUrl(otherUser)} alt={otherUser.name ?? ""} />
             <AvatarFallback>{getInitials(otherUser.name)}</AvatarFallback>
           </Avatar>
           <div>

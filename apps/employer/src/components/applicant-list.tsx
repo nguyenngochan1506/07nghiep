@@ -6,9 +6,16 @@ import { MessageSquare, Search } from "lucide-react";
 import { Input } from "@07nghiep/ui/components/input";
 import { useState } from "react";
 
+type CandidateInfo = {
+  id: string;
+  name: string | null;
+  image: string | null;
+  profile: { avatarUrl: string | null } | null;
+};
+
 export interface ApplicantItem {
   id: string;
-  candidate: { id: string; name: string | null; image: string | null };
+  candidate: CandidateInfo;
   job: { id: string; title: string };
   applicationId: string;
   applicationStatus: string;
@@ -56,6 +63,10 @@ function getRelativeTime(dateString: string) {
   const diffDay = Math.floor(diffHour / 24);
   if (diffDay < 30) return `${diffDay} ngày`;
   return date.toLocaleDateString("vi-VN");
+}
+
+function getAvatarUrl(candidate: CandidateInfo) {
+  return candidate.profile?.avatarUrl || candidate.image || undefined;
 }
 
 const statusLabels: Record<string, string> = {
@@ -147,7 +158,7 @@ export function ApplicantList({
                   <div className="relative shrink-0">
                     <Avatar className="h-10 w-10">
                       <AvatarImage
-                        src={applicant.candidate.image ?? undefined}
+                        src={getAvatarUrl(applicant.candidate)}
                         alt={applicant.candidate.name ?? ""}
                       />
                       <AvatarFallback>

@@ -2,6 +2,15 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure, router } from "../lib/api";
 
+const senderSelect = {
+  select: {
+    id: true,
+    name: true,
+    image: true,
+    profile: { select: { avatarUrl: true } },
+  },
+} as const;
+
 export const messageRouter = router({
   send: protectedProcedure
     .input(
@@ -42,9 +51,7 @@ export const messageRouter = router({
           content: input.content,
         },
         include: {
-          sender: {
-            select: { id: true, name: true, image: true },
-          },
+          sender: senderSelect,
         },
       });
 
@@ -119,9 +126,7 @@ export const messageRouter = router({
         cursor: cursor ? { id: cursor } : undefined,
         orderBy: { createdAt: "desc" },
         include: {
-          sender: {
-            select: { id: true, name: true, image: true },
-          },
+          sender: senderSelect,
         },
       });
 

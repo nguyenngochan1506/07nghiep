@@ -12,17 +12,20 @@ import {
   Calendar,
   Plus,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { ModeToggle } from "./mode-toggle";
 import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
+import { Badge } from "@07nghiep/ui/components/badge";
+import { trpc } from "@/utils/trpc";
 
 const employerNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Plus, label: "Đăng tin mới", href: "/jobs/new" },
   { icon: Briefcase, label: "Quản lý tin đăng", href: "/my-jobs" },
   { icon: FileText, label: "Đơn ứng tuyển", href: "/applications" },
-  { icon: MessageSquare, label: "Tin nhắn", href: "/messages" },
+  { icon: MessageSquare, label: "Tin nhắn", href: "/messages", hasMessageBadge: true },
   { icon: Calendar, label: "Lịch phỏng vấn", href: "/interviews" },
   { icon: Settings, label: "Cài đặt", href: "/settings/organization" },
 ];
@@ -32,6 +35,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ children }: SidebarProps) {
+  const { data: unreadCount } = useQuery(
+    trpc.conversation.getUnreadCount.queryOptions(undefined, {
+      refetchInterval: 15000,
+    })
+  );
+
   return (
     <div className="flex h-svh">
       {/* Sidebar */}
@@ -59,7 +68,12 @@ export default function Sidebar({ children }: SidebarProps) {
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {(item as any).hasMessageBadge && unreadCount && unreadCount > 0 ? (
+                    <Badge variant="destructive" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Badge>
+                  ) : null}
                 </Link>
               </li>
             ))}

@@ -1,13 +1,23 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 
 import { ModeToggle } from "./mode-toggle";
 import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 import { authClient } from "@/lib/auth-client";
+import { Badge } from "@07nghiep/ui/components/badge";
+import { trpc } from "@/utils/trpc";
 
 export default function Header() {
     const { data: session } = authClient.useSession();
     const isLoggedIn = !!session;
+
+    const { data: unreadCount } = useQuery(
+        trpc.conversation.getUnreadCount.queryOptions(undefined, {
+            enabled: isLoggedIn,
+            refetchInterval: 15000,
+        })
+    );
 
     const publicLinks = [
         { to: "/jobs/", label: "Việc làm" },
@@ -17,7 +27,7 @@ export default function Header() {
     const protectedLinks = [
         { to: "/saved-jobs", label: "Đã lưu" },
         { to: "/applications", label: "Đơn ứng tuyển" },
-        { to: "/messages", label: "Tin nhắn" },
+        { to: "/messages", label: "Tin nhắn", hasMessageBadge: true },
         { to: "/interviews", label: "Lịch PV" },
     ];
 
@@ -36,14 +46,19 @@ export default function Header() {
 
                 {/* Navigation */}
                 <nav className="hidden gap-1 md:flex">
-                    {navLinks.map(({ to, label }) => (
+                    {navLinks.map(({ to, label, hasMessageBadge }) => (
                         <Link
                             key={label}
                             to={to}
                             activeProps={{ className: "bg-secondary text-foreground font-bold" }}
-                            className="rounded-sm px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                            className="relative flex items-center gap-1 rounded-sm px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                         >
                             {label}
+                            {hasMessageBadge && unreadCount && unreadCount > 0 ? (
+                                <Badge variant="destructive" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
+                                    {unreadCount > 99 ? "99+" : unreadCount}
+                                </Badge>
+                            ) : null}
                         </Link>
                     ))}
                 </nav>
