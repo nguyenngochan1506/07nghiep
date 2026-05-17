@@ -313,7 +313,7 @@ function EmployerInterviewsPage() {
                 return (
                   <div
                     key={i}
-                    className={`min-h-[100px] border-b border-r p-1 transition-colors ${
+                    className={`min-h-[100px] border-b border-r p-1 transition-colors group relative ${
                       !isValid ? "bg-muted/20" : ""
                     } ${
                       isToday
@@ -322,9 +322,41 @@ function EmployerInterviewsPage() {
                         ? "bg-success/5 border-l-2 border-l-success"
                         : hasScheduled
                         ? "bg-warning/5 border-l-2 border-l-warning"
+                        : hasInterviews
+                        ? "bg-muted/20"
                         : ""
                     }`}
                   >
+                    {/* Hover tooltip */}
+                    {hasInterviews && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none">
+                        <div className="bg-card border shadow-lg rounded-lg p-3 min-w-[220px] max-w-[300px] text-left">
+                          <p className="text-xs font-semibold text-foreground mb-2">
+                            {date!.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" })}
+                          </p>
+                          <div className="space-y-2">
+                            {dayInterviews.map((iv: any) => (
+                              <div key={iv.id} className="flex items-start gap-2">
+                                <span className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
+                                  iv.status === "CONFIRMED" ? "bg-success" :
+                                  iv.status === "SCHEDULED" ? "bg-warning" :
+                                  "bg-muted-foreground"
+                                }`} />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium truncate">{iv.application?.candidate?.name}</p>
+                                  <p className="text-[11px] text-muted-foreground truncate">{iv.application?.job?.title}</p>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes} phút
+                                  </p>
+                                  {iv.location && <p className="text-[11px] text-muted-foreground">{iv.location}</p>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="h-2 w-2 bg-card border-b border-r rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
+                      </div>
+                    )}
                     {isValid && (
                       <>
                         <p className={`text-xs font-semibold mb-0.5 px-0.5 ${
