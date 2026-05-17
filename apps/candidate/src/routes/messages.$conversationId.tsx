@@ -9,6 +9,7 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useEffect, useRef } from "react";
 import { env } from "@07nghiep/env/candidate";
 import type { MessageData } from "@07nghiep/ui/components/message/message-bubble";
+import { createSSEConnection } from "@07nghiep/ui/lib/sse";
 
 export const Route = createFileRoute("/messages/$conversationId")({
   component: ConversationDetail,
@@ -112,27 +113,27 @@ function ConversationDetail() {
 
   useEffect(() => {
     if (!env.VITE_SERVER_URL) return;
-    const eventSource = new EventSource(
-      `${env.VITE_SERVER_URL}/api/messages/sse?conversation=${conversationId}`
+    const abort = new AbortController();
+
+    createSSEConnection(
+      `${env.VITE_SERVER_URL}/api/messages/sse?conversation=${conversationId}`,
+      (eventType, data) => {
+        try {
+          const msg = JSON.parse(data);
+          if (eventType === "message") {
+            if (msg.senderId !== currentUserId) {
+              markAsRead.mutate({ id: conversationId });
+            }
+            queryClient.invalidateQueries({ queryKey: messagesQueryKey });
+            queryClient.invalidateQueries({ queryKey: trpc.conversation.list.queryKey() });
+            queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
+          }
+        } catch {}
+      },
+      abort.signal
     );
 
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.senderId !== currentUserId) {
-          markAsRead.mutate({ id: conversationId });
-        }
-        queryClient.invalidateQueries({ queryKey: messagesQueryKey });
-        queryClient.invalidateQueries({ queryKey: trpc.conversation.list.queryKey() });
-        queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
-      } catch {}
-    };
-
-    eventSource.addEventListener("message", handleMessage);
-    return () => {
-      eventSource.removeEventListener("message", handleMessage);
-      eventSource.close();
-    };
+    return () => abort.abort();
   }, [conversationId, currentUserId, queryClient, markAsRead, messagesQueryKey]);
 
   const otherUser =

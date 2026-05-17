@@ -5,6 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { ConversationList, type ConversationItem } from "@07nghiep/ui/components/message/conversation-list";
 import { useEffect } from "react";
 import { env } from "@07nghiep/env/candidate";
+import { createSSEConnection } from "@07nghiep/ui/lib/sse";
 
 export const Route = createFileRoute("/messages")({
   component: MessagesLayout,
@@ -31,14 +32,20 @@ function MessagesLayout() {
 
   useEffect(() => {
     if (!env.VITE_SERVER_URL) return;
-    const eventSource = new EventSource(`${env.VITE_SERVER_URL}/api/notifications/sse`);
+    const abort = new AbortController();
 
-    eventSource.addEventListener("notification", () => {
-      queryClient.invalidateQueries({ queryKey: trpc.conversation.list.queryKey() });
-      queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
-    });
+    createSSEConnection(
+      `${env.VITE_SERVER_URL}/api/notifications/sse`,
+      (eventType) => {
+        if (eventType === "notification") {
+          queryClient.invalidateQueries({ queryKey: trpc.conversation.list.queryKey() });
+          queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
+        }
+      },
+      abort.signal
+    );
 
-    return () => eventSource.close();
+    return () => abort.abort();
   }, [queryClient]);
 
   const handleSelect = (conversation: ConversationItem) => {

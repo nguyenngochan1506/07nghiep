@@ -6,6 +6,7 @@ import { ApplicantList, type ApplicantItem } from "@/components/applicant-list";
 import { useEffect, useState } from "react";
 import { env } from "@07nghiep/env/employer";
 import { toast } from "sonner";
+import { createSSEConnection } from "@07nghiep/ui/lib/sse";
 
 export const Route = createFileRoute("/messages")({
   component: MessagesLayout,
@@ -49,14 +50,20 @@ function MessagesLayout() {
 
   useEffect(() => {
     if (!env.VITE_SERVER_URL) return;
-    const eventSource = new EventSource(`${env.VITE_SERVER_URL}/api/notifications/sse`);
+    const abort = new AbortController();
 
-    eventSource.addEventListener("notification", () => {
-      queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
-      queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
-    });
+    createSSEConnection(
+      `${env.VITE_SERVER_URL}/api/notifications/sse`,
+      (eventType) => {
+        if (eventType === "notification") {
+          queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
+          queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
+        }
+      },
+      abort.signal
+    );
 
-    return () => eventSource.close();
+    return () => abort.abort();
   }, [queryClient]);
 
   const handleSelect = async (applicant: ApplicantItem) => {
