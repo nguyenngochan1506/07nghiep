@@ -3,16 +3,24 @@ import { Link } from "@tanstack/react-router";
 import { ModeToggle } from "./mode-toggle";
 import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
+import { authClient } from "@/lib/auth-client";
 
 export default function Header() {
-    const navLinks = [
+    const { data: session } = authClient.useSession();
+    const isLoggedIn = !!session;
+
+    const publicLinks = [
         { to: "/jobs/", label: "Việc làm" },
-        { to: "/saved-jobs", label: "Đã lưu" },
         { to: "/organizations", label: "Công ty" },
+    ];
+
+    const protectedLinks = [
+        { to: "/saved-jobs", label: "Đã lưu" },
         { to: "/applications", label: "Đơn ứng tuyển" },
         { to: "/interviews", label: "Lịch PV" },
-        { to: "/profile", label: "Hồ sơ" },
     ];
+
+    const navLinks = isLoggedIn ? [...publicLinks, ...protectedLinks] : publicLinks;
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -31,7 +39,6 @@ export default function Header() {
                         <Link
                             key={label}
                             to={to}
-                            // Active class mặc định của Tanstack để chữ sáng lên khi đang ở đúng trang
                             activeProps={{ className: "bg-secondary text-foreground font-bold" }}
                             className="rounded-sm px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                         >
@@ -40,19 +47,13 @@ export default function Header() {
                     ))}
                 </nav>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <Link
-            to="/"
-            className="rounded-sm px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          >
-            Đăng tin
-          </Link>
-          <NotificationBellContainer />
-          <ModeToggle />
-          <UserMenu />
-        </div>
-      </div>
-    </header>
-  );
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                    {isLoggedIn && <NotificationBellContainer />}
+                    <ModeToggle />
+                    <UserMenu />
+                </div>
+            </div>
+        </header>
+    );
 }
