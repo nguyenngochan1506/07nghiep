@@ -28,18 +28,11 @@ export const profileRouter = router({
     if (!ctx.user)
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
-    const profile = await ctx.prisma.profile.findUnique({
+    return ctx.prisma.profile.upsert({
       where: { userId: ctx.user.id },
+      update: {},
+      create: { userId: ctx.user.id, skills: [] },
     });
-
-    if (!profile) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Profile not found",
-      });
-    }
-
-    return profile;
   }),
 
   updateMyProfile: candidateProcedure

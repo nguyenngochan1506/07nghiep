@@ -164,7 +164,7 @@ function ProfilePage() {
       ? (session?.user as { role?: string }).role
       : undefined;
   const canEditProfile =
-    sessionRole === "CANDIDATE" &&
+    Boolean(sessionRole) &&
     Boolean(sessionUserId) &&
     sessionUserId === (profile.userId ?? "");
 

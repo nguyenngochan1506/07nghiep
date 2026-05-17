@@ -74,12 +74,10 @@ function createRoleGuard(allowedRoles: UserRole[]) {
   });
 }
 
-export const candidateProcedure = protectedProcedure.use(createRoleGuard(["CANDIDATE"]));
+export const candidateProcedure = protectedProcedure.use(createRoleGuard(["CANDIDATE", "EMPLOYER", "ADMIN"]));
 
 export const employerProcedure = protectedProcedure.use(createRoleGuard(["EMPLOYER"]));
 
 export const adminProcedure = protectedProcedure.use(createRoleGuard(["ADMIN"]));
 
 export const employerOrAdminProcedure = protectedProcedure.use(createRoleGuard(["EMPLOYER", "ADMIN"]));
-
-export const candidateOrAdminProcedure = protectedProcedure.use(createRoleGuard(["CANDIDATE", "ADMIN"]));
