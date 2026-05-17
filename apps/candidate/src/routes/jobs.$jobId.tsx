@@ -1,22 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { mockJobs } from "@/utils/mock-jobs";
+import { useJobs } from "@/routes/__root";
 
 export const Route = createFileRoute("/jobs/$jobId")({
     component: JobDetailPage,
 });
 
 function JobDetailPage() {
-    // Lấy tham số jobId từ URL
     const { jobId } = Route.useParams();
 
-    // Tìm công việc có id khớp với URL trong danh sách mockJobs
-    const job = mockJobs.find((j) => j.id === jobId);
+    // 2. Lấy danh sách công việc và hàm thả tim từ bộ nhớ toàn cục
+    const { jobs, toggleSave } = useJobs();
 
-    // Trạng thái tạm thời cho nút "Lưu công việc"
-    const [isSaved, setIsSaved] = useState(false);
+    // 3. Tìm công việc trong danh sách (đã bao gồm các trạng thái isSaved)
+    const job = jobs.find((j) => j.id === jobId);
 
-    // Xử lý trường hợp người dùng nhập ID không tồn tại
     if (!job) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
@@ -49,11 +46,9 @@ function JobDetailPage() {
 
                         {/* Logo và Tiêu đề */}
                         <div className="flex items-center gap-4">
-                            <img
-                                src={job.companyLogo}
-                                alt={`${job.companyName} logo`}
-                                className="w-16 h-16 rounded-lg object-cover border border-gray-100"
-                            />
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200 shrink-0">
+                                <span className="text-xs text-gray-500">Logo</span>
+                            </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
                                 <p className="text-lg text-gray-600 mt-1">{job.companyName}</p>
@@ -62,15 +57,16 @@ function JobDetailPage() {
 
                         {/* Các nút hành động */}
                         <div className="flex items-center gap-3 w-full md:w-auto">
+                            {/* 4. Đổi sự kiện onClick để gọi hàm chung toggleSave */}
                             <button
-                                onClick={() => setIsSaved(!isSaved)}
+                                onClick={() => toggleSave(job.id)}
                                 className={`flex-1 md:flex-none px-4 py-2 border rounded-md font-medium transition-colors ${
-                                    isSaved
+                                    job.isSaved
                                         ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                                         : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                                 }`}
                             >
-                                {isSaved ? "Đã lưu" : "Lưu công việc"}
+                                {job.isSaved ? "Đã lưu" : "Lưu công việc"}
                             </button>
                             <button className="flex-1 md:flex-none px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors">
                                 Ứng tuyển ngay
@@ -105,10 +101,10 @@ function JobDetailPage() {
                         <h2 className="text-xl font-bold text-gray-900">Mô tả công việc</h2>
                         <div className="text-gray-700 leading-relaxed space-y-2">
                             <p>
-                                {job.description ||
-                                    "Chúng tôi đang tìm kiếm ứng viên tài năng tham gia vào đội ngũ phát triển. Bạn sẽ có cơ hội làm việc trong môi trường năng động, dự án quy mô lớn và được hưởng các chế độ đãi ngộ hấp dẫn."}
+                                {/* Dữ liệu mẫu tạm thời cho mô tả công việc nếu thiếu */}
+                                {"Chúng tôi đang tìm kiếm ứng viên tài năng tham gia vào đội ngũ phát triển. Bạn sẽ có cơ hội làm việc trong môi trường năng động, dự án quy mô lớn và được hưởng các chế độ đãi ngộ hấp dẫn."}
                             </p>
-                            <p>Yêu cầu kỹ năng:</p>
+                            <p className="font-semibold text-gray-800 mt-4">Yêu cầu kỹ năng:</p>
                             <ul className="list-disc pl-5 space-y-1">
                                 {job.skills.map((skill) => (
                                     <li key={skill}>{skill}</li>

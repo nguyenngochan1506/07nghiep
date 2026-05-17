@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from '@tanstack/react-router';
 
 export interface Job {
@@ -21,13 +20,12 @@ interface JobCardProps {
     onSave?: (id: string) => void;
 }
 
-export function JobCard({ job, onSave }: JobCardProps) {
+export function JobCardItem({ job, onSave }: JobCardProps) {
     return (
         <div className="border rounded-lg p-4 mb-4 shadow-sm bg-white flex flex-col gap-3">
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
-                        {/* Thay bằng thẻ img thực tế khi có src */}
                         <span className="text-xs text-gray-500">Logo</span>
                     </div>
                     <div>
@@ -40,7 +38,10 @@ export function JobCard({ job, onSave }: JobCardProps) {
                     </div>
                 </div>
                 <button
-                    onClick={() => onSave?.(job.id)}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        onSave?.(job.id);
+                    }}
                     className="text-gray-500 hover:text-red-500 transition-colors"
                 >
                     {job.isSaved ? '❤️' : '🤍'}
@@ -57,8 +58,8 @@ export function JobCard({ job, onSave }: JobCardProps) {
             <div className="flex flex-wrap gap-2 mt-1">
                 {job.skills.map(skill => (
                     <span key={skill} className="bg-blue-50 text-blue-600 border border-blue-100 text-xs px-2 py-1 rounded-md">
-            {skill}
-          </span>
+                        {skill}
+                    </span>
                 ))}
             </div>
 
