@@ -154,6 +154,50 @@ export const applicationRouter = router({
       const updated = await ctx.prisma.application.update({
         where: { id: input.id },
         data: { status: input.status },
+        include: {
+          candidate: true,
+          job: {
+            select: {
+              title: true,
+              organization: {
+                select: { name: true },
+              },
+            },
+          },
+        },
+      });
+
+      // Record history
+      await ctx.prisma.applicationHistory.create({
+        data: {
+          applicationId: input.id,
+          fromStatus: application.status,
+          toStatus: input.status,
+          changedById: ctx.session.user.id,
+        },
+      });
+
+      // Notify candidate
+      const statusLabels: Record<string, string> = {
+        VIEWED: "đã xem hồ sơ",
+        SHORTLISTED: "đã đưa hồ sơ của bạn vào danh sách tiềm năng",
+        INTERVIEWING: "mời bạn phỏng vấn",
+        OFFERED: "gửi lời mời làm việc (Offer)",
+        REJECTED: "đã từ chối hồ sơ",
+      };
+
+      const { createNotification } = await import("../lib/notifications/service");
+      await createNotification({
+        userId: application.candidateId,
+        type: "APPLICATION_STATUS",
+        title: "Cập nhật trạng thái ứng tuyển",
+        body: `Nhà tuyển dụng ${updated.job.organization.name} ${
+          statusLabels[input.status] || "đã cập nhật trạng thái ứng tuyển của bạn"
+        } cho vị trí "${updated.job.title}"`,
+        data: {
+          applicationId: input.id,
+          status: input.status,
+        },
       });
 
       return updated;
@@ -230,6 +274,41 @@ export const applicationRouter = router({
         where: { id: { in: input.ids } },
         data: { status: input.status },
       });
+
+      // Record history + notify for each application
+      const statusLabels: Record<string, string> = {
+        VIEWED: "đã xem hồ sơ",
+        SHORTLISTED: "đã đưa hồ sơ của bạn vào danh sách tiềm năng",
+        INTERVIEWING: "mời bạn phỏng vấn",
+        OFFERED: "gửi lời mời làm việc (Offer)",
+        REJECTED: "đã từ chối hồ sơ",
+      };
+
+      const { createNotification } = await import("../lib/notifications/service");
+
+      for (const app of applications) {
+        await ctx.prisma.applicationHistory.create({
+          data: {
+            applicationId: app.id,
+            fromStatus: app.status,
+            toStatus: input.status,
+            changedById: ctx.session.user.id,
+          },
+        });
+
+        await createNotification({
+          userId: app.candidateId,
+          type: "APPLICATION_STATUS",
+          title: "Cập nhật trạng thái ứng tuyển",
+          body: `Nhà tuyển dụng ${organization.name} ${
+            statusLabels[input.status] || "đã cập nhật trạng thái ứng tuyển của bạn"
+          }`,
+          data: {
+            applicationId: app.id,
+            status: input.status,
+          },
+        });
+      }
 
       return { success: true, count: input.ids.length };
     }),
