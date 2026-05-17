@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { env } from "@07nghiep/env/server";
 
 const isR2Configured =
@@ -24,6 +25,7 @@ function getR2Client(): S3Client {
     r2Client = new S3Client({
       region: "auto",
       endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: env.R2_ACCESS_KEY_ID!,
         secretAccessKey: env.R2_SECRET_ACCESS_KEY!,
@@ -39,10 +41,14 @@ export function isStorageConfigured(): boolean {
 }
 
 export function getPublicUrl(key: string): string {
-  if (!env.R2_PUBLIC_URL || !env.R2_BUCKET_NAME) {
-    throw new Error("R2_PUBLIC_URL or R2_BUCKET_NAME is not configured");
+  if (!env.R2_PUBLIC_URL) {
+    throw new Error("R2_PUBLIC_URL is not configured");
   }
-  return `${env.R2_PUBLIC_URL.replace(/\/$/, "")}/${env.R2_BUCKET_NAME}/${key}`;
+  const base = env.R2_PUBLIC_URL.replace(/\/$/, "");
+  if (base.includes("cloudflarestorage.com")) {
+    return `${base}/${env.R2_BUCKET_NAME}/${key}`;
+  }
+  return `${base}/${key}`;
 }
 
 export type UploadType = "resume" | "avatar";
@@ -115,4 +121,18 @@ export async function deleteFile(key: string): Promise<void> {
       Key: key,
     })
   );
+}
+
+export async function getFileUrl(key: string): Promise<string> {
+  if (!isStorageConfigured()) {
+    throw new Error("Storage is not configured");
+  }
+
+  const client = getR2Client();
+  const command = new GetObjectCommand({
+    Bucket: env.R2_BUCKET_NAME!,
+    Key: key,
+  });
+
+  return getSignedUrl(client, command, { expiresIn: 3600 });
 }

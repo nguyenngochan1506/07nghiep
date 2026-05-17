@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   generatePresignedUploadUrl,
   isStorageConfigured,
+  getFileUrl,
   type UploadType,
 } from "@07nghiep/storage";
 import { profileUpdateSchema } from "../lib/api/schemas";
@@ -147,5 +148,18 @@ export const profileRouter = router({
       );
 
       return result;
+    }),
+  getFileViewUrl: candidateProcedure
+    .input(z.object({ url: z.string().min(1) }))
+    .query(async ({ input }) => {
+      if (!isStorageConfigured()) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "File storage is not configured",
+        });
+      }
+
+      const key = input.url.split("/").slice(-2).join("/");
+      return getFileUrl(key);
     }),
 });

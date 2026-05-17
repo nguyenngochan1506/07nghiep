@@ -99,7 +99,7 @@ export default function ExperienceSection({ form }: ExperienceSectionProps) {
                     <Label htmlFor={`experience.${index}.startDate`}>Từ ngày</Label>
                     <input
                       id={`experience.${index}.startDate`}
-                      type="month"
+                      type="date"
                       data-invalid={Boolean(errors?.startDate)}
                       aria-invalid={Boolean(errors?.startDate)}
                       className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20"
@@ -112,7 +112,7 @@ export default function ExperienceSection({ form }: ExperienceSectionProps) {
                     <Label htmlFor={`experience.${index}.endDate`}>Đến ngày</Label>
                     <input
                       id={`experience.${index}.endDate`}
-                      type="month"
+                      type="date"
                       data-invalid={Boolean(errors?.endDate)}
                       aria-invalid={Boolean(errors?.endDate)}
                       className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20"
