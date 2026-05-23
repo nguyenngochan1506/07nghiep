@@ -3,6 +3,7 @@ import { applicationRouter } from "./application";
 
 import { jobRouter } from "./job";
 import { applicationsRouter } from "./applications";
+import { adminUserRouter } from "./admin/user";
 import { organizationRouter } from "./organization";
 import { profileRouter } from "./profile";
 import { userRouter } from "./user";
@@ -23,6 +24,9 @@ export const appRouter = router({
   application: applicationRouter,
   job: jobRouter,
   applications: applicationsRouter,
+  admin: router({
+    users: adminUserRouter,
+  }),
 });
 
 export type AppRouter = typeof appRouter;

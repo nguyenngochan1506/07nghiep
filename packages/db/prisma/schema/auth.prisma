@@ -7,6 +7,7 @@ model User {
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
   role                   UserRole       @default(CANDIDATE)
+  isSuspended            Boolean        @default(false)
   applications           Application[]
   candidateConversations Conversation[] @relation("CandidateConversations")
   employerConversations  Conversation[] @relation("EmployerConversations")
