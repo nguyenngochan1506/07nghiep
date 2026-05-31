@@ -82,11 +82,6 @@ function AdminUserDetailPage() {
     return "secondary" as const;
   }, [user?.role]);
 
-  const formatRole = (r?: string | null) => {
-    if (!r) return "Unknown";
-    return `${r.charAt(0)}${r.slice(1).toLowerCase()}`;
-  };
-
   const onChangeRole = async (value: UserRole | null) => {
     if (!user) {
       return;
@@ -239,7 +234,7 @@ function AdminUserDetailPage() {
               <div className="space-y-1">
                 <p className="text-sm font-semibold">{user.name}</p>
                 <p className="text-xs text-muted-foreground">{user.email}</p>
-                <Badge variant={roleBadgeVariant}>{formatRole(user.role)}</Badge>
+                <Badge variant={roleBadgeVariant}>{user.role}</Badge>
               </div>
             </div>
 
@@ -269,9 +264,9 @@ function AdminUserDetailPage() {
                   <SelectValue placeholder="Chọn vai trò" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">{formatRole("ADMIN")}</SelectItem>
-                  <SelectItem value="EMPLOYER">{formatRole("EMPLOYER")}</SelectItem>
-                  <SelectItem value="CANDIDATE">{formatRole("CANDIDATE")}</SelectItem>
+                  <SelectItem value="ADMIN">ADMIN</SelectItem>
+                  <SelectItem value="EMPLOYER">EMPLOYER</SelectItem>
+                  <SelectItem value="CANDIDATE">CANDIDATE</SelectItem>
                 </SelectContent>
               </Select>
             </div>

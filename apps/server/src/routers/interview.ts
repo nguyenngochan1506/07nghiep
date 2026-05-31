@@ -5,7 +5,6 @@ import { protectedProcedure, router } from "../lib/api";
 export const interviewRouter = router({
   // ── Get all interviews for current user ─────────────────────────────────────
   getMyInterviews: protectedProcedure.query(async ({ ctx }) => {
-    const now = new Date();
     return ctx.prisma.interview.findMany({
       where: {
         status: { notIn: ["CANCELLED"] },
