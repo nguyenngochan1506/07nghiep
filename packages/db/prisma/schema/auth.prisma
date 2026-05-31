@@ -7,6 +7,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   role          UserRole  @default(CANDIDATE)
+  isSuspended   Boolean   @default(false)
+  deletedAt     DateTime?
   sessions      Session[]
   accounts      Account[]
 

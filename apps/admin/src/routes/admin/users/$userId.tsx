@@ -82,6 +82,11 @@ function AdminUserDetailPage() {
     return "secondary" as const;
   }, [user?.role]);
 
+  const formatRole = (r?: string | null) => {
+    if (!r) return "Unknown";
+    return `${r.charAt(0)}${r.slice(1).toLowerCase()}`;
+  };
+
   const onChangeRole = async (value: UserRole | null) => {
     if (!user) {
       return;
@@ -211,7 +216,14 @@ function AdminUserDetailPage() {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-6 p-6 lg:grid-cols-[320px_1fr]">
+    <div>
+      <div className="px-6 pt-6">
+        <Button variant="outline" onClick={() => navigate({ to: "/admin/users" })}>
+          Quay lại danh sách
+        </Button>
+      </div>
+
+      <div className="mx-auto grid w-full max-w-7xl gap-6 p-6 lg:grid-cols-[320px_1fr]">
       <aside className="space-y-6">
         <Card>
           <CardHeader>
@@ -227,7 +239,7 @@ function AdminUserDetailPage() {
               <div className="space-y-1">
                 <p className="text-sm font-semibold">{user.name}</p>
                 <p className="text-xs text-muted-foreground">{user.email}</p>
-                <Badge variant={roleBadgeVariant}>{user.role}</Badge>
+                <Badge variant={roleBadgeVariant}>{formatRole(user.role)}</Badge>
               </div>
             </div>
 
@@ -251,15 +263,15 @@ function AdminUserDetailPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-2">
-              <p className="text-xs font-medium">Thay đổi vai trò</p>
+              <p className="text-xs font-medium">TROLE_CHANGE</p>
               <Select value={user.role} onValueChange={onChangeRole}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn vai trò" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">ADMIN</SelectItem>
-                  <SelectItem value="EMPLOYER">EMPLOYER</SelectItem>
-                  <SelectItem value="CANDIDATE">CANDIDATE</SelectItem>
+                  <SelectItem value="ADMIN">{formatRole("ADMIN")}</SelectItem>
+                  <SelectItem value="EMPLOYER">{formatRole("EMPLOYER")}</SelectItem>
+                  <SelectItem value="CANDIDATE">{formatRole("CANDIDATE")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -323,6 +335,7 @@ function AdminUserDetailPage() {
               <TabsList variant="line" className="mb-4">
                 <TabsTrigger value="activity">Lịch sử hoạt động</TabsTrigger>
                 <TabsTrigger value="notes">Ghi chú Admin</TabsTrigger>
+                <TabsTrigger value="roles">Lịch sử vai trò</TabsTrigger>
               </TabsList>
 
               <TabsContent value="activity" className="space-y-3">
@@ -379,10 +392,35 @@ function AdminUserDetailPage() {
                   )}
                 </div>
               </TabsContent>
+
+              <TabsContent value="roles" className="space-y-3">
+                {detailQuery.data?.roleHistory && detailQuery.data.roleHistory.length > 0 ? (
+                  detailQuery.data.roleHistory.map((r: any) => (
+                    <div key={r.id} className="rounded-md border p-3">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <Badge variant="outline">ROLE_CHANGE</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(r.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm">
+                        {r.adminId ? "Bởi admin: " : ""}
+                        <strong>{formatRole(r.previousRole ?? "UNKNOWN")}</strong> → <strong>{formatRole(r.newRole ?? "UNKNOWN")}</strong>
+                      </p>
+                      {r.note ? <p className="mt-2 text-sm text-muted-foreground">{r.note}</p> : null}
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    Chưa có lịch sử thay đổi vai trò.
+                  </div>
+                )}
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </section>
+      </div>
     </div>
   );
 }

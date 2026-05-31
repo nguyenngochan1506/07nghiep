@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
@@ -56,11 +56,29 @@ function UsersRoute() {
       search: s.get("search") ?? "",
       role: s.get("role") ?? "ALL",
       status: s.get("status") ?? "ALL",
+      sortBy: s.get("sortBy") ?? "createdAt",
+      order: s.get("order") ?? "desc",
     };
   }, [location.search]);
 
   const [searchInput, setSearchInput] = useState(searchParams.search);
+  const [debouncedInput, setDebouncedInput] = useState(searchParams.search);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedInput(searchInput.trim()), 300);
+    return () => clearTimeout(id);
+  }, [searchInput]);
+
+  const suggestionsQuery = useQuery(
+    {
+      ...trpc.admin.users.suggestions.queryOptions({ q: debouncedInput }),
+      enabled: debouncedInput.length >= 2 && showSuggestions,
+    },
+  );
 
   const query = useQuery(
     trpc.admin.users.list.queryOptions({
@@ -76,6 +94,8 @@ function UsersRoute() {
         searchParams.status === "ALL"
           ? undefined
           : (searchParams.status as UserStatus),
+      sortBy: (searchParams.sortBy as "createdAt" | "name" | "email") ?? "createdAt",
+      order: (searchParams.order as "asc" | "desc") ?? "desc",
     }),
   );
 
@@ -93,6 +113,8 @@ function UsersRoute() {
       search: string;
       role: string;
       status: string;
+      sortBy: string;
+      order: string;
     }>,
   ) {
     const s = new URLSearchParams(location.search);
@@ -219,17 +241,63 @@ function UsersRoute() {
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                <Input
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      pushSearch({ search: searchInput.trim(), page: 1 });
-                    }
-                  }}
-                  placeholder="Tìm kiếm theo tên hoặc email"
-                  className="w-full md:w-72"
-                />
+                <div className="relative w-full md:w-72">
+                  <Input
+                    ref={(el) => (inputRef.current = el)}
+                    value={searchInput}
+                    onChange={(e) => {
+                      setSearchInput(e.target.value);
+                      setShowSuggestions(true);
+                      setActiveIndex(-1);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        if (activeIndex >= 0 && suggestionsQuery.data && suggestionsQuery.data[activeIndex]) {
+                          const s = suggestionsQuery.data[activeIndex];
+                          setSearchInput(s.label);
+                          pushSearch({ search: s.label, page: 1 });
+                          setShowSuggestions(false);
+                          return;
+                        }
+                        pushSearch({ search: searchInput.trim(), page: 1 });
+                      } else if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const len = suggestionsQuery.data?.length ?? 0;
+                        setActiveIndex((i) => Math.min(len - 1, i + 1));
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setActiveIndex((i) => Math.max(-1, i - 1));
+                      } else if (e.key === "Escape") {
+                        setShowSuggestions(false);
+                      }
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                    placeholder="Tìm kiếm theo tên hoặc email"
+                    className="w-full"
+                  />
+
+                  {showSuggestions && suggestionsQuery.data && suggestionsQuery.data.length > 0 ? (
+                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-auto rounded-md border bg-background shadow-md">
+                      {suggestionsQuery.data.map((s, idx) => (
+                        <button
+                          key={s.id}
+                          className={`block w-full px-3 py-2 text-left hover:bg-muted/30 ${idx === activeIndex ? 'bg-muted/30' : ''}`}
+                          onMouseEnter={() => setActiveIndex(idx)}
+                          onMouseLeave={() => setActiveIndex(-1)}
+                          onClick={() => {
+                            setSearchInput(s.label);
+                            pushSearch({ search: s.label, page: 1 });
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          <div className="font-medium">{s.label}</div>
+                          <div className="text-muted-foreground text-xs">{s.email}</div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
 
                 <Select
                   value={searchParams.role}
@@ -261,6 +329,33 @@ function UsersRoute() {
                     <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
                     <SelectItem value="ACTIVE">ACTIVE</SelectItem>
                     <SelectItem value="SUSPENDED">SUSPENDED</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={searchParams.sortBy}
+                  onValueChange={(value) => pushSearch({ sortBy: value ?? "createdAt", page: 1 })}
+                >
+                  <SelectTrigger className="w-full md:w-40">
+                    <SelectValue placeholder="Sắp xếp" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt">Ngày tạo</SelectItem>
+                    <SelectItem value="name">Tên</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={searchParams.order}
+                  onValueChange={(value) => pushSearch({ order: value ?? "desc", page: 1 })}
+                >
+                  <SelectTrigger className="w-full md:w-36">
+                    <SelectValue placeholder="Thứ tự" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">Tăng dần</SelectItem>
+                    <SelectItem value="desc">Giảm dần</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

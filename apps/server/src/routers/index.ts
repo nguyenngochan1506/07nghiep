@@ -29,9 +29,9 @@ export const appRouter = router({
   job: jobRouter,
   notification: notificationRouter,
   applications: applicationsRouter,
-  // admin: router({
-  //   users: adminUserRouter,
-  // }),
+  admin: router({
+    users: adminUserRouter,
+  }),
   interview: interviewRouter,
   conversation: conversationRouter,
   message: messageRouter,

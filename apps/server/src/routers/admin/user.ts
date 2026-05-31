@@ -18,6 +18,8 @@ const userListSchema = z.object({
   search: z.string().optional(),
   role: z.nativeEnum(UserRole).optional(),
   status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+  sortBy: z.enum(["createdAt", "name", "email"]).default("createdAt"),
+  order: z.enum(["asc", "desc"]).default("desc"),
 });
 
 const updateStatusSchema = z.object({
@@ -43,7 +45,7 @@ const deleteUserSchema = z.object({ userId: z.string() });
 
 export const adminUserRouter = router({
   list: adminProcedure.input(userListSchema).query(async ({ ctx, input }) => {
-    const { page, limit, search, role, status } = input;
+    const { page, limit, search, role, status, sortBy, order } = input;
 
     const where: any = {};
 
@@ -62,11 +64,14 @@ export const adminUserRouter = router({
       where.isSuspended = true;
     }
 
+    // exclude soft-deleted users
+    where.deletedAt = null;
+
     const total = await ctx.prisma.user.count({ where });
 
     const users = await ctx.prisma.user.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { [sortBy]: order },
       skip: (page - 1) * limit,
       take: limit,
       select: {
@@ -75,11 +80,13 @@ export const adminUserRouter = router({
         email: true,
         image: true,
         role: true,
+        isSuspended: true,
         createdAt: true,
         updatedAt: true,
-        isSuspended: true,
       },
     });
+
+    const totalPages = Math.ceil(total / limit);
 
     const mapped = users.map((u) => ({
       id: u.id,
@@ -91,8 +98,6 @@ export const adminUserRouter = router({
       updatedAt: u.updatedAt,
       status: u.isSuspended ? "SUSPENDED" : "ACTIVE",
     }));
-
-    const totalPages = Math.ceil(total / limit) || 1;
 
     return { data: mapped, total, totalPages, page, limit };
   }),
@@ -134,13 +139,56 @@ export const adminUserRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    const updated = await ctx.prisma.user.update({
-      where: { id: userId },
-      data: { role },
-    });
+    const prev = await ctx.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    const updated = await ctx.prisma.user.update({ where: { id: userId }, data: { role } });
+
+    // Record role change as internal notification for history
+    try {
+      const adminId = ctx.session?.user.id ?? null;
+      await ctx.prisma.notification.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId,
+          type: "SYSTEM",
+          title: "Thay đổi vai trò",
+          body: `Role changed from ${prev?.role ?? "UNKNOWN"} to ${updated.role}`,
+          data: {
+            internal: true,
+            previousRole: prev?.role ?? null,
+            newRole: updated.role,
+            adminId,
+          },
+        },
+      });
+    } catch (e) {
+      console.error("Failed to record role change:", e);
+    }
 
     return { success: true, user: { id: updated.id, role: updated.role } };
   }),
+
+  // suggestions for autocomplete (name or email)
+  suggestions: adminProcedure
+    .input(z.object({ q: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const q = input.q.trim();
+      if (!q) return [] as { id: string; label: string; email?: string }[];
+
+      const users = await ctx.prisma.user.findMany({
+        where: {
+          deletedAt: null,
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, email: true },
+      });
+
+      return users.map((u) => ({ id: u.id, label: `${u.name} <${u.email}>`, email: u.email }));
+    }),
 
   getDetail: adminProcedure.input(getDetailSchema).query(async ({ ctx, input }) => {
     const { id } = input;
@@ -185,6 +233,13 @@ export const adminUserRouter = router({
       }),
     ]);
 
+    // fetch role change history
+    const roleChangesRaw = await ctx.prisma.notification.findMany({
+      where: { userId: id, type: "SYSTEM", title: "Thay đổi vai trò" },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
     const timeline: TimelineItem[] = [
       ...recentSessions.map((s) => ({
         type: "LOGIN" as const,
@@ -221,6 +276,15 @@ export const adminUserRouter = router({
       createdBy: (n.data as { adminId?: string } | null)?.adminId ?? null,
     }));
 
+    const roleHistory = roleChangesRaw.map((n) => ({
+      id: n.id,
+      previousRole: (n.data as any)?.previousRole ?? null,
+      newRole: (n.data as any)?.newRole ?? null,
+      adminId: (n.data as any)?.adminId ?? null,
+      createdAt: n.createdAt,
+      note: n.body,
+    }));
+
     return {
       user,
       status: user.isSuspended ? "SUSPENDED" : "ACTIVE",
@@ -232,6 +296,7 @@ export const adminUserRouter = router({
         timeline,
       },
       adminNotes,
+      roleHistory,
     };
   }),
 
@@ -317,7 +382,23 @@ export const adminUserRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    await ctx.prisma.user.delete({ where: { id: userId } });
+    // Soft-delete: set deletedAt timestamp
+    await ctx.prisma.user.update({ where: { id: userId }, data: { deletedAt: new Date() } });
+
+    try {
+      await ctx.prisma.notification.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId,
+          type: "SYSTEM",
+          title: "USER_DELETED",
+          body: "User soft-deleted by admin",
+          data: { internal: true, adminId: ctx.session?.user.id ?? null, soft: true },
+        },
+      });
+    } catch (e) {
+      console.error("Failed to record user delete notification:", e);
+    }
 
     return { success: true };
   }),
