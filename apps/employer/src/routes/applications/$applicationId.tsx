@@ -367,11 +367,9 @@ function ApplicationDetailPage() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">Lịch phỏng vấn</h3>
                   <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Lên lịch
-                      </Button>
+                    <DialogTrigger render={<Button size="sm" />}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Lên lịch
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>

@@ -152,16 +152,20 @@ function mapFormValuesToProfileUpdateInput(values: ProfileFormValues) {
       })),
     education: values.education
       .map((item) => {
-        const startYear = Number.parseInt(item.startDate.slice(0, 4), 10);
-        const endYear = Number.parseInt(item.endDate.slice(0, 4), 10);
+        const startYear = item.startDate
+          ? Number.parseInt(item.startDate.slice(0, 4), 10)
+          : Number.NaN;
+        const endYear = item.endDate
+          ? Number.parseInt(item.endDate.slice(0, 4), 10)
+          : Number.NaN;
 
         if (Number.isNaN(startYear)) {
           return null;
         }
 
         return {
-          degree: item.degree,
-          school: item.school,
+          degree: item.degree || "",
+          school: item.school || "",
           location: item.location || undefined,
           startYear,
           endYear: Number.isNaN(endYear) ? undefined : endYear,

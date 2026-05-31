@@ -82,6 +82,13 @@ function AdminUserDetailPage() {
     return "secondary" as const;
   }, [user?.role]);
 
+  const formatRole = (role?: string | null) => {
+    if (!role) {
+      return "Unknown";
+    }
+    return `${role.charAt(0)}${role.slice(1).toLowerCase()}`;
+  };
+
   const onChangeRole = async (value: UserRole | null) => {
     if (!user) {
       return;
@@ -258,7 +265,7 @@ function AdminUserDetailPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-2">
-              <p className="text-xs font-medium">TROLE_CHANGE</p>
+              <p className="text-xs font-medium">Thay đổi vai trò</p>
               <Select value={user.role} onValueChange={onChangeRole}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn vai trò" />

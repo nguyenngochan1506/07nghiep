@@ -243,7 +243,9 @@ function UsersRoute() {
               <div className="flex flex-col gap-2 md:flex-row md:items-center">
                 <div className="relative w-full md:w-72">
                   <Input
-                    ref={(el) => (inputRef.current = el)}
+                    ref={(el) => {
+                      inputRef.current = el;
+                    }}
                     value={searchInput}
                     onChange={(e) => {
                       setSearchInput(e.target.value);
