@@ -30,26 +30,8 @@ const defaultValues: ProfileFormValues = {
   location: "",
   aboutMe: "",
   skills: [],
-  experience: [
-    {
-      title: "",
-      company: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    },
-  ],
-  education: [
-    {
-      degree: "",
-      school: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      gpa: "",
-    },
-  ],
+  experience: [],
+  education: [],
   portfolio: {
     linkedin: "",
     github: "",
@@ -110,8 +92,8 @@ function mapProfileApiToFormValues(
           school: typeof item.school === "string" ? item.school : "",
           location: typeof item.location === "string" ? item.location : "",
           startDate:
-            typeof item.startYear === "number" ? `${item.startYear}-01` : "",
-          endDate: typeof item.endYear === "number" ? `${item.endYear}-01` : "",
+            typeof item.startYear === "number" ? `${item.startYear}-01-01` : "",
+          endDate: typeof item.endYear === "number" ? `${item.endYear}-01-01` : "",
           gpa: typeof item.gpa === "string" ? item.gpa : "",
         }))
         .filter(
@@ -157,15 +139,17 @@ function mapFormValuesToProfileUpdateInput(values: ProfileFormValues) {
       values.portfolio.linkedin ||
       values.portfolio.github ||
       undefined,
-    experience: values.experience.map((item) => ({
-      title: item.title,
-      company: item.company,
-      location: item.location || undefined,
-      startDate: item.startDate,
-      endDate: item.endDate || undefined,
-      current: !item.endDate,
-      description: item.description || undefined,
-    })),
+    experience: values.experience
+      .filter((item) => Boolean(item.title || item.company))
+      .map((item) => ({
+        title: item.title || "",
+        company: item.company || "",
+        location: item.location || undefined,
+        startDate: item.startDate ? item.startDate.slice(0, 7) : "",
+        endDate: item.endDate ? item.endDate.slice(0, 7) : undefined,
+        current: !item.endDate,
+        description: item.description || undefined,
+      })),
     education: values.education
       .map((item) => {
         const startYear = Number.parseInt(item.startDate.slice(0, 4), 10);
@@ -213,6 +197,9 @@ function ProfileEditPage() {
   );
   const { mutateAsync: deleteResume } = useMutation(
     trpc.profile.deleteResume.mutationOptions(),
+  );
+  const { mutateAsync: updateUserName } = useMutation(
+    trpc.user.updateMe.mutationOptions(),
   );
 
   const isDirty = form.formState.isDirty;
@@ -350,13 +337,19 @@ function ProfileEditPage() {
         clearTimeout(autoSaveTimerRef.current);
       }
 
-      autoSaveTimerRef.current = setTimeout(() => {
+      autoSaveTimerRef.current = setTimeout(async () => {
         const parsed = profileSchema.safeParse(data);
         if (!parsed.success) {
           return;
         }
 
-        mutate(mapFormValuesToProfileUpdateInput(parsed.data), {
+        const input = mapFormValuesToProfileUpdateInput(parsed.data);
+
+        if (data.fullName && data.fullName !== sessionName) {
+          await updateUserName({ name: data.fullName });
+        }
+
+        mutate(input, {
           onSuccess: () => {
             toast.success("Đã lưu thay đổi");
 
@@ -376,6 +369,31 @@ function ProfileEditPage() {
       subscription.unsubscribe();
     };
   }, [form, mutate]);
+
+  const handleSave = async () => {
+    const data = form.getValues();
+    const parsed = profileSchema.safeParse(data);
+    if (!parsed.success) {
+      toast.error("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
+
+    const input = mapFormValuesToProfileUpdateInput(parsed.data);
+
+    if (data.fullName && data.fullName !== sessionName) {
+      await updateUserName({ name: data.fullName });
+    }
+
+    mutate(input, {
+      onSuccess: () => {
+        toast.success("Đã lưu thay đổi");
+        queryClient.invalidateQueries();
+      },
+      onError: (error) => {
+        toast.error("Không thể lưu: " + error.message);
+      },
+    });
+  };
 
   const watchedValues = form.watch();
 
@@ -415,6 +433,15 @@ function ProfileEditPage() {
           onChange={handleResumeUpload}
           onRemove={handleResumeRemove}
         />
+
+        <div className="flex justify-end gap-3 pt-4 border-t">
+          <Button asChild variant="outline">
+            <Link to="/profile" onClick={handleBackToProfileClick}>Hủy</Link>
+          </Button>
+          <Button onClick={handleSave} disabled={!isDirty}>
+            Lưu thay đổi
+          </Button>
+        </div>
       </form>
     </div>
   );

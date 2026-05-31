@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   generatePresignedUploadUrl,
   isStorageConfigured,
+  getFileUrl,
   type UploadType,
 } from "@07nghiep/storage";
 import { profileUpdateSchema } from "../lib/api/schemas";
@@ -28,18 +29,11 @@ export const profileRouter = router({
     if (!ctx.user)
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
-    const profile = await ctx.prisma.profile.findUnique({
+    return ctx.prisma.profile.upsert({
       where: { userId: ctx.user.id },
+      update: {},
+      create: { userId: ctx.user.id, skills: [] },
     });
-
-    if (!profile) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Profile not found",
-      });
-    }
-
-    return profile;
   }),
 
   updateMyProfile: candidateProcedure
@@ -154,5 +148,18 @@ export const profileRouter = router({
       );
 
       return result;
+    }),
+  getFileViewUrl: candidateProcedure
+    .input(z.object({ url: z.string().min(1) }))
+    .query(async ({ input }) => {
+      if (!isStorageConfigured()) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "File storage is not configured",
+        });
+      }
+
+      const key = input.url.split("/").slice(-2).join("/");
+      return getFileUrl(key);
     }),
 });

@@ -76,6 +76,55 @@ export const organizationRouter = router({
       });
     }),
 
+  // ── Public: List organizations ─────────────────────────────────────────────
+  getPublicList: publicProcedure
+    .input(
+      z.object({
+        keyword: z.string().optional(),
+        industry: z.string().optional(),
+        limit: z.number().min(1).max(50).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const where: any = {};
+
+      if (input.keyword) {
+        where.name = { contains: input.keyword, mode: "insensitive" };
+      }
+
+      if (input.industry) {
+        where.industry = { contains: input.industry, mode: "insensitive" };
+      }
+
+      const [orgs, total] = await Promise.all([
+        ctx.prisma.organization.findMany({
+          where,
+          include: {
+            _count: {
+              select: {
+                jobs: {
+                  where: { status: "OPEN" },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: input.limit,
+          skip: input.offset,
+        }),
+        ctx.prisma.organization.count({ where }),
+      ]);
+
+      return {
+        organizations: orgs.map((org) => ({
+          ...org,
+          openJobsCount: org._count.jobs,
+        })),
+        total,
+      };
+    }),
+
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {

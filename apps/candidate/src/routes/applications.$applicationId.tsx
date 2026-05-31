@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, CalendarDays, Clock3, FileText, Building2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, FileText, Building2, MapPin, Link as LinkIcon, Check, X, Clock } from "lucide-react";
 
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
@@ -97,6 +97,18 @@ function ApplicationDetailPage() {
   const withdrawMutation = useMutation(trpc.applications.withdraw.mutationOptions());
   const updateMutation = useMutation(trpc.applications.update.mutationOptions());
 
+  // Interview
+  const { data: interviews, isLoading: interviewsLoading } = useQuery(
+    trpc.interview.list.queryOptions({ applicationId }),
+  );
+  const respondInterview = useMutation(trpc.interview.respond.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast.success("Đã cập nhật trạng thái phỏng vấn");
+    },
+    onError: (err: any) => toast.error(err.message || "Không thể cập nhật"),
+  }));
+
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [coverDraft, setCoverDraft] = useState("");
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -173,7 +185,7 @@ function ApplicationDetailPage() {
               lastKnownStep={
                 // derive last successful step from histories, find last toStatus that is in our step order
                 ((): any => {
-                  const STEP_ORDER = ["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEW", "OFFERED"] as const;
+                  const STEP_ORDER = ["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEWING", "OFFERED"] as const;
                   for (let i = data.histories.length - 1; i >= 0; i--) {
                     const s = data.histories[i].toStatus;
                     if ((STEP_ORDER as readonly string[]).includes(s)) return s;
@@ -340,6 +352,92 @@ function ApplicationDetailPage() {
                 </CardContent>
               </Card>
             ) : null}
+            <Separator className="my-4" />
+
+            {/* Interview Section */}
+            <Card>
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="text-lg">Lịch phỏng vấn</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {interviewsLoading ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : interviews && (interviews as any[]).length > 0 ? (
+                  <div className="space-y-3">
+                    {(interviews as any[]).map((iv: any) => {
+                      const isActive = iv.status !== "CANCELLED" && iv.status !== "COMPLETED";
+                      const dateStr = new Date(iv.scheduledAt).toLocaleDateString("vi-VN", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      });
+                      const timeStr = new Date(iv.scheduledAt).toLocaleTimeString("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                      return (
+                        <div key={iv.id} className={`rounded-lg border p-4 ${!isActive ? "opacity-60" : ""}`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <Badge className={
+                              iv.status === "SCHEDULED" ? "bg-warning/10 text-warning border-warning/20" :
+                              iv.status === "CONFIRMED" ? "bg-success/10 text-success border-success/20" :
+                              iv.status === "CANCELLED" ? "bg-destructive/10 text-destructive border-destructive/20" :
+                              "bg-muted text-muted-foreground"
+                            }>
+                              {iv.status === "SCHEDULED" ? "Đã lên lịch" :
+                               iv.status === "CONFIRMED" ? "Đã xác nhận" :
+                               iv.status === "CANCELLED" ? "Đã hủy" :
+                               iv.status === "COMPLETED" ? "Đã hoàn thành" : iv.status}
+                            </Badge>
+                            {iv.status === "SCHEDULED" && (
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => respondInterview.mutate({ id: iv.id, action: "CONFIRMED" })} disabled={respondInterview.isPending}>
+                                  <Check className="h-4 w-4 mr-1" />Xác nhận
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => respondInterview.mutate({ id: iv.id, action: "CANCELLED" })} disabled={respondInterview.isPending}>
+                                  <X className="h-4 w-4 mr-1" />Từ chối
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-1.5 text-sm">
+                            <div className="flex items-center gap-2">
+                              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                              <span>{dateStr}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span>{timeStr} · {iv.durationMinutes} phút</span>
+                            </div>
+                            {iv.location && (
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span>{iv.location}</span>
+                              </div>
+                            )}
+                            {iv.meetingLink && (
+                              <div className="flex items-center gap-2">
+                                <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                                <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{iv.meetingLink}</a>
+                              </div>
+                            )}
+                          </div>
+                          {iv.notes && (
+                            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">{iv.notes}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Chưa có lịch phỏng vấn nào.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Separator className="my-4" />
 
             {/* Employer notes */}

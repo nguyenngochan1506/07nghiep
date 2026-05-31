@@ -11,7 +11,7 @@ const KANBAN_COLUMNS = [
   { id: ApplicationStatus.PENDING, title: "Pending" },
   { id: ApplicationStatus.VIEWED, title: "Viewed" },
   { id: ApplicationStatus.SHORTLISTED, title: "Shortlisted" },
-  { id: ApplicationStatus.INTERVIEW, title: "Interview" },
+  { id: ApplicationStatus.INTERVIEWING, title: "Interviewing" },
   { id: ApplicationStatus.OFFERED, title: "Offered" },
   { id: ApplicationStatus.REJECTED, title: "Rejected" },
 ];

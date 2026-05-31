@@ -35,6 +35,7 @@ export const profileUpdateSchema = z.object({
   phone: z.string().max(20).optional(),
   portfolioUrl: z.string().url().optional(),
   avatarUrl: z.string().url().optional(),
+  resumeUrl: z.string().url().optional(),
 });
 
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;

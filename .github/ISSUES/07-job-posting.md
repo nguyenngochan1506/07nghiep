@@ -114,7 +114,7 @@ Same form as create, pre-filled with existing data.
 apps/employer/src/
 ├── routes/
 │   ├── jobs.new.tsx           # Create job
-│   ├── my-jobs.tsx           # Job dashboard
+│   ├── my-jobs.index.tsx           # Job dashboard
 │   └── my-jobs.$jobId.edit.tsx  # Edit job
 ├── components/
 │   ├── job/

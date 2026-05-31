@@ -31,7 +31,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
         {
           onSuccess: () => {
             navigate({
-              to: "/dashboard",
+              to: "/home",
             });
             toast.success("Đăng nhập thành công");
           },

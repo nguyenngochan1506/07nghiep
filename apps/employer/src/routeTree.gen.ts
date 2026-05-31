@@ -9,19 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InterviewsRouteImport } from './routes/interviews'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MyJobsIndexRouteImport } from './routes/my-jobs/index'
 import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
 import { Route as SettingsOrganizationRouteImport } from './routes/settings/organization'
+import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 import { Route as JobsNewRouteImport } from './routes/jobs/new'
 import { Route as ApplicationsApplicationIdRouteImport } from './routes/applications/$applicationId'
 import { Route as MyJobsJobIdEditRouteImport } from './routes/my-jobs/$jobId/edit'
 
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InterviewsRoute = InterviewsRouteImport.update({
+  id: '/interviews',
+  path: '/interviews',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -49,6 +68,11 @@ const SettingsOrganizationRoute = SettingsOrganizationRouteImport.update({
   path: '/settings/organization',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
+  id: '/$conversationId',
+  path: '/$conversationId',
+  getParentRoute: () => MessagesRoute,
+} as any)
 const JobsNewRoute = JobsNewRouteImport.update({
   id: '/jobs/new',
   path: '/jobs/new',
@@ -69,9 +93,13 @@ const MyJobsJobIdEditRoute = MyJobsJobIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRouteWithChildren
+  '/notifications': typeof NotificationsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/settings/organization': typeof SettingsOrganizationRoute
   '/applications/': typeof ApplicationsIndexRoute
   '/my-jobs/': typeof MyJobsIndexRoute
@@ -80,9 +108,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRouteWithChildren
+  '/notifications': typeof NotificationsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/settings/organization': typeof SettingsOrganizationRoute
   '/applications': typeof ApplicationsIndexRoute
   '/my-jobs': typeof MyJobsIndexRoute
@@ -92,9 +124,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRouteWithChildren
+  '/notifications': typeof NotificationsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
   '/jobs/new': typeof JobsNewRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/settings/organization': typeof SettingsOrganizationRoute
   '/applications/': typeof ApplicationsIndexRoute
   '/my-jobs/': typeof MyJobsIndexRoute
@@ -105,9 +141,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/interviews'
     | '/login'
+    | '/messages'
+    | '/notifications'
     | '/applications/$applicationId'
     | '/jobs/new'
+    | '/messages/$conversationId'
     | '/settings/organization'
     | '/applications/'
     | '/my-jobs/'
@@ -116,9 +156,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/interviews'
     | '/login'
+    | '/messages'
+    | '/notifications'
     | '/applications/$applicationId'
     | '/jobs/new'
+    | '/messages/$conversationId'
     | '/settings/organization'
     | '/applications'
     | '/my-jobs'
@@ -127,9 +171,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard'
+    | '/interviews'
     | '/login'
+    | '/messages'
+    | '/notifications'
     | '/applications/$applicationId'
     | '/jobs/new'
+    | '/messages/$conversationId'
     | '/settings/organization'
     | '/applications/'
     | '/my-jobs/'
@@ -139,7 +187,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  InterviewsRoute: typeof InterviewsRoute
   LoginRoute: typeof LoginRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
+  NotificationsRoute: typeof NotificationsRoute
   ApplicationsApplicationIdRoute: typeof ApplicationsApplicationIdRoute
   JobsNewRoute: typeof JobsNewRoute
   SettingsOrganizationRoute: typeof SettingsOrganizationRoute
@@ -150,11 +201,32 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interviews': {
+      id: '/interviews'
+      path: '/interviews'
+      fullPath: '/interviews'
+      preLoaderRoute: typeof InterviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -192,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsOrganizationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/$conversationId': {
+      id: '/messages/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof MessagesConversationIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
     '/jobs/new': {
       id: '/jobs/new'
       path: '/jobs/new'
@@ -216,10 +295,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MessagesRouteChildren {
+  MessagesConversationIdRoute: typeof MessagesConversationIdRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesConversationIdRoute: MessagesConversationIdRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  InterviewsRoute: InterviewsRoute,
   LoginRoute: LoginRoute,
+  MessagesRoute: MessagesRouteWithChildren,
+  NotificationsRoute: NotificationsRoute,
   ApplicationsApplicationIdRoute: ApplicationsApplicationIdRoute,
   JobsNewRoute: JobsNewRoute,
   SettingsOrganizationRoute: SettingsOrganizationRoute,

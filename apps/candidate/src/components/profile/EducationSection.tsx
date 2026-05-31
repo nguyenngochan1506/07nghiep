@@ -96,7 +96,7 @@ export default function EducationSection({ form }: EducationSectionProps) {
                     <Label htmlFor={`education.${index}.startDate`}>Từ ngày</Label>
                     <Input
                       id={`education.${index}.startDate`}
-                      type="month"
+                      type="date"
                       data-invalid={Boolean(errors?.startDate)}
                       aria-invalid={Boolean(errors?.startDate)}
                       {...form.register(`education.${index}.startDate`)}
@@ -108,7 +108,7 @@ export default function EducationSection({ form }: EducationSectionProps) {
                     <Label htmlFor={`education.${index}.endDate`}>Đến ngày</Label>
                     <Input
                       id={`education.${index}.endDate`}
-                      type="month"
+                      type="date"
                       data-invalid={Boolean(errors?.endDate)}
                       aria-invalid={Boolean(errors?.endDate)}
                       {...form.register(`education.${index}.endDate`)}

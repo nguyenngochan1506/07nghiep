@@ -15,11 +15,14 @@ import {
   SelectValue,
 } from "@07nghiep/ui/components/select";
 import { Textarea } from "@07nghiep/ui/components/textarea";
-import { Calendar, Download, ExternalLink, Mail, MapPin, Phone, User } from "lucide-react";
+import { Calendar, Download, ExternalLink, Mail, MapPin, Phone, User, Plus, Clock, MapPin as MapPinIcon, Link as LinkIcon, X, Check } from "lucide-react";
 import { format } from "date-fns";
 import { getStatusColor, getStatusLabel } from "../../components/applications/application-card";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { Input } from "@07nghiep/ui/components/input";
+import { Label } from "@07nghiep/ui/components/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@07nghiep/ui/components/dialog";
 
 
 export const Route = createFileRoute("/applications/$applicationId")({
@@ -33,6 +36,65 @@ function ApplicationDetailPage() {
   );
 
   const [notes, setNotes] = useState("");
+
+  // Interview scheduling
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [interviewDate, setInterviewDate] = useState("");
+  const [interviewTime, setInterviewTime] = useState("");
+  const [interviewDuration, setInterviewDuration] = useState(60);
+  const [interviewLocation, setInterviewLocation] = useState("");
+  const [interviewLink, setInterviewLink] = useState("");
+  const [interviewNotes, setInterviewNotes] = useState("");
+
+  const { data: interviews, isLoading: interviewsLoading } = useQuery(
+    trpc.interview.list.queryOptions({ applicationId })
+  );
+
+  const createInterview = useMutation(
+    trpc.interview.create.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries();
+        toast.success("Đã lên lịch phỏng vấn");
+        setScheduleOpen(false);
+        resetInterviewForm();
+      },
+      onError: (err: any) => toast.error(err.message || "Không thể lên lịch"),
+    })
+  );
+
+  const cancelInterview = useMutation(
+    trpc.interview.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries();
+        toast.success("Đã hủy lịch phỏng vấn");
+      },
+      onError: (err: any) => toast.error(err.message || "Không thể hủy lịch"),
+    })
+  );
+
+  const resetInterviewForm = () => {
+    setInterviewDate("");
+    setInterviewTime("");
+    setInterviewDuration(60);
+    setInterviewLocation("");
+    setInterviewLink("");
+    setInterviewNotes("");
+  };
+
+  const handleScheduleInterview = () => {
+    if (!interviewDate || !interviewTime) {
+      toast.error("Vui lòng chọn ngày và giờ phỏng vấn");
+      return;
+    }
+    createInterview.mutate({
+      applicationId,
+      scheduledAt: `${interviewDate}T${interviewTime}:00`,
+      durationMinutes: interviewDuration,
+      location: interviewLocation || undefined,
+      meetingLink: interviewLink || undefined,
+      notes: interviewNotes || undefined,
+    });
+  };
 
   useEffect(() => {
     if (application?.notes) {
@@ -94,9 +156,14 @@ function ApplicationDetailPage() {
       <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between bg-card p-6 rounded-2xl border shadow-sm">
         <div className="flex items-center gap-6">
           <Avatar className="h-20 w-20 ring-4 ring-muted">
-            <AvatarImage src={application.candidate.image || undefined} />
+            <AvatarImage src={profile?.avatarUrl || application.candidate.image || undefined} />
             <AvatarFallback className="text-2xl">
-              <User className="h-10 w-10 text-muted-foreground" />
+              {(application.candidate.name || "?")
+                .split(" ")
+                .slice(0, 2)
+                .map((w: string) => w[0] ?? "")
+                .join("")
+                .toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1">
@@ -167,6 +234,9 @@ function ApplicationDetailPage() {
                   Screening Questions
                 </TabsTrigger>
               )}
+              <TabsTrigger value="interviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6">
+                Phỏng vấn
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="profile" className="pt-6 outline-none">
@@ -179,50 +249,87 @@ function ApplicationDetailPage() {
                 </Card>
               ) : (
                 <div className="space-y-6">
-                  {/* Summary */}
-                  {profile.summary && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">About</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground whitespace-pre-wrap">{profile.summary}</p>
-                      </CardContent>
-                    </Card>
-                  )}
+                   {/* Summary */}
+                   {profile.summary && (
+                     <Card>
+                       <CardHeader>
+                         <CardTitle className="text-lg">About</CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         <p className="text-muted-foreground whitespace-pre-wrap">{profile.summary}</p>
+                       </CardContent>
+                     </Card>
+                   )}
+
+                   {/* Skills */}
+                   {Array.isArray(profile.skills) && profile.skills.length > 0 && (
+                     <Card>
+                       <CardHeader>
+                         <CardTitle className="text-lg">Skills</CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         <div className="flex flex-wrap gap-2">
+                           {profile.skills.map((skill: string) => (
+                             <Badge key={skill} variant="secondary" className="rounded-full">
+                               {skill}
+                             </Badge>
+                           ))}
+                         </div>
+                       </CardContent>
+                     </Card>
+                   )}
                   
-                  {/* Experience */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Experience</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Assuming experience is an array of objects. We'll stringify for now since exact structure wasn't provided, but normally we'd map it. */}
-                      {profile.experience ? (
-                        <pre className="text-sm bg-muted p-4 rounded-lg overflow-auto">
-                          {JSON.stringify(profile.experience, null, 2)}
-                        </pre>
-                      ) : (
-                        <p className="text-muted-foreground">No experience listed.</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Education */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Education</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {profile.education ? (
-                        <pre className="text-sm bg-muted p-4 rounded-lg overflow-auto">
-                          {JSON.stringify(profile.education, null, 2)}
-                        </pre>
-                      ) : (
-                        <p className="text-muted-foreground">No education listed.</p>
-                      )}
-                    </CardContent>
-                  </Card>
+                   {/* Experience */}
+                   {Array.isArray(profile.experience) && profile.experience.length > 0 && (
+                     <Card>
+                       <CardHeader>
+                         <CardTitle className="text-lg">Experience</CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         <div className="space-y-4">
+                           {profile.experience.map((exp: any, i: number) => (
+                             <div key={i} className="border-l-2 border-muted pl-4">
+                               <h4 className="font-semibold">{exp.title || "Untitled"}</h4>
+                               <p className="text-sm text-muted-foreground">
+                                 {exp.company}{exp.location ? ` · ${exp.location}` : ""}
+                               </p>
+                               <p className="text-xs text-muted-foreground">
+                                 {exp.startDate || "?"} — {exp.endDate || exp.current ? "Present" : "?"}
+                               </p>
+                               {exp.description && (
+                                 <p className="text-sm text-muted-foreground mt-1">{exp.description}</p>
+                               )}
+                             </div>
+                           ))}
+                         </div>
+                       </CardContent>
+                     </Card>
+                   )}
+                   
+                   {/* Education */}
+                   {Array.isArray(profile.education) && profile.education.length > 0 && (
+                     <Card>
+                       <CardHeader>
+                         <CardTitle className="text-lg">Education</CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         <div className="space-y-4">
+                           {profile.education.map((edu: any, i: number) => (
+                             <div key={i} className="border-l-2 border-muted pl-4">
+                               <h4 className="font-semibold">{edu.degree || "Untitled"}</h4>
+                               <p className="text-sm text-muted-foreground">
+                                 {edu.school}{edu.location ? ` · ${edu.location}` : ""}
+                               </p>
+                               <p className="text-xs text-muted-foreground">
+                                 {edu.startYear || "?"} — {edu.endYear || "Present"}
+                                 {edu.gpa ? ` · GPA: ${edu.gpa}` : ""}
+                               </p>
+                             </div>
+                           ))}
+                         </div>
+                       </CardContent>
+                     </Card>
+                   )}
                 </div>
               )}
             </TabsContent>
@@ -254,6 +361,124 @@ function ApplicationDetailPage() {
                 </Card>
               </TabsContent>
             )}
+
+            <TabsContent value="interviews" className="pt-6 outline-none">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Lịch phỏng vấn</h3>
+                  <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Lên lịch
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Lên lịch phỏng vấn</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-2">
+                            <Label>Ngày</Label>
+                            <Input type="date" value={interviewDate} onChange={(e) => setInterviewDate(e.target.value)} />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Label>Giờ</Label>
+                            <Input type="time" value={interviewTime} onChange={(e) => setInterviewTime(e.target.value)} />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label>Thời lượng (phút)</Label>
+                          <Input type="number" value={interviewDuration} onChange={(e) => setInterviewDuration(Number(e.target.value))} min={15} max={480} step={15} />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label>Địa điểm</Label>
+                          <Input placeholder="Văn phòng, Online..." value={interviewLocation} onChange={(e) => setInterviewLocation(e.target.value)} />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label>Link họp (Google Meet, Zoom...)</Label>
+                          <Input placeholder="https://meet.google.com/..." value={interviewLink} onChange={(e) => setInterviewLink(e.target.value)} />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label>Ghi chú</Label>
+                          <Textarea placeholder="Ghi chú cho ứng viên..." value={interviewNotes} onChange={(e) => setInterviewNotes(e.target.value)} rows={3} />
+                        </div>
+                        <Button className="w-full" onClick={handleScheduleInterview} disabled={createInterview.isPending}>
+                          {createInterview.isPending ? "Đang lưu..." : "Lưu lịch phỏng vấn"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {interviewsLoading ? (
+                  <p className="text-sm text-muted-foreground">Đang tải...</p>
+                ) : interviews && (interviews as any[]).length > 0 ? (
+                  (interviews as any[]).map((iv: any) => {
+                    const isActive = iv.status !== "CANCELLED" && iv.status !== "COMPLETED";
+                    const dateStr = new Date(iv.scheduledAt).toLocaleDateString("vi-VN", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    });
+                    const timeStr = new Date(iv.scheduledAt).toLocaleTimeString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                    return (
+                      <Card key={iv.id} className={!isActive ? "opacity-60" : ""}>
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Badge variant={isActive ? "default" : "secondary"}>
+                              {iv.status === "SCHEDULED" ? "Đã lên lịch" :
+                               iv.status === "CONFIRMED" ? "Đã xác nhận" :
+                               iv.status === "CANCELLED" ? "Đã hủy" :
+                               iv.status === "COMPLETED" ? "Đã hoàn thành" : iv.status}
+                            </Badge>
+                            {isActive && (
+                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => cancelInterview.mutate({ id: iv.id })}>
+                                <X className="h-4 w-4 mr-1" />Hủy
+                              </Button>
+                            )}
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span>{dateStr}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span>{timeStr} · {iv.durationMinutes} phút</span>
+                            </div>
+                            {iv.location && (
+                              <div className="flex items-center gap-2">
+                                <MapPinIcon className="h-4 w-4 text-muted-foreground" />
+                                <span>{iv.location}</span>
+                              </div>
+                            )}
+                            {iv.meetingLink && (
+                              <div className="flex items-center gap-2">
+                                <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                                <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{iv.meetingLink}</a>
+                              </div>
+                            )}
+                          </div>
+                          {iv.notes && (
+                            <p className="text-xs text-muted-foreground mt-2 border-t pt-2">{iv.notes}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Chưa có lịch phỏng vấn nào.
+                  </div>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
 

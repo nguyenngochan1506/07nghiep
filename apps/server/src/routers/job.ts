@@ -66,6 +66,14 @@ export const jobRouter = router({
           total,
           totalPages: Math.ceil(total / pageSize),
         },
+      } as {
+        jobs: any[];
+        pagination: {
+          page: number;
+          pageSize: number;
+          total: number;
+          totalPages: number;
+        };
       };
     }),
 
@@ -139,6 +147,26 @@ export const jobRouter = router({
       return {
         ...job,
         skills: job.skills.map((s) => s.skill),
+      } as {
+        id: string;
+        title: string;
+        description: string;
+        requirements: string | null;
+        benefits: string | null;
+        salaryMin: any;
+        salaryMax: any;
+        salaryType: any;
+        salaryNegotiable: boolean;
+        location: string;
+        workType: any;
+        jobType: any;
+        experienceLevel: any;
+        status: any;
+        publishedAt: Date | null;
+        expiresAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        skills: string[];
       };
     }),
 
@@ -325,6 +353,69 @@ export const jobRouter = router({
         },
         include: { skills: true },
       });
+    }),
+
+  // ── Public: List open jobs ────────────────────────────────────────────────
+  getPublicList: publicProcedure
+    .input(
+      z.object({
+        keyword: z.string().optional(),
+        location: z.string().optional(),
+        workType: z.string().optional(),
+        limit: z.number().min(1).max(50).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const where: any = { status: "OPEN" };
+
+      if (input.keyword) {
+        where.OR = [
+          { title: { contains: input.keyword, mode: "insensitive" } },
+          {
+            organization: {
+              name: { contains: input.keyword, mode: "insensitive" },
+            },
+          },
+        ];
+      }
+
+      if (input.location) {
+        where.location = { contains: input.location, mode: "insensitive" };
+      }
+
+      if (input.workType) {
+        where.workType = input.workType;
+      }
+
+      const [jobs, total] = await Promise.all([
+        ctx.prisma.job.findMany({
+          where,
+          include: {
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                logoUrl: true,
+                verified: true,
+              },
+            },
+            skills: true,
+          },
+          orderBy: { createdAt: "desc" },
+          take: input.limit,
+          skip: input.offset,
+        }),
+        ctx.prisma.job.count({ where }),
+      ]);
+
+      return {
+        jobs: jobs.map((job) => ({
+          ...job,
+          skills: job.skills.map((s) => s.skill),
+        })),
+        total,
+      };
     }),
 
   // ── Public: Get job details ───────────────────────────────────────────────
