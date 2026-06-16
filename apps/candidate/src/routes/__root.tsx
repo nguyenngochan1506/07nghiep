@@ -11,7 +11,7 @@ import { trpc } from "@/utils/trpc";
 
 import "../index.css";
 
-import { createContext, useContext, useState, useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 export type JobType = {
@@ -33,7 +33,6 @@ export type JobType = {
 
 export const JobsContext = createContext<{
     jobs: JobType[];
-    toggleSave: (id: string) => void;
 } | null>(null);
 
 export function useJobs() {
@@ -103,28 +102,14 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
-    const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-
-    const toggleSave = (id: string) => {
-        setSavedIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
-
     const { data, isLoading } = useQuery(
         trpc.job.getPublicList.queryOptions({ limit: 50 })
     );
 
     const jobs: JobType[] = useMemo(() => {
         if (!data?.jobs) return [];
-        return data.jobs.map((job: any) => ({
-            ...mapJob(job),
-            isSaved: savedIds.has(job.id),
-        }));
-    }, [data, savedIds]);
+        return data.jobs.map((job: any) => mapJob(job));
+    }, [data]);
 
     return (
         <>
@@ -137,7 +122,7 @@ function RootComponent() {
             >
                 <div className="grid grid-rows-[auto_1fr] h-svh">
                     <Header />
-                    <JobsContext.Provider value={{ jobs, toggleSave }}>
+                    <JobsContext.Provider value={{ jobs }}>
                         <Outlet />
                     </JobsContext.Provider>
                 </div>

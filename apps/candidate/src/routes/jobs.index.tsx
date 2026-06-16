@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { JobCardItem } from "@/components/job-card";
 import { SearchBar } from "@/components/search-bar";
 import { JobFilters } from "@/components/job-filters";
 import { useJobs } from "@/routes/__root";
+import { queryClient, trpc } from "@/utils/trpc";
 
 export const Route = createFileRoute("/jobs/")({
     component: JobsPage,
@@ -12,7 +14,16 @@ export const Route = createFileRoute("/jobs/")({
 const ITEMS_PER_PAGE = 4;
 
 function JobsPage() {
-    const { jobs, toggleSave } = useJobs();
+    const { jobs } = useJobs();
+    const savedJobsOptions = trpc.savedJob.list.queryOptions({ pageSize: 50 });
+    const savedJobsQuery = useQuery(savedJobsOptions);
+    const toggleSavedJob = useMutation(
+        trpc.savedJob.toggle.mutationOptions({
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
+            },
+        }),
+    );
 
     const [keyword, setKeyword] = useState("");
     const [location, setLocation] = useState("");
@@ -40,7 +51,16 @@ function JobsPage() {
 
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const paginatedJobs = filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const savedIds = useMemo(
+        () => new Set((savedJobsQuery.data?.jobs ?? []).map((job) => job.id)),
+        [savedJobsQuery.data?.jobs],
+    );
+    const paginatedJobs = filteredJobs
+        .slice(startIndex, startIndex + ITEMS_PER_PAGE)
+        .map((job) => ({
+            ...job,
+            isSaved: savedIds.has(job.id),
+        }));
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -88,7 +108,7 @@ function JobsPage() {
                                     <JobCardItem
                                         key={job.id}
                                         job={job as any}
-                                        onSave={toggleSave}
+                                        onSave={(jobId) => toggleSavedJob.mutate({ jobId })}
                                     />
                                 ))}
                             </div>

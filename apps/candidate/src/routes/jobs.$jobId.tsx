@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useJobs } from "@/routes/__root";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
-import { trpc } from "@/utils/trpc";
+import { queryClient, trpc } from "@/utils/trpc";
 
 type JobDetailView = {
   id: string;
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/jobs/$jobId")({
 
 function JobDetailPage() {
   const { jobId } = Route.useParams();
-  const { jobs, toggleSave } = useJobs();
+  const { jobs } = useJobs();
 
   const contextJob = jobs.find((j) => j.id === jobId);
 
@@ -76,6 +76,15 @@ function JobDetailPage() {
     trpc.applications.list.queryOptions({ search: undefined })
   );
   const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
+  const savedJobOptions = trpc.savedJob.isSaved.queryOptions({ jobId });
+  const savedJobQuery = useQuery(savedJobOptions);
+  const toggleSavedJob = useMutation(
+    trpc.savedJob.toggle.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: savedJobOptions.queryKey });
+      },
+    }),
+  );
 
   const isLoadingTrigger = hasAppliedQuery.isLoading || profileQuery.isLoading || apiLoading;
 
@@ -121,7 +130,7 @@ function JobDetailPage() {
     );
   }
 
-  const isSaved = contextJob?.isSaved ?? false;
+  const isSaved = savedJobQuery.data?.saved ?? false;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8">
@@ -152,7 +161,8 @@ function JobDetailPage() {
 
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button
-                onClick={() => toggleSave(job.id)}
+                onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
+                disabled={toggleSavedJob.isPending}
                 className={`flex-1 md:flex-none px-4 py-2 border rounded-md font-medium transition-colors ${
                   isSaved
                     ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"

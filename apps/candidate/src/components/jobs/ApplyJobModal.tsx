@@ -59,6 +59,7 @@ export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileC
 	const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
 	const { mutateAsync, isPending } = useMutation(trpc.applications.applyJob.mutationOptions());
+	const uploadResumeMutation = useMutation(trpc.profile.uploadResume.mutationOptions());
 
 	useEffect(() => {
 		if (!open) {
@@ -76,18 +77,40 @@ export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileC
 
 	const onSubmit = form.handleSubmit(async (values) => {
 		try {
-			// handle upload placeholder
+			let finalResume: string | undefined;
+
 			if (values.resumeChoice === "upload") {
 				if (!uploadedFile) {
-					toast.error("Vui lòng chọn tệp để tải lên hoặc chọn sơ yếu lý lịch của bạn.");
+					toast.error("Vui lòng chọn tệp PDF để tải lên.");
 					return;
 				}
-				// Upload logic placeholder
-				toast.error("Chức năng tải lên hồ sơ xin việc mới hiện chưa được triển khai. Vui lòng sử dụng hồ sơ xin việc có sẵn trong hồ sơ của bạn.");
-				return;
-			}
 
-			const finalResume = values.resumeChoice === "profile" ? profileQuery.data?.resumeUrl : undefined;
+				if (uploadedFile.type !== "application/pdf") {
+					toast.error("Hệ thống chỉ hỗ trợ CV định dạng PDF.");
+					return;
+				}
+
+				const upload = await uploadResumeMutation.mutateAsync({
+					filename: uploadedFile.name,
+					contentType: uploadedFile.type,
+				});
+
+				const uploadResponse = await fetch(upload.uploadUrl, {
+					method: "PUT",
+					headers: {
+						"Content-Type": uploadedFile.type,
+					},
+					body: uploadedFile,
+				});
+
+				if (!uploadResponse.ok) {
+					throw new Error("Không thể tải CV lên máy chủ lưu trữ.");
+				}
+
+				finalResume = upload.publicUrl;
+			} else {
+				finalResume = values.resumeChoice === "profile" ? profileQuery.data?.resumeUrl ?? undefined : undefined;
+			}
 
 			await mutateAsync({ jobId, coverLetter: values.coverLetter, resumeUrl: finalResume ?? undefined });
 
@@ -163,7 +186,7 @@ export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileC
 								</label>
 								<input
 									type="file"
-									accept=".pdf,.doc,.docx"
+									accept="application/pdf,.pdf"
 									onChange={(e) => setUploadedFile(e.target.files?.[0] ?? null)}
 								/>
 								{uploadedFile ? <span className="text-xs">{uploadedFile.name}</span> : null}
@@ -176,8 +199,8 @@ export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileC
 							<Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
 								Hủy
 							</Button>
-							<Button type="submit" disabled={isPending}>
-								{isPending ? "Submitting..." : "Nộp đơn đăng ký"}
+							<Button type="submit" disabled={isPending || uploadResumeMutation.isPending}>
+								{isPending || uploadResumeMutation.isPending ? "Đang nộp..." : "Nộp đơn đăng ký"}
 							</Button>
 						</div>
 					</form>
