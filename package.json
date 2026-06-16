@@ -10,6 +10,7 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
+    "test": "turbo test",
     "dev:admin": "turbo -F admin dev",
     "dev:candidate": "turbo -F candidate dev",
     "dev:employer": "turbo -F employer dev",

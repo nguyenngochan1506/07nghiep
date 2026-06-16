@@ -18,7 +18,8 @@
     "check-types": "tsc -b",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.mjs"
+    "start": "node dist/index.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@07nghiep/auth": "workspace:*",
@@ -39,6 +40,7 @@
     "@types/node": "catalog:",
     "tsdown": "^0.16.5",
     "tsx": "^4.19.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.9"
   }
 }
