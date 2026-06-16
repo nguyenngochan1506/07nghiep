@@ -42,7 +42,7 @@ const SYSTEM_STATUS = [
 ];
 
 const QUICK_ACTIONS = [
-  { icon: Users, label: "Quản lý người dùng", href: "/" },
+  { icon: Users, label: "Quản lý người dùng", href: "/admin/users" },
   { icon: Briefcase, label: "Duyệt việc làm", href: "/" },
   { icon: Shield, label: "Bảo mật", href: "/" },
   { icon: Settings, label: "Cài đặt", href: "/" },

@@ -7,7 +7,7 @@ import UserMenu from "./user-menu";
 export default function Header() {
   const navLinks = [
     { to: "/", label: "Bảng điều khiển" },
-    { to: "/", label: "Người dùng" },
+    { to: "/admin/users", label: "Người dùng" },
     { to: "/", label: "Việc làm" },
     { to: "/", label: "Báo cáo" },
   ];

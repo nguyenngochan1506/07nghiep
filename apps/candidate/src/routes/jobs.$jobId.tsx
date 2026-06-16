@@ -6,7 +6,22 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
 import { trpc } from "@/utils/trpc";
 
-function mapJob(raw: any) {
+type JobDetailView = {
+  id: string;
+  title: string;
+  companyName: string;
+  companyLogo: string;
+  location: string;
+  workType: string;
+  jobType: string;
+  experience: string;
+  salaryRange: string;
+  skills: string[];
+  description: string;
+  status: string;
+};
+
+function mapJob(raw: any): JobDetailView {
   const salaryRange =
     raw.salaryMin && raw.salaryMax
       ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
@@ -47,7 +62,15 @@ function JobDetailPage() {
     )
   );
 
-  const job = contextJob ?? (apiJob ? mapJob(apiJob) : null);
+  const contextJobView: JobDetailView | null = contextJob
+    ? {
+        ...contextJob,
+        description: "",
+        status: "OPEN",
+      }
+    : null;
+
+  const job: JobDetailView | null = contextJobView ?? (apiJob ? mapJob(apiJob) : null);
 
   const hasAppliedQuery = useQuery(
     trpc.applications.list.queryOptions({ search: undefined })

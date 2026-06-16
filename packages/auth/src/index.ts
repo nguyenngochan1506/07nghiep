@@ -27,6 +27,11 @@ export function createAuth() {
           defaultValue: "CANDIDATE",
           input: false,
         },
+        isSuspended: {
+          type: "boolean",
+          defaultValue: false,
+          input: false,
+        },
       },
     },
     secret: env.BETTER_AUTH_SECRET,

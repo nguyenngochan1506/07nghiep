@@ -19,12 +19,14 @@ export default function Header() {
         })
     );
 
-    const publicLinks = [
+    type NavLink = { to: string; label: string; hasMessageBadge?: boolean };
+
+    const publicLinks: NavLink[] = [
         { to: "/jobs/", label: "Việc làm" },
         { to: "/organizations", label: "Công ty" },
     ];
 
-    const protectedLinks = [
+    const protectedLinks: NavLink[] = [
         { to: "/saved-jobs", label: "Đã lưu" },
         { to: "/applications", label: "Đơn ứng tuyển" },
         { to: "/messages", label: "Tin nhắn", hasMessageBadge: true },

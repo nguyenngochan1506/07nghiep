@@ -17,7 +17,7 @@ import UserMenu from "./user-menu";
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
-  { icon: Users, label: "Người dùng", href: "/" },
+  { icon: Users, label: "Người dùng", href: "/admin/users" },
   { icon: Briefcase, label: "Việc làm", href: "/" },
   { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
   { icon: BarChart3, label: "Báo cáo", href: "/" },

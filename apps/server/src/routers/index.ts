@@ -4,6 +4,7 @@ import { interviewRouter } from "./interview";
 
 import { jobRouter } from "./job";
 import { applicationsRouter } from "./applications";
+import { adminUserRouter } from "./admin/user";
 import { organizationRouter } from "./organization";
 import { notificationRouter } from "./notification";
 import { profileRouter } from "./profile";
@@ -28,6 +29,9 @@ export const appRouter = router({
   job: jobRouter,
   notification: notificationRouter,
   applications: applicationsRouter,
+  admin: router({
+    users: adminUserRouter,
+  }),
   interview: interviewRouter,
   conversation: conversationRouter,
   message: messageRouter,
