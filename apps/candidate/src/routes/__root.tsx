@@ -13,6 +13,8 @@ import "../index.css";
 
 import { createContext, useContext, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 
 export type JobType = {
   id: string;
@@ -46,7 +48,10 @@ export interface RouterAppContext {
   queryClient: QueryClient;
 }
 
-function mapJob(raw: any): JobType {
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type PublicJob = RouterOutputs["job"]["getPublicList"]["jobs"][number];
+
+function mapJob(raw: PublicJob): JobType {
   const salaryRange =
     raw.salaryMin && raw.salaryMax
       ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
@@ -105,11 +110,11 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
-  const { data, isLoading } = useQuery(trpc.job.getPublicList.queryOptions({ limit: 50 }));
+  const { data } = useQuery(trpc.job.getPublicList.queryOptions({ limit: 50 }));
 
   const jobs: JobType[] = useMemo(() => {
     if (!data?.jobs) return [];
-    return data.jobs.map((job: any) => mapJob(job));
+    return data.jobs.map((job) => mapJob(job));
   }, [data]);
 
   return (

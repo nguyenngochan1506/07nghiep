@@ -91,7 +91,6 @@ function MessagesLayout() {
         </div>
         <ApplicantList
           applicants={applicantsData?.items ?? []}
-          currentUserId={currentUserId}
           activeConversationId={params.conversationId}
           isLoading={isLoading}
           onSelect={handleSelect}

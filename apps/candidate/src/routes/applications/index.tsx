@@ -3,8 +3,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import {
   ArrowRight,
-  Building2,
-  CalendarDays,
   BriefcaseBusiness,
   Loader2,
   Search,
@@ -12,14 +10,7 @@ import {
   SearchX,
 } from "lucide-react";
 
-import { Badge } from "@07nghiep/ui/components/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@07nghiep/ui/components/card";
+import { Card, CardContent, CardHeader } from "@07nghiep/ui/components/card";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { Input } from "@07nghiep/ui/components/input";
 import { Button } from "@07nghiep/ui/components/button";
@@ -32,26 +23,54 @@ import {
 } from "@07nghiep/ui/components/select";
 
 import { trpc } from "@/utils/trpc";
-import { ApplicationCard } from "@/components/application/application-card";
+import {
+  ApplicationCard,
+  type ApplicationCardProps,
+} from "@/components/application/application-card";
 
 export const Route = createFileRoute("/applications/")({
   component: ApplicationsPage,
 });
 
+const APPLICATION_STATUS_FILTERS = [
+  "ALL",
+  "PENDING",
+  "VIEWED",
+  "SHORTLISTED",
+  "INTERVIEWING",
+  "OFFERED",
+  "REJECTED",
+  "WITHDRAWN",
+] as const;
+
+type ApplicationStatusFilter = (typeof APPLICATION_STATUS_FILTERS)[number];
+type ApplicationStatus = Exclude<ApplicationStatusFilter, "ALL">;
+type ApplicationListItem = Omit<ApplicationCardProps, "job"> & {
+  job: ApplicationCardProps["job"];
+};
+type ApplicationListApiItem = {
+  id: string;
+  status: string;
+  appliedAt: string | Date;
+  job: {
+    id: string;
+    title: string;
+    organization: {
+      name: string;
+    } | null;
+  } | null;
+};
+
+function isApplicationStatusFilter(value: unknown): value is ApplicationStatusFilter {
+  if (typeof value !== "string") return false;
+  return APPLICATION_STATUS_FILTERS.includes(value as ApplicationStatusFilter);
+}
+
 function ApplicationsPage() {
   // Controlled UI state
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    | "ALL"
-    | "PENDING"
-    | "VIEWED"
-    | "SHORTLISTED"
-    | "INTERVIEWING"
-    | "OFFERED"
-    | "REJECTED"
-    | "WITHDRAWN"
-  >("ALL");
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatusFilter>("ALL");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 
   // Debounce searchTerm -> debouncedSearchTerm
@@ -64,12 +83,31 @@ function ApplicationsPage() {
   const { data, isLoading, isFetching } = useQuery(
     trpc.applications.list.queryOptions({
       search: debouncedSearchTerm || undefined,
-      status: statusFilter === "ALL" ? undefined : (statusFilter as any),
+      status: statusFilter === "ALL" ? undefined : (statusFilter as ApplicationStatus),
       sortBy: sortBy,
     }),
   );
 
-  const applications = useMemo(() => (data ?? []) as any[], [data]);
+  const applicationsSource =
+    (data as unknown as readonly ApplicationListApiItem[] | undefined) ?? [];
+  const applications = useMemo<ApplicationListItem[]>(
+    () =>
+      applicationsSource.map((application) => ({
+        id: application.id,
+        status: application.status,
+        appliedAt: application.appliedAt,
+        job: application.job
+          ? {
+              id: application.job.id,
+              title: application.job.title,
+              organization: application.job.organization
+                ? { name: application.job.organization.name }
+                : null,
+            }
+          : null,
+      })),
+    [applicationsSource],
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,7 +154,9 @@ function ApplicationsPage() {
             <div className="flex items-center gap-2">
               <Select
                 value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value ?? "ALL")}
+                onValueChange={(value) => {
+                  if (isApplicationStatusFilter(value)) setStatusFilter(value);
+                }}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Lọc theo trạng thái" />

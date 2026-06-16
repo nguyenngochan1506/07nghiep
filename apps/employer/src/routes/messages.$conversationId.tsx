@@ -10,6 +10,12 @@ import { useEffect, useRef } from "react";
 import { env } from "@07nghiep/env/employer";
 import type { MessageData } from "@07nghiep/ui/components/message/message-bubble";
 import { createSSEConnection } from "@07nghiep/ui/lib/sse";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
+
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type MessageListData = RouterOutputs["message"]["list"];
+type MessageListItem = MessageListData["items"][number];
 
 export const Route = createFileRoute("/messages/$conversationId")({
   component: ConversationDetail,
@@ -30,6 +36,21 @@ function getAvatarUrl(
 ) {
   if (!user) return undefined;
   return user.profile?.avatarUrl || user.image || undefined;
+}
+
+function toMessageData(message: {
+  id: string;
+  content: string;
+  senderId: string;
+  read: boolean;
+  createdAt: Date | string;
+  sender: MessageData["sender"];
+}): MessageData {
+  return {
+    ...message,
+    createdAt:
+      message.createdAt instanceof Date ? message.createdAt.toISOString() : message.createdAt,
+  };
 }
 
 function ConversationDetail() {
@@ -73,24 +94,26 @@ function ConversationDetail() {
     trpc.message.send.mutationOptions({
       onMutate: async (newMsg) => {
         await queryClient.cancelQueries({ queryKey: messagesQueryKey });
-        const previous = queryClient.getQueryData(messagesQueryKey);
+        const previous = queryClient.getQueryData<MessageListData>(messagesQueryKey);
 
-        const optimisticMsg: MessageData = {
+        const optimisticMsg: MessageListItem = {
           id: `temp-${Date.now()}`,
+          conversationId,
           content: newMsg.content,
           senderId: currentUserId,
           read: false,
+          readAt: null,
           createdAt: new Date().toISOString(),
           sender: {
             id: currentUserId,
-            name: currentUserName,
+            name: currentUserName ?? "",
             image: null,
             profile: null,
           },
         };
 
-        queryClient.setQueryData(messagesQueryKey, (old: any) => {
-          if (!old) return { items: [optimisticMsg], nextCursor: null };
+        queryClient.setQueryData<MessageListData>(messagesQueryKey, (old) => {
+          if (!old) return { items: [optimisticMsg], nextCursor: undefined };
           return { ...old, items: [...old.items, optimisticMsg] };
         });
 
@@ -175,7 +198,7 @@ function ConversationDetail() {
       ) : null}
 
       <MessageThread
-        messages={messagesData?.items ?? []}
+        messages={messagesData?.items.map(toMessageData) ?? []}
         currentUserId={currentUserId}
         isLoading={msgLoading}
       />

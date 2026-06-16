@@ -1,13 +1,18 @@
-import React from "react";
+import type React from "react";
+
+export type JobFiltersValue = {
+  location: string;
+  workType: string;
+};
 
 interface JobFiltersProps {
-  filters: any;
-  setFilters: React.Dispatch<React.SetStateAction<any>>;
+  filters: JobFiltersValue;
+  setFilters: React.Dispatch<React.SetStateAction<JobFiltersValue>>;
 }
 
 export function JobFilters({ filters, setFilters }: JobFiltersProps) {
-  const handleFilterChange = (key: string, value: any) => {
-    setFilters((prev: any) => ({ ...prev, [key]: value }));
+  const handleFilterChange = (key: keyof JobFiltersValue, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   return (

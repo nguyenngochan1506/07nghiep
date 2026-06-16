@@ -161,7 +161,7 @@ export const applicationsRouter = router({
       }
 
       // Verify ownership
-      if (application.job.organization.userId !== ctx.user!.id) {
+      if (application.job.organization.userId !== ctx.user?.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
       }
 
@@ -175,7 +175,7 @@ export const applicationsRouter = router({
           applicationId: id,
           fromStatus: application.status,
           toStatus: status,
-          changedById: ctx.user!.id,
+          changedById: ctx.user?.id,
           note,
         },
       });

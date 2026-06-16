@@ -12,7 +12,7 @@ export const Route = createFileRoute("/dashboard")({
     if (!session.data) {
       redirect({ to: "/login", throw: true });
     }
-    const user = session.data!.user as { role?: string };
+    const user = session.data?.user as { role?: string };
     const role = user.role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       toast.error("Bạn không có quyền truy cập trang này");

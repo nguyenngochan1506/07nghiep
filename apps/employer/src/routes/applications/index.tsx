@@ -22,6 +22,28 @@ export const Route = createFileRoute("/applications/")({
   component: ApplicationsPage,
 });
 
+type JobListItem = {
+  id: string;
+  title: string;
+};
+
+type ApplicationListItem = {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: Date | string;
+  candidate: {
+    name: string | null;
+    image: string | null;
+  };
+  job?: {
+    title: string;
+  };
+};
+
+function isApplicationStatus(value: string): value is ApplicationStatus {
+  return Object.values(ApplicationStatus).includes(value as ApplicationStatus);
+}
+
 function ApplicationsPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "ALL">("ALL");
@@ -41,7 +63,8 @@ function ApplicationsPage() {
     }),
   );
 
-  const applications = applicationsData?.items || [];
+  const applications = (applicationsData?.items ?? []) as ApplicationListItem[];
+  const jobs = (jobsData?.jobs ?? []) as JobListItem[];
 
   const bulkUpdateStatusMutation = useMutation(
     trpc.application.bulkUpdateStatus.mutationOptions({
@@ -50,7 +73,7 @@ function ApplicationsPage() {
         setSelectedIds([]);
         toast.success("Applications updated successfully");
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(err.message || "Failed to update applications");
       },
     }),
@@ -61,7 +84,7 @@ function ApplicationsPage() {
   };
 
   const handleToggleAll = (selectAll: boolean) => {
-    setSelectedIds(selectAll ? applications.map((a: any) => a.id) : []);
+    setSelectedIds(selectAll ? applications.map((application) => application.id) : []);
   };
 
   const handleBulkStatusUpdate = (status: ApplicationStatus) => {
@@ -114,13 +137,13 @@ function ApplicationsPage() {
           />
         </div>
 
-        <Select value={jobFilter as any} onValueChange={setJobFilter as any}>
+        <Select value={jobFilter} onValueChange={(value) => setJobFilter(value ?? "ALL")}>
           <SelectTrigger className="w-full sm:w-[250px] bg-background">
             <SelectValue placeholder="All Jobs" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All Jobs</SelectItem>
-            {jobsData?.jobs.map((job: any) => (
+            {jobs.map((job) => (
               <SelectItem key={job.id} value={job.id}>
                 {job.title}
               </SelectItem>
@@ -128,7 +151,12 @@ function ApplicationsPage() {
           </SelectContent>
         </Select>
 
-        <Select value={statusFilter as any} onValueChange={(val) => setStatusFilter(val as any)}>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) =>
+            setStatusFilter(value && isApplicationStatus(value) ? value : "ALL")
+          }
+        >
           <SelectTrigger className="w-full sm:w-[200px] bg-background">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
@@ -148,7 +176,13 @@ function ApplicationsPage() {
           <span className="font-medium text-sm">{selectedIds.length} application(s) selected</span>
           <div className="flex-1" />
           <span className="text-sm">Change status to:</span>
-          <Select onValueChange={(val) => handleBulkStatusUpdate(val as any)}>
+          <Select
+            onValueChange={(value) => {
+              if (typeof value === "string" && isApplicationStatus(value)) {
+                handleBulkStatusUpdate(value);
+              }
+            }}
+          >
             <SelectTrigger className="w-[180px] h-8 bg-background">
               <SelectValue placeholder="Select status..." />
             </SelectTrigger>

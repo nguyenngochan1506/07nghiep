@@ -2,7 +2,7 @@ import { ApplicationStatus } from "@/types/application";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
 import { ApplicationCard } from "./application-card";
-import { trpc, queryClient } from "../../utils/trpc";
+import { trpcClient, queryClient } from "../../utils/trpc";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ScrollArea } from "@07nghiep/ui/components/scroll-area";
@@ -31,19 +31,23 @@ interface ApplicationKanbanProps {
   }>;
 }
 
+type UpdateStatusInput = {
+  id: string;
+  status: ApplicationStatus;
+};
+
 export function ApplicationKanban({ applications }: ApplicationKanbanProps) {
-  const updateStatusMutation = useMutation(
-    trpc.application.updateStatus.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries();
-        toast.success("Application status updated");
-      },
-      onError: (error: any) => {
-        toast.error(error.message || "Failed to update status");
-        queryClient.invalidateQueries();
-      },
-    }),
-  );
+  const updateStatusMutation = useMutation({
+    mutationFn: (input: UpdateStatusInput) => trpcClient.application.updateStatus.mutate(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast.success("Application status updated");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update status");
+      queryClient.invalidateQueries();
+    },
+  });
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;

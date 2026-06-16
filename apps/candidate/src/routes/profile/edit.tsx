@@ -230,7 +230,7 @@ function ProfileEditPage() {
       toast.success("Tải ảnh đại diện thành công");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định.";
-      toast.error("Không thể tải ảnh đại diện: " + message);
+      toast.error(`Không thể tải ảnh đại diện: ${message}`);
     }
   };
 
@@ -264,7 +264,7 @@ function ProfileEditPage() {
       toast.success("Tải CV thành công");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định.";
-      toast.error("Không thể tải CV: " + message);
+      toast.error(`Không thể tải CV: ${message}`);
     }
   };
 
@@ -279,7 +279,7 @@ function ProfileEditPage() {
       toast.success("Đã xóa CV");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định.";
-      toast.error("Không thể xóa CV: " + message);
+      toast.error(`Không thể xóa CV: ${message}`);
     }
   };
 
@@ -338,7 +338,7 @@ function ProfileEditPage() {
             queryClient.invalidateQueries();
           },
           onError: (error) => {
-            toast.error("Không thể lưu: " + error.message);
+            toast.error(`Không thể lưu: ${error.message}`);
           },
         });
       }, 500);
@@ -372,7 +372,7 @@ function ProfileEditPage() {
         queryClient.invalidateQueries();
       },
       onError: (error) => {
-        toast.error("Không thể lưu: " + error.message);
+        toast.error(`Không thể lưu: ${error.message}`);
       },
     });
   };

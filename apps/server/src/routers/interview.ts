@@ -1,3 +1,4 @@
+import type { Prisma } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure, router } from "../lib/api";
@@ -97,7 +98,7 @@ export const interviewRouter = router({
 
       // Employer or admin can schedule
       const isEmployer = application.job.organization.userId === ctx.session.user.id;
-      const isAdmin = (ctx.session.user as any)?.role === "ADMIN";
+      const isAdmin = ctx.role === "ADMIN";
       if (!isEmployer && !isAdmin) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
       }
@@ -128,7 +129,7 @@ export const interviewRouter = router({
 
       await createNotification({
         userId: application.candidateId,
-        type: "INTERVIEW_INVITATION" as any,
+        type: "INTERVIEW_INVITATION",
         title: "Lịch phỏng vấn mới",
         body: `Nhà tuyển dụng ${application.job.organization.name} đã lên lịch phỏng vấn cho vị trí "${application.job.title}" vào ${dateStr} lúc ${timeStr}. Vui lòng xác nhận lịch phỏng vấn.`,
         data: {
@@ -170,16 +171,16 @@ export const interviewRouter = router({
       }
 
       const isEmployer = interview.application.job.organization.userId === ctx.session.user.id;
-      const isAdmin = (ctx.session.user as any)?.role === "ADMIN";
+      const isAdmin = ctx.role === "ADMIN";
       if (!isEmployer && !isAdmin) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
       }
 
-      const { id, ...data } = input;
-      const updateData: any = { ...data };
-      if (data.scheduledAt) {
-        updateData.scheduledAt = new Date(data.scheduledAt);
-      }
+      const { id: _id, scheduledAt, ...data } = input;
+      const updateData: Prisma.InterviewUpdateInput = {
+        ...data,
+        ...(scheduledAt ? { scheduledAt: new Date(scheduledAt) } : {}),
+      };
 
       const updated = await ctx.prisma.interview.update({
         where: { id: input.id },
@@ -201,7 +202,7 @@ export const interviewRouter = router({
 
       await createNotification({
         userId: interview.application.candidateId,
-        type: "INTERVIEW_INVITATION" as any,
+        type: "INTERVIEW_INVITATION",
         title: "Cập nhật lịch phỏng vấn",
         body: `Nhà tuyển dụng ${interview.application.job.organization.name} đã cập nhật lịch phỏng vấn cho vị trí "${interview.application.job.title}": ${dateStr} lúc ${timeStr}.`,
         data: {
@@ -265,7 +266,7 @@ export const interviewRouter = router({
 
       await createNotification({
         userId: interview.application.job.organization.userId,
-        type: "INTERVIEW_INVITATION" as any,
+        type: "INTERVIEW_INVITATION",
         title: `Ứng viên ${actionLabel} lịch phỏng vấn`,
         body: `${candidateName} ${actionLabel} lịch phỏng vấn cho vị trí "${interview.application.job.title}" vào ${dateStr} lúc ${timeStr}.`,
         data: {
@@ -297,7 +298,7 @@ export const interviewRouter = router({
       }
 
       const isEmployer = interview.application.job.organization.userId === ctx.session.user.id;
-      const isAdmin = (ctx.session.user as any)?.role === "ADMIN";
+      const isAdmin = ctx.role === "ADMIN";
       if (!isEmployer && !isAdmin) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
       }

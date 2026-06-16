@@ -1,14 +1,6 @@
-import { prisma } from "@07nghiep/db";
+import { prisma, type NotificationType, type Prisma } from "@07nghiep/db";
 import { emitNotification } from "./events";
 import { sendEmail } from "./email";
-
-export type NotificationType =
-  | "APPLICATION_RECEIVED"
-  | "APPLICATION_STATUS"
-  | "MESSAGE"
-  | "JOB_ALERT"
-  | "SYSTEM"
-  | "INTERVIEW_INVITATION";
 
 export function escapeHtml(value: string): string {
   return value
@@ -24,7 +16,7 @@ export const createNotification = async (params: {
   type: NotificationType;
   title: string;
   body: string;
-  data?: any;
+  data?: Prisma.InputJsonValue;
 }) => {
   // Check preferences
   const pref = await prisma.notificationPreference.findUnique({
@@ -39,7 +31,7 @@ export const createNotification = async (params: {
   const notification = await prisma.notification.create({
     data: {
       userId: params.userId,
-      type: params.type as any,
+      type: params.type,
       title: params.title,
       body: params.body,
       data: params.data,

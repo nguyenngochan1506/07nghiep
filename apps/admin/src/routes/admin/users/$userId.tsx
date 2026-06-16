@@ -73,6 +73,7 @@ function AdminUserDetailPage() {
   const user = detailQuery.data?.user;
   const timeline = detailQuery.data?.activity.timeline ?? [];
   const notes = detailQuery.data?.adminNotes ?? [];
+  const roleHistory = detailQuery.data?.roleHistory ?? [];
   const status = detailQuery.data?.status ?? "SUSPENDED";
 
   const roleBadgeVariant = useMemo(() => {
@@ -412,8 +413,8 @@ function AdminUserDetailPage() {
                 </TabsContent>
 
                 <TabsContent value="roles" className="space-y-3">
-                  {detailQuery.data?.roleHistory && detailQuery.data.roleHistory.length > 0 ? (
-                    detailQuery.data.roleHistory.map((r: any) => (
+                  {roleHistory.length > 0 ? (
+                    roleHistory.map((r) => (
                       <div key={r.id} className="rounded-md border p-3">
                         <div className="mb-1 flex items-center justify-between gap-2">
                           <Badge variant="outline">ROLE_CHANGE</Badge>

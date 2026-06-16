@@ -10,13 +10,13 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { authorizedRoles } from "@/lib/role-guard";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
-import { JobsTable } from "@/components/jobs/jobs-table";
+import { JobsTable, type JobRow } from "@/components/jobs/jobs-table";
 
 export const Route = createFileRoute("/my-jobs/")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) redirect({ to: "/login", throw: true });
-    const role = (session.data!.user as { role?: string }).role ?? "CANDIDATE";
+    const role = (session.data?.user as { role?: string }).role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       await authClient.signOut();
       redirect({ to: "/login", throw: true });
@@ -93,6 +93,7 @@ function MyJobsPage() {
   );
 
   const stats = statsQuery.data;
+  const jobs = (jobsQuery.data?.jobs ?? []) as JobRow[];
 
   const STAT_CARDS = [
     {
@@ -159,13 +160,7 @@ function MyJobsPage() {
         {/* Jobs Table */}
         <Card className="p-6">
           <JobsTable
-            jobs={(jobsQuery.data?.jobs ?? []).map((j) => ({
-              ...j,
-              status: j.status as any,
-              publishedAt: j.publishedAt,
-              expiresAt: j.expiresAt,
-              createdAt: j.createdAt,
-            }))}
+            jobs={jobs}
             total={jobsQuery.data?.pagination.total ?? 0}
             page={page}
             pageSize={10}

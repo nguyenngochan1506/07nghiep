@@ -1,3 +1,4 @@
+import type { Prisma } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -84,7 +85,7 @@ export const organizationRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const where: any = {};
+      const where: Prisma.OrganizationWhereInput = {};
 
       if (input.keyword) {
         where.name = { contains: input.keyword, mode: "insensitive" };

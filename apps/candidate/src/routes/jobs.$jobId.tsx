@@ -21,19 +21,35 @@ type JobDetailView = {
   status: string;
 };
 
-function mapJob(raw: any): JobDetailView {
+type PublicJobDetail = {
+  id: string;
+  title: string;
+  location: string | null;
+  workType: string | null;
+  jobType: string | null;
+  experience: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  skills: string[];
+  description: string | null;
+  status: string;
+  organization: {
+    name: string | null;
+    logoUrl: string | null;
+  } | null;
+};
+
+function mapJob(raw: PublicJobDetail): JobDetailView {
   const salaryRange =
     raw.salaryMin && raw.salaryMax
       ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
       : "Thỏa thuận";
 
-  const org = raw.organization ?? {};
-
   return {
     id: raw.id,
     title: raw.title,
-    companyName: org.name ?? "Unknown",
-    companyLogo: org.logoUrl ?? "",
+    companyName: raw.organization?.name ?? "Unknown",
+    companyLogo: raw.organization?.logoUrl ?? "",
     location: raw.location ?? "",
     workType: raw.workType ?? "",
     jobType: raw.jobType ?? "",
@@ -67,7 +83,8 @@ function JobDetailPage() {
       }
     : null;
 
-  const job: JobDetailView | null = contextJobView ?? (apiJob ? mapJob(apiJob) : null);
+  const job: JobDetailView | null =
+    contextJobView ?? (apiJob ? mapJob(apiJob as unknown as PublicJobDetail) : null);
 
   const hasAppliedQuery = useQuery(trpc.applications.list.queryOptions({ search: undefined }));
   const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
@@ -85,17 +102,22 @@ function JobDetailPage() {
 
   const hasApplied = useMemo(() => {
     if (hasAppliedQuery.data == null) return false;
-    return (hasAppliedQuery.data as any[]).some((a) => a.job?.id === jobId);
+    const applications = hasAppliedQuery.data as unknown as Array<{ job?: { id: string } | null }>;
+    return applications.some((a) => a.job?.id === jobId);
   }, [hasAppliedQuery.data, jobId]);
 
   const applicationStatus = useMemo(() => {
     if (hasAppliedQuery.data == null) return null;
-    const app = (hasAppliedQuery.data as any[]).find((a) => a.job?.id === jobId);
+    const applications = hasAppliedQuery.data as unknown as Array<{
+      status: string | null;
+      job?: { id: string } | null;
+    }>;
+    const app = applications.find((a) => a.job?.id === jobId);
     return app?.status ?? null;
   }, [hasAppliedQuery.data, jobId]);
 
   const isProfileComplete = useMemo(() => {
-    const p = profileQuery.data as any | undefined;
+    const p = profileQuery.data;
     if (!p) return false;
     return Boolean(p.summary && p.resumeUrl);
   }, [profileQuery.data]);
@@ -172,7 +194,7 @@ function JobDetailPage() {
                 <Skeleton className="h-10 w-32 md:w-40 rounded-md" />
               ) : (
                 <ApplyJobModal
-                  jobId={jobId!}
+                  jobId={job.id}
                   jobStatus={job.status || "OPEN"}
                   hasApplied={hasApplied}
                   isProfileComplete={isProfileComplete}

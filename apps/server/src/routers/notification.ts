@@ -33,7 +33,7 @@ export const notificationRouter = router({
         },
       });
 
-      let nextCursor: typeof cursor | undefined = undefined;
+      let nextCursor: typeof cursor | undefined;
       if (items.length > limit) {
         const nextItem = items.pop();
         nextCursor = nextItem?.id;

@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Building2, CalendarDays, MessageSquare, Trash2 } from "lucide-react";
 import { toast } from "sonner";

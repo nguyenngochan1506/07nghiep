@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
+import type React from "react";
 import { JobCardItem } from "@/components/job-card";
 import { queryClient, trpc } from "@/utils/trpc";
 
@@ -7,7 +10,11 @@ export const Route = createFileRoute("/saved-jobs")({
   component: SavedJobsPage,
 });
 
-function mapSavedJob(raw: any) {
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type SavedJob = RouterOutputs["savedJob"]["list"]["jobs"][number];
+type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
+
+function mapSavedJob(raw: SavedJob): JobCardItemProps["job"] {
   const salaryRange =
     raw.salaryMin && raw.salaryMax
       ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
@@ -65,7 +72,7 @@ function SavedJobsPage() {
           {savedJobs.map((job) => (
             <JobCardItem
               key={job.id}
-              job={job as any}
+              job={job}
               onSave={(jobId) => toggleSavedJob.mutate({ jobId })}
             />
           ))}

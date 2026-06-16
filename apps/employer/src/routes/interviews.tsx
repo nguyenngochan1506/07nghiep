@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
@@ -21,6 +23,9 @@ import { useState, useMemo } from "react";
 export const Route = createFileRoute("/interviews")({
   component: EmployerInterviewsPage,
 });
+
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type InterviewItem = RouterOutputs["interview"]["getMyInterviews"][number];
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   SCHEDULED: { label: "Chờ xác nhận", className: "bg-warning/10 text-warning border-warning/20" },
@@ -70,7 +75,7 @@ function getMonthStart(date: Date) {
 }
 
 function EmployerInterviewsPage() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { data: interviews, isLoading } = useQuery(trpc.interview.getMyInterviews.queryOptions());
 
   const [viewMode, setViewMode] = useState<"week" | "month" | "list">("week");
@@ -98,9 +103,9 @@ function EmployerInterviewsPage() {
   const totalCells = monthStartDay + totalDays;
   const weeks = Math.ceil(totalCells / 7);
 
-  const interviewsByDate = useMemo(() => {
+  const interviewsByDate = useMemo<Record<string, InterviewItem[]>>(() => {
     if (!interviews) return {};
-    const map: Record<string, any[]> = {};
+    const map: Record<string, InterviewItem[]> = {};
     for (const iv of interviews) {
       const d = new Date(iv.scheduledAt).toDateString();
       if (!map[d]) map[d] = [];
@@ -109,28 +114,24 @@ function EmployerInterviewsPage() {
     return map;
   }, [interviews]);
 
-  const weekInterviews = useMemo(() => {
+  const weekInterviews = useMemo<InterviewItem[]>(() => {
     if (!interviews) return [];
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    return (interviews as any[]).filter((iv) => {
+    return interviews.filter((iv) => {
       const d = new Date(iv.scheduledAt);
       return d >= weekStart && d < weekEnd;
     });
   }, [interviews, weekStart]);
 
-  const upcoming = useMemo(() => {
+  const upcoming = useMemo<InterviewItem[]>(() => {
     if (!interviews) return [];
-    return (interviews as any[]).filter(
-      (iv) => iv.status === "SCHEDULED" || iv.status === "CONFIRMED",
-    );
+    return interviews.filter((iv) => iv.status === "SCHEDULED" || iv.status === "CONFIRMED");
   }, [interviews]);
 
-  const past = useMemo(() => {
+  const past = useMemo<InterviewItem[]>(() => {
     if (!interviews) return [];
-    return (interviews as any[]).filter(
-      (iv) => iv.status === "COMPLETED" || iv.status === "CANCELLED",
-    );
+    return interviews.filter((iv) => iv.status === "COMPLETED" || iv.status === "CANCELLED");
   }, [interviews]);
 
   if (isLoading) {
@@ -270,7 +271,7 @@ function EmployerInterviewsPage() {
                           </div>
                         )}
 
-                        {dayEvents.map((iv: any) => {
+                        {dayEvents.map((iv) => {
                           const scheduledDate = new Date(iv.scheduledAt);
                           const startMinutes =
                             (scheduledDate.getHours() - START_HOUR) * 60 +
@@ -279,8 +280,8 @@ function EmployerInterviewsPage() {
                           const height = Math.max((iv.durationMinutes / 60) * HOUR_HEIGHT, 28);
                           const candidate = iv.application?.candidate;
                           const job = iv.application?.job;
-                          const profile = candidate?.profile;
-                          const initials = (candidate?.name || "?")
+                          const _profile = candidate?.profile;
+                          const _initials = (candidate?.name || "?")
                             .split(" ")
                             .slice(0, 2)
                             .map((w: string) => w[0] ?? "")
@@ -375,8 +376,8 @@ function EmployerInterviewsPage() {
                 const dateStr = date?.toDateString();
                 const dayInterviews = dateStr ? interviewsByDate[dateStr] || [] : [];
                 const isToday = date?.toDateString() === now.toDateString();
-                const hasConfirmed = dayInterviews.some((iv: any) => iv.status === "CONFIRMED");
-                const hasScheduled = dayInterviews.some((iv: any) => iv.status === "SCHEDULED");
+                const hasConfirmed = dayInterviews.some((iv) => iv.status === "CONFIRMED");
+                const hasScheduled = dayInterviews.some((iv) => iv.status === "SCHEDULED");
                 const hasInterviews = dayInterviews.length > 0;
 
                 return (
@@ -401,14 +402,14 @@ function EmployerInterviewsPage() {
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none">
                         <div className="bg-card border shadow-lg rounded-lg p-3 min-w-[220px] max-w-[300px] text-left">
                           <p className="text-xs font-semibold text-foreground mb-2">
-                            {date!.toLocaleDateString("vi-VN", {
+                            {date?.toLocaleDateString("vi-VN", {
                               weekday: "long",
                               day: "numeric",
                               month: "long",
                             })}
                           </p>
                           <div className="space-y-2">
-                            {dayInterviews.map((iv: any) => (
+                            {dayInterviews.map((iv) => (
                               <div key={iv.id} className="flex items-start gap-2">
                                 <span
                                   className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
@@ -457,7 +458,7 @@ function EmployerInterviewsPage() {
                           {dayNum}
                         </p>
                         <div className="space-y-0.5">
-                          {dayInterviews.slice(0, 3).map((iv: any) => (
+                          {dayInterviews.slice(0, 3).map((iv) => (
                             <div
                               key={iv.id}
                               className={`text-[10px] rounded px-1 py-0.5 truncate cursor-default ${
@@ -496,7 +497,7 @@ function EmployerInterviewsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Sắp tới</h2>
             {upcoming.length > 0 ? (
               <div className="space-y-3">
-                {upcoming.map((iv: any) => {
+                {upcoming.map((iv) => {
                   const candidate = iv.application?.candidate;
                   const job = iv.application?.job;
                   const profile = candidate?.profile;
@@ -513,7 +514,9 @@ function EmployerInterviewsPage() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-4">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={profile?.avatarUrl || candidate?.image} />
+                              <AvatarImage
+                                src={profile?.avatarUrl || candidate?.image || undefined}
+                              />
                               <AvatarFallback>{initials}</AvatarFallback>
                             </Avatar>
                             <div className="space-y-1.5">
@@ -577,7 +580,7 @@ function EmployerInterviewsPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Đã qua</h2>
               <div className="space-y-2">
-                {past.map((iv: any) => {
+                {past.map((iv) => {
                   const candidate = iv.application?.candidate;
                   const job = iv.application?.job;
                   const initials = (candidate?.name || "?")

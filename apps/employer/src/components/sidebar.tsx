@@ -4,11 +4,8 @@ import {
   LayoutDashboard,
   Briefcase,
   FileText,
-  Users,
-  BarChart3,
   MessageSquare,
   Settings,
-  TrendingUp,
   Calendar,
   Plus,
 } from "lucide-react";
@@ -20,7 +17,12 @@ import UserMenu from "./user-menu";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { trpc } from "@/utils/trpc";
 
-const employerNavItems = [
+const employerNavItems: Array<{
+  icon: typeof LayoutDashboard;
+  label: string;
+  href: string;
+  hasMessageBadge?: boolean;
+}> = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Plus, label: "Đăng tin mới", href: "/jobs/new" },
   { icon: Briefcase, label: "Quản lý tin đăng", href: "/my-jobs" },
@@ -69,7 +71,7 @@ export default function Sidebar({ children }: SidebarProps) {
                 >
                   <item.icon className="h-4 w-4" />
                   <span className="flex-1">{item.label}</span>
-                  {(item as any).hasMessageBadge && unreadCount && unreadCount > 0 ? (
+                  {item.hasMessageBadge && unreadCount && unreadCount > 0 ? (
                     <Badge
                       variant="destructive"
                       className="h-4 min-w-4 rounded-full px-1 text-[10px]"

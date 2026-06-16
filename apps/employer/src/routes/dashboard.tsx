@@ -25,7 +25,7 @@ export const Route = createFileRoute("/dashboard")({
     if (!session.data) {
       redirect({ to: "/login", throw: true });
     }
-    const user = session.data!.user as { role?: string };
+    const user = session.data?.user as { role?: string };
     const role = user.role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       toast.error("Bạn không có quyền truy cập trang này");
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardComponent,
 });
 
-const STATS = [
+const _STATS = [
   { icon: Briefcase, label: "Việc đang tuyển", value: "12", change: "+2 tuần này" },
   { icon: FileText, label: "Đơn ứng tuyển", value: "45", change: "+8 mới" },
   { icon: Eye, label: "Tổng lượt xem", value: "1.2K", change: "+15%" },
@@ -51,6 +51,12 @@ const RECENT_ACTIVITY = [
   { text: "Đánh giá mới từ ứng viên John D.", time: "2 ngày trước" },
 ];
 
+type ErrorWithTRPCCode = {
+  data?: {
+    code?: string;
+  };
+};
+
 function DashboardComponent() {
   const { session } = Route.useRouteContext();
   const statsQuery = useQuery(trpc.job.getMyStats.queryOptions());
@@ -60,7 +66,8 @@ function DashboardComponent() {
     ...trpc.organization.getMyOrganization.queryOptions(),
     retry: false,
   });
-  const isOrgMissing = orgQuery.isError && (orgQuery.error as any)?.data?.code === "NOT_FOUND";
+  const isOrgMissing =
+    orgQuery.isError && (orgQuery.error as unknown as ErrorWithTRPCCode).data?.code === "NOT_FOUND";
 
   const STAT_CARDS = [
     {

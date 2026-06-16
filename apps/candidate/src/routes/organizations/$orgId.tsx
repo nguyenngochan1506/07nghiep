@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 import { MapPin, Users, Globe, Building2, ArrowLeft, ExternalLink, Calendar } from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@07nghiep/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
+import { Card, CardContent } from "@07nghiep/ui/components/card";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
@@ -15,7 +17,10 @@ const COMPANY_SIZE_LABELS: Record<string, string> = {
   ENTERPRISE: "Doanh nghiệp (>1000)",
 };
 
-function formatSalary(raw: any): string {
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type OrganizationJob = RouterOutputs["organization"]["getJobs"]["jobs"][number];
+
+function formatSalary(raw: OrganizationJob): string {
   if (raw.salaryNegotiable) return "Thỏa thuận";
   const min = raw.salaryMin ? Number(raw.salaryMin).toLocaleString() : null;
   const max = raw.salaryMax ? Number(raw.salaryMax).toLocaleString() : null;
@@ -79,7 +84,7 @@ function OrganizationDetailPage() {
     .join("")
     .toUpperCase();
 
-  const jobs = (jobsData as any)?.jobs ?? [];
+  const jobs = jobsData?.jobs ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8">
@@ -177,7 +182,7 @@ function OrganizationDetailPage() {
 
           {jobs.length > 0 ? (
             <div className="space-y-3">
-              {jobs.map((job: any) => (
+              {jobs.map((job) => (
                 <Link key={job.id} to="/jobs/$jobId" params={{ jobId: job.id }}>
                   <Card className="transition-shadow hover:shadow-md cursor-pointer">
                     <CardContent className="p-5 flex items-center justify-between">

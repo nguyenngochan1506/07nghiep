@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { trpc } from "@/utils/trpc";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 import { authClient } from "@/lib/auth-client";
 import { MessageThread } from "@07nghiep/ui/components/message/message-thread";
 import { MessageInput } from "@07nghiep/ui/components/message/message-input";
@@ -8,12 +10,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/ava
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useEffect, useRef } from "react";
 import { env } from "@07nghiep/env/candidate";
-import type { MessageData } from "@07nghiep/ui/components/message/message-bubble";
 import { createSSEConnection } from "@07nghiep/ui/lib/sse";
 
 export const Route = createFileRoute("/messages/$conversationId")({
   component: ConversationDetail,
 });
+
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type MessageListData = RouterOutputs["message"]["list"];
+type MessageListItem = MessageListData["items"][number];
 
 function getInitials(name: string | null) {
   if (!name) return "?";
@@ -75,22 +80,24 @@ function ConversationDetail() {
         await queryClient.cancelQueries({ queryKey: messagesQueryKey });
         const previous = queryClient.getQueryData(messagesQueryKey);
 
-        const optimisticMsg: MessageData = {
+        const optimisticMsg: MessageListItem = {
           id: `temp-${Date.now()}`,
+          conversationId,
           content: newMsg.content,
           senderId: currentUserId,
           read: false,
+          readAt: null,
           createdAt: new Date().toISOString(),
           sender: {
             id: currentUserId,
-            name: currentUserName,
+            name: currentUserName ?? "Bạn",
             image: null,
             profile: null,
           },
         };
 
-        queryClient.setQueryData(messagesQueryKey, (old: any) => {
-          if (!old) return { items: [optimisticMsg], nextCursor: null };
+        queryClient.setQueryData<MessageListData>(messagesQueryKey, (old) => {
+          if (!old) return { items: [optimisticMsg], nextCursor: undefined };
           return { ...old, items: [...old.items, optimisticMsg] };
         });
 

@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ExperienceLevel, JobType, SalaryType, WorkType } from "@07nghiep/db";
+import type { JobUpdateInput } from "@07nghiep/server/lib/api";
 import { toast } from "sonner";
 import { Save, ArrowLeft, ArrowRight, Send } from "lucide-react";
 
@@ -22,11 +24,56 @@ const TOTAL_STEPS = 5;
 
 type FormErrors = Partial<Record<string, string>>;
 
+type EditableJob = {
+  title: string;
+  jobType: string;
+  workType: string;
+  experienceLevel: string;
+  location: string;
+  description: string;
+  requirements: string | null;
+  benefits: string | null;
+  skills: string[];
+  salaryNegotiable: boolean;
+  salaryType: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  expiresAt: Date | string | null;
+};
+
+const JOB_TYPE_VALUES = ["FULLTIME", "PARTIME", "CONTRACT", "INTERNSHIP", "FREELANCE"] as const;
+const WORK_TYPE_VALUES = ["REMOTE", "HYBRID", "ONSITE"] as const;
+const EXPERIENCE_LEVEL_VALUES = [
+  "ENTRY",
+  "JUNIOR",
+  "MIDDLE",
+  "SENIOR",
+  "LEAD",
+  "EXECUTIVE",
+] as const;
+const SALARY_TYPE_VALUES = ["HOURLY", "MONTHLY", "YEARLY"] as const;
+
+function isJobType(value: string): value is JobType {
+  return JOB_TYPE_VALUES.includes(value as (typeof JOB_TYPE_VALUES)[number]);
+}
+
+function isWorkType(value: string): value is WorkType {
+  return WORK_TYPE_VALUES.includes(value as (typeof WORK_TYPE_VALUES)[number]);
+}
+
+function isExperienceLevel(value: string): value is ExperienceLevel {
+  return EXPERIENCE_LEVEL_VALUES.includes(value as (typeof EXPERIENCE_LEVEL_VALUES)[number]);
+}
+
+function isSalaryType(value: string): value is SalaryType {
+  return SALARY_TYPE_VALUES.includes(value as (typeof SALARY_TYPE_VALUES)[number]);
+}
+
 export const Route = createFileRoute("/my-jobs/$jobId/edit")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) redirect({ to: "/login", throw: true });
-    const role = (session.data!.user as { role?: string }).role ?? "CANDIDATE";
+    const role = (session.data?.user as { role?: string }).role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       await authClient.signOut();
       redirect({ to: "/login", throw: true });
@@ -66,14 +113,14 @@ function EditJobPage() {
     expiresAt: "",
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, _setErrors] = useState<FormErrors>({});
 
   // ── Load Job Data ─────────────────────────────────────────────────────────
   const jobQuery = useQuery(trpc.job.getById.queryOptions({ id: jobId }));
 
   useEffect(() => {
     if (jobQuery.data) {
-      const job = jobQuery.data;
+      const job = jobQuery.data as unknown as EditableJob;
       setStep1({
         title: job.title,
         jobType: job.jobType,
@@ -111,25 +158,49 @@ function EditJobPage() {
   );
 
   function handleSave(status?: "DRAFT" | "OPEN") {
-    const payload = {
+    const payload: JobUpdateInput = {
       id: jobId,
       title: step1.title,
-      jobType: step1.jobType as any,
-      workType: step1.workType as any,
-      experienceLevel: step1.experienceLevel as any,
       location: step1.location,
       description: step2.description,
       requirements: step2.requirements || undefined,
       benefits: step2.benefits || undefined,
       skills: step2.skills,
       salaryNegotiable: step3.salaryNegotiable,
-      salaryType: step3.salaryType ? (step3.salaryType as any) : undefined,
       salaryMin: step3.salaryMin ? Number(step3.salaryMin) : undefined,
       salaryMax: step3.salaryMax ? Number(step3.salaryMax) : undefined,
       expiresAt: step4.expiresAt ? new Date(step4.expiresAt) : undefined,
-      ...(status ? { status } : {}),
     };
-    updateMutation.mutate(payload);
+    if (isJobType(step1.jobType)) payload.jobType = step1.jobType;
+    if (isWorkType(step1.workType)) payload.workType = step1.workType;
+    if (isExperienceLevel(step1.experienceLevel)) {
+      payload.experienceLevel = step1.experienceLevel;
+    }
+    if (isSalaryType(step3.salaryType)) payload.salaryType = step3.salaryType;
+    const payloadWithStatus: JobUpdateInput & { status?: "DRAFT" | "OPEN" } = payload;
+    if (status) payloadWithStatus.status = status;
+    updateMutation.mutate(payloadWithStatus);
+  }
+
+  function handleStep2Change(field: keyof Step2Data, value: string | string[]) {
+    setStep2((prev) => {
+      if (field === "skills") {
+        return { ...prev, skills: Array.isArray(value) ? value : prev.skills };
+      }
+      return { ...prev, [field]: typeof value === "string" ? value : prev[field] };
+    });
+  }
+
+  function handleStep3Change(field: keyof Step3Data, value: string | boolean) {
+    setStep3((prev) => {
+      if (field === "salaryNegotiable") {
+        return {
+          ...prev,
+          salaryNegotiable: typeof value === "boolean" ? value : prev.salaryNegotiable,
+        };
+      }
+      return { ...prev, [field]: typeof value === "string" ? value : prev[field] };
+    });
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -185,18 +256,10 @@ function EditJobPage() {
             />
           )}
           {currentStep === 2 && (
-            <JobStep2
-              data={step2}
-              errors={errors}
-              onChange={(field, value) => setStep2((prev) => ({ ...prev, [field]: value as any }))}
-            />
+            <JobStep2 data={step2} errors={errors} onChange={handleStep2Change} />
           )}
           {currentStep === 3 && (
-            <JobStep3
-              data={step3}
-              errors={errors}
-              onChange={(field, value) => setStep3((prev) => ({ ...prev, [field]: value as any }))}
-            />
+            <JobStep3 data={step3} errors={errors} onChange={handleStep3Change} />
           )}
           {currentStep === 4 && (
             <JobStep4

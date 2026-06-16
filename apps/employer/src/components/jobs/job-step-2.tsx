@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { X, Plus } from "lucide-react";
 import { Label } from "@07nghiep/ui/components/label";
 import { Textarea } from "@07nghiep/ui/components/textarea";
-import { Input } from "@07nghiep/ui/components/input";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 

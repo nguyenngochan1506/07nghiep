@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApplicationStatus } from "@/types/application";
-import { trpc, queryClient } from "../../utils/trpc";
+import { trpc, trpcClient, queryClient } from "../../utils/trpc";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -28,7 +28,6 @@ import {
   MapPin as MapPinIcon,
   Link as LinkIcon,
   X,
-  Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { getStatusColor, getStatusLabel } from "../../components/applications/application-card";
@@ -48,9 +47,86 @@ export const Route = createFileRoute("/applications/$applicationId")({
   component: ApplicationDetailPage,
 });
 
+type CandidateProfile = {
+  avatarUrl: string | null;
+  summary: string | null;
+  skills: string[] | null;
+  experience: unknown;
+  education: unknown;
+  phone: string | null;
+  location: string | null;
+  resumeUrl: string | null;
+  portfolioUrl: string | null;
+};
+type ApplicationDetail = {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: Date | string;
+  resumeUrl: string | null;
+  coverLetter: string | null;
+  answers: unknown;
+  notes: string | null;
+  candidate: {
+    name: string | null;
+    email: string;
+    image: string | null;
+    profile: CandidateProfile | null;
+  };
+  job: {
+    title: string;
+  };
+};
+type InterviewItem = {
+  id: string;
+  status: string;
+  scheduledAt: Date | string;
+  durationMinutes: number;
+  location: string | null;
+  meetingLink: string | null;
+  notes: string | null;
+};
+type ProfileExperience = {
+  title?: string;
+  company?: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+};
+type ProfileEducation = {
+  degree?: string;
+  school?: string;
+  location?: string;
+  startYear?: string | number;
+  endYear?: string | number;
+  gpa?: string | number;
+};
+type UpdateStatusInput = {
+  id: string;
+  status: ApplicationStatus;
+};
+type UpdateNotesInput = {
+  id: string;
+  notes: string;
+};
+
+function isApplicationStatus(value: string): value is ApplicationStatus {
+  return Object.values(ApplicationStatus).includes(value as ApplicationStatus);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readProfileEntries<T extends object>(value: unknown): T[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRecord) as T[];
+}
+
 function ApplicationDetailPage() {
   const { applicationId } = Route.useParams();
-  const { data: application, isLoading } = useQuery(
+  const { data: rawApplication, isLoading } = useQuery(
     trpc.application.get.queryOptions({ id: applicationId }),
   );
 
@@ -77,7 +153,7 @@ function ApplicationDetailPage() {
         setScheduleOpen(false);
         resetInterviewForm();
       },
-      onError: (err: any) => toast.error(err.message || "Không thể lên lịch"),
+      onError: (err) => toast.error(err.message || "Không thể lên lịch"),
     }),
   );
 
@@ -87,7 +163,7 @@ function ApplicationDetailPage() {
         queryClient.invalidateQueries();
         toast.success("Đã hủy lịch phỏng vấn");
       },
-      onError: (err: any) => toast.error(err.message || "Không thể hủy lịch"),
+      onError: (err) => toast.error(err.message || "Không thể hủy lịch"),
     }),
   );
 
@@ -116,34 +192,32 @@ function ApplicationDetailPage() {
   };
 
   useEffect(() => {
-    if (application?.notes) {
-      setNotes(application.notes);
+    if (rawApplication?.notes) {
+      setNotes(rawApplication.notes);
     }
-  }, [application?.notes]);
+  }, [rawApplication?.notes]);
 
-  const updateStatusMutation = useMutation(
-    trpc.application.updateStatus.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries();
-        toast.success("Application status updated");
-      },
-      onError: (err: any) => {
-        toast.error(err.message || "Failed to update status");
-      },
-    }),
-  );
+  const updateStatusMutation = useMutation({
+    mutationFn: (input: UpdateStatusInput) => trpcClient.application.updateStatus.mutate(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast.success("Application status updated");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to update status");
+    },
+  });
 
-  const updateNotesMutation = useMutation(
-    trpc.application.updateNotes.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries();
-        toast.success("Notes saved successfully");
-      },
-      onError: (err: any) => {
-        toast.error(err.message || "Failed to save notes");
-      },
-    }),
-  );
+  const updateNotesMutation = useMutation({
+    mutationFn: (input: UpdateNotesInput) => trpcClient.application.updateNotes.mutate(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast.success("Notes saved successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to save notes");
+    },
+  });
 
   const handleStatusChange = (status: ApplicationStatus) => {
     updateStatusMutation.mutate({
@@ -163,11 +237,16 @@ function ApplicationDetailPage() {
     return <div className="p-8 text-center text-muted-foreground">Loading application...</div>;
   }
 
-  if (!application) {
+  if (!rawApplication) {
     return <div className="p-8 text-center text-muted-foreground">Application not found</div>;
   }
 
-  const profile = application.candidate.profile as any;
+  const application = rawApplication as unknown as ApplicationDetail;
+  const profile: CandidateProfile | null = application.candidate.profile;
+  const profileExperience = readProfileEntries<ProfileExperience>(profile?.experience);
+  const profileEducation = readProfileEntries<ProfileEducation>(profile?.education);
+  const answers = application.answers;
+  const interviewItems = (interviews ?? []) as unknown as InterviewItem[];
 
   return (
     <div className="flex flex-col gap-6 p-8 max-w-[1200px] mx-auto w-full">
@@ -206,8 +285,10 @@ function ApplicationDetailPage() {
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <Select
-            value={application.status as any}
-            onValueChange={(val) => handleStatusChange(val as any)}
+            value={application.status}
+            onValueChange={(value) => {
+              if (value && isApplicationStatus(value)) handleStatusChange(value);
+            }}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Update Status" />
@@ -256,7 +337,7 @@ function ApplicationDetailPage() {
               >
                 Cover Letter
               </TabsTrigger>
-              {!!(application as any).answers && (
+              {!!answers && (
                 <TabsTrigger
                   value="questions"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
@@ -315,14 +396,14 @@ function ApplicationDetailPage() {
                   )}
 
                   {/* Experience */}
-                  {Array.isArray(profile.experience) && profile.experience.length > 0 && (
+                  {profileExperience.length > 0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg">Experience</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {profile.experience.map((exp: any, i: number) => (
+                          {profileExperience.map((exp, i) => (
                             <div key={i} className="border-l-2 border-muted pl-4">
                               <h4 className="font-semibold">{exp.title || "Untitled"}</h4>
                               <p className="text-sm text-muted-foreground">
@@ -346,14 +427,14 @@ function ApplicationDetailPage() {
                   )}
 
                   {/* Education */}
-                  {Array.isArray(profile.education) && profile.education.length > 0 && (
+                  {profileEducation.length > 0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg">Education</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {profile.education.map((edu: any, i: number) => (
+                          {profileEducation.map((edu, i) => (
                             <div key={i} className="border-l-2 border-muted pl-4">
                               <h4 className="font-semibold">{edu.degree || "Untitled"}</h4>
                               <p className="text-sm text-muted-foreground">
@@ -390,12 +471,12 @@ function ApplicationDetailPage() {
               </Card>
             </TabsContent>
 
-            {!!(application as any).answers && (
+            {!!answers && (
               <TabsContent value="questions" className="pt-6 outline-none">
                 <Card>
                   <CardContent className="p-6">
                     <pre className="text-sm bg-muted p-4 rounded-lg overflow-auto">
-                      {JSON.stringify((application as any).answers, null, 2)}
+                      {JSON.stringify(answers, null, 2)}
                     </pre>
                   </CardContent>
                 </Card>
@@ -484,8 +565,8 @@ function ApplicationDetailPage() {
 
                 {interviewsLoading ? (
                   <p className="text-sm text-muted-foreground">Đang tải...</p>
-                ) : interviews && (interviews as any[]).length > 0 ? (
-                  (interviews as any[]).map((iv: any) => {
+                ) : interviewItems.length > 0 ? (
+                  interviewItems.map((iv) => {
                     const isActive = iv.status !== "CANCELLED" && iv.status !== "COMPLETED";
                     const dateStr = new Date(iv.scheduledAt).toLocaleDateString("vi-VN", {
                       weekday: "long",

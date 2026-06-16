@@ -33,7 +33,6 @@ export interface ApplicantItem {
 
 interface ApplicantListProps {
   applicants: ApplicantItem[];
-  currentUserId: string;
   activeConversationId?: string;
   isLoading?: boolean;
   onSelect: (applicant: ApplicantItem) => void;
@@ -91,7 +90,6 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
 
 export function ApplicantList({
   applicants,
-  currentUserId,
   activeConversationId,
   isLoading,
   onSelect,

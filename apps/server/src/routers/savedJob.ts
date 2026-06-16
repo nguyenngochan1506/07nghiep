@@ -4,9 +4,17 @@ import { candidateProcedure, router } from "../lib/api";
 
 const jobIdSchema = z.object({ jobId: z.string().min(1) });
 
+function getSessionUserId(ctx: { session: { user: { id: string } } | null }): string {
+  if (!ctx.session) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Authentication required" });
+  }
+
+  return ctx.session.user.id;
+}
+
 export const savedJobRouter = router({
   toggle: candidateProcedure.input(jobIdSchema).mutation(async ({ ctx, input }) => {
-    const userId = ctx.user!.id;
+    const userId = getSessionUserId(ctx);
 
     const job = await ctx.prisma.job.findFirst({
       where: { id: input.jobId, status: "OPEN" },
@@ -46,10 +54,12 @@ export const savedJobRouter = router({
   }),
 
   isSaved: candidateProcedure.input(jobIdSchema).query(async ({ ctx, input }) => {
+    const userId = getSessionUserId(ctx);
+
     const item = await ctx.prisma.savedJob.findUnique({
       where: {
         userId_jobId: {
-          userId: ctx.user!.id,
+          userId,
           jobId: input.jobId,
         },
       },
@@ -72,7 +82,7 @@ export const savedJobRouter = router({
       const page = input?.page ?? 1;
       const pageSize = input?.pageSize ?? 20;
       const skip = (page - 1) * pageSize;
-      const where = { userId: ctx.user!.id };
+      const where = { userId: getSessionUserId(ctx) };
 
       const [items, total] = await Promise.all([
         ctx.prisma.savedJob.findMany({

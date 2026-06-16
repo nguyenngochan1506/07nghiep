@@ -173,7 +173,7 @@ function UsersRoute() {
       return;
     }
 
-    const csvHeader = ["id", "name", "email", "role", "status", "joined"].join(",") + "\n";
+    const csvHeader = `${["id", "name", "email", "role", "status", "joined"].join(",")}\n`;
     const csvRows = rows
       .map((row) =>
         [

@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 import {
   ArrowLeft,
   CalendarDays,
@@ -21,19 +23,19 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { Button } from "@07nghiep/ui/components/button";
 import {
   Sheet as Dialog,
-  SheetTrigger as DialogTrigger,
   SheetContent as DialogContent,
   SheetHeader as DialogHeader,
   SheetTitle as DialogTitle,
   SheetDescription as DialogDescription,
   SheetFooter as DialogFooter,
-  SheetClose as DialogClose,
 } from "@07nghiep/ui/components/sheet";
 
 import { trpc, queryClient } from "@/utils/trpc";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import ApplicationStatusTracker from "@/components/application/status-tracker";
+import ApplicationStatusTracker, {
+  type ApplicationStatusTrackerProps,
+} from "@/components/application/status-tracker";
 import { Label } from "@07nghiep/ui/components/label";
 import { Textarea } from "@07nghiep/ui/components/textarea";
 
@@ -78,6 +80,22 @@ const STATUS_META: Record<
   },
 };
 
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type ApplicationInterview = RouterOutputs["interview"]["list"][number];
+type TrackerStep = NonNullable<ApplicationStatusTrackerProps["lastKnownStep"]>;
+
+const TRACKER_STEP_ORDER = [
+  "PENDING",
+  "VIEWED",
+  "SHORTLISTED",
+  "INTERVIEWING",
+  "OFFERED",
+] as const satisfies readonly TrackerStep[];
+
+function isTrackerStep(status: string): status is TrackerStep {
+  return TRACKER_STEP_ORDER.includes(status as TrackerStep);
+}
+
 function formatDate(dateValue: string | Date) {
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
@@ -120,7 +138,7 @@ function ApplicationDetailPage() {
         queryClient.invalidateQueries();
         toast.success("Đã cập nhật trạng thái phỏng vấn");
       },
-      onError: (err: any) => toast.error(err.message || "Không thể cập nhật"),
+      onError: (err) => toast.error(err.message || "Không thể cập nhật"),
     }),
   );
 
@@ -203,17 +221,10 @@ function ApplicationDetailPage() {
               currentStatus={data.status}
               lastKnownStep={
                 // derive last successful step from histories, find last toStatus that is in our step order
-                ((): any => {
-                  const STEP_ORDER = [
-                    "PENDING",
-                    "VIEWED",
-                    "SHORTLISTED",
-                    "INTERVIEWING",
-                    "OFFERED",
-                  ] as const;
+                ((): TrackerStep | undefined => {
                   for (let i = data.histories.length - 1; i >= 0; i--) {
                     const s = data.histories[i].toStatus;
-                    if ((STEP_ORDER as readonly string[]).includes(s)) return s;
+                    if (isTrackerStep(s)) return s;
                   }
                   return undefined;
                 })()
@@ -399,9 +410,9 @@ function ApplicationDetailPage() {
               <CardContent className="pt-4">
                 {interviewsLoading ? (
                   <Skeleton className="h-20 w-full" />
-                ) : interviews && (interviews as any[]).length > 0 ? (
+                ) : interviews && interviews.length > 0 ? (
                   <div className="space-y-3">
-                    {(interviews as any[]).map((iv: any) => {
+                    {interviews.map((iv: ApplicationInterview) => {
                       const isActive = iv.status !== "CANCELLED" && iv.status !== "COMPLETED";
                       const dateStr = new Date(iv.scheduledAt).toLocaleDateString("vi-VN", {
                         weekday: "long",

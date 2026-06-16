@@ -1,12 +1,19 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 
-export const t = initTRPC.context<{ session: any }>().create();
-
 export type UserRole = "CANDIDATE" | "EMPLOYER" | "ADMIN";
+
+type SessionWithRole = {
+  user: {
+    id: string;
+    role?: UserRole;
+  };
+};
+
+export const t = initTRPC.context<{ session: SessionWithRole | null }>().create();
 
 export function roleGuard(allowedRoles: UserRole[]) {
   return t.middleware(({ ctx, next }) => {
-    const user = ctx.session?.user as { role?: UserRole } | undefined;
+    const user = ctx.session?.user;
 
     if (!user) {
       throw new TRPCError({

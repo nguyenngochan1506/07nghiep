@@ -1,6 +1,7 @@
+import type { Prisma } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../lib/api";
+import { type Context, protectedProcedure, router } from "../lib/api";
 
 const userSelect = {
   select: {
@@ -91,7 +92,7 @@ export const conversationRouter = router({
         });
       }
 
-      const where: any = {
+      const where: Prisma.ApplicationWhereInput = {
         job: { organizationId: organization.id },
         ...(search
           ? {
@@ -439,7 +440,7 @@ export const conversationRouter = router({
 });
 
 async function notifyOtherParty(
-  ctx: any,
+  ctx: Pick<Context, "prisma">,
   employerId: string,
   candidateId: string,
   senderId: string,

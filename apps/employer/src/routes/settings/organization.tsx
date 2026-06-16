@@ -1,8 +1,9 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import type { CompanySize } from "@07nghiep/db";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Building, Save, Globe, MapPin, Users, Calendar, Image as ImageIcon } from "lucide-react";
+import { Building, Save, Globe, MapPin, Calendar, Image as ImageIcon } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@07nghiep/ui/components/button";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/settings/organization")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) redirect({ to: "/login", throw: true });
-    const role = (session.data!.user as { role?: string }).role ?? "CANDIDATE";
+    const role = (session.data?.user as { role?: string }).role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       await authClient.signOut();
       redirect({ to: "/login", throw: true });
@@ -45,6 +46,16 @@ const COMPANY_SIZES = [
   { value: "ENTERPRISE", label: "Tập đoàn (>1000 nhân viên)" },
 ] as const;
 
+type ErrorWithTRPCCode = {
+  data?: {
+    code?: string;
+  };
+};
+
+function isCompanySize(value: string): value is CompanySize {
+  return COMPANY_SIZES.some((size) => size.value === value);
+}
+
 function OrganizationSettingsPage() {
   const queryClient = useQueryClient();
   const orgQuery = useQuery({
@@ -52,7 +63,8 @@ function OrganizationSettingsPage() {
     retry: false, // Don't retry on 404
   });
 
-  const isNotFound = orgQuery.isError && (orgQuery.error as any)?.data?.code === "NOT_FOUND";
+  const isNotFound =
+    orgQuery.isError && (orgQuery.error as unknown as ErrorWithTRPCCode).data?.code === "NOT_FOUND";
   const isLoading = orgQuery.isLoading;
   const isEditing = !isNotFound && !!orgQuery.data;
 
@@ -93,7 +105,7 @@ function OrganizationSettingsPage() {
         description: value.description || undefined,
         website: value.website || undefined,
         industry: value.industry || undefined,
-        companySize: value.companySize ? (value.companySize as any) : undefined,
+        companySize: isCompanySize(value.companySize) ? value.companySize : undefined,
         foundedYear: value.foundedYear ? parseInt(value.foundedYear, 10) : undefined,
         location: value.location || undefined,
         logoUrl: value.logoUrl || undefined,

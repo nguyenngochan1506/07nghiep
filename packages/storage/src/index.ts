@@ -9,19 +9,32 @@ const isR2Configured =
 
 let r2Client: S3Client | null = null;
 
-function getR2Client(): S3Client {
-  if (!isR2Configured) {
+function getR2Config() {
+  const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME } = env;
+
+  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME) {
     throw new Error("R2 is not configured. Please set R2_* environment variables.");
   }
+
+  return {
+    accountId: R2_ACCOUNT_ID,
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
+    bucketName: R2_BUCKET_NAME,
+  };
+}
+
+function getR2Client(): S3Client {
+  const config = getR2Config();
 
   if (!r2Client) {
     r2Client = new S3Client({
       region: "auto",
-      endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
       forcePathStyle: true,
       credentials: {
-        accessKeyId: env.R2_ACCESS_KEY_ID!,
-        secretAccessKey: env.R2_SECRET_ACCESS_KEY!,
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
       },
     });
   }
@@ -82,9 +95,10 @@ export async function generatePresignedUploadUrl(
   const timestamp = Date.now();
   const key = `${type}s/${userId}/${timestamp}.${extension}`;
 
+  const { bucketName } = getR2Config();
   const client = getR2Client();
   const command = new PutObjectCommand({
-    Bucket: env.R2_BUCKET_NAME!,
+    Bucket: bucketName,
     Key: key,
     ContentType: contentType,
   });
@@ -105,10 +119,11 @@ export async function deleteFile(key: string): Promise<void> {
     throw new Error("Storage is not configured");
   }
 
+  const { bucketName } = getR2Config();
   const client = getR2Client();
   await client.send(
     new DeleteObjectCommand({
-      Bucket: env.R2_BUCKET_NAME!,
+      Bucket: bucketName,
       Key: key,
     }),
   );
@@ -119,9 +134,10 @@ export async function getFileUrl(key: string): Promise<string> {
     throw new Error("Storage is not configured");
   }
 
+  const { bucketName } = getR2Config();
   const client = getR2Client();
   const command = new GetObjectCommand({
-    Bucket: env.R2_BUCKET_NAME!,
+    Bucket: bucketName,
     Key: key,
   });
 

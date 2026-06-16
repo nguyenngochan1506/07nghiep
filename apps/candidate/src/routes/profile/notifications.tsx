@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { NotificationPreferences } from "@07nghiep/ui/components/notification-preferences";
+import type React from "react";
 import { trpc } from "../../utils/trpc";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile/notifications")({
   component: NotificationPreferencesPage,
 });
+
+type NotificationPreferencesProps = React.ComponentProps<typeof NotificationPreferences>;
 
 function NotificationPreferencesPage() {
   const queryClient = useQueryClient();
@@ -26,8 +29,8 @@ function NotificationPreferencesPage() {
     }),
   );
 
-  const handleUpdate = (type: any, field: any, value: boolean) => {
-    const existing = preferences.find((p: any) => p.type === type);
+  const handleUpdate: NotificationPreferencesProps["onUpdate"] = (type, field, value) => {
+    const existing = preferences.find((p) => p.type === type);
     updatePreference.mutate({
       type,
       pushEnabled: field === "pushEnabled" ? value : (existing?.pushEnabled ?? true),
@@ -44,7 +47,7 @@ function NotificationPreferencesPage() {
         </p>
       </div>
       <NotificationPreferences
-        preferences={preferences as any}
+        preferences={preferences}
         onUpdate={handleUpdate}
         isLoading={isLoading || updatePreference.isPending}
       />

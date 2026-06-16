@@ -123,7 +123,7 @@ app.get("/api/notifications/sse", async (c) => {
   const userId = session.user.id;
 
   return streamSSE(c, async (stream) => {
-    const handler = (payload: any) => {
+    const handler = (payload: unknown) => {
       stream.writeSSE({
         data: JSON.stringify(payload),
         event: "notification",
@@ -141,7 +141,7 @@ app.get("/api/notifications/sse", async (c) => {
       await stream.sleep(30000);
       try {
         await stream.writeSSE({ data: "ping", event: "ping" });
-      } catch (e) {
+      } catch (_e) {
         // Connection closed
         break;
       }
@@ -161,7 +161,7 @@ app.get("/api/messages/sse", async (c) => {
   }
 
   return streamSSE(c, async (stream) => {
-    const handler = (payload: any) => {
+    const handler = (payload: unknown) => {
       stream.writeSSE({
         data: JSON.stringify(payload),
         event: "message",

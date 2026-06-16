@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Building2, MapPin, Users, ExternalLink, ChevronRight } from "lucide-react";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
+import { Search, Building2, MapPin, Users, ChevronRight } from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { Input } from "@07nghiep/ui/components/input";
-import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent } from "@07nghiep/ui/components/card";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
@@ -15,6 +16,9 @@ const COMPANY_SIZE_LABELS: Record<string, string> = {
   LARGE: "Lớn (201-1000)",
   ENTERPRISE: "Doanh nghiệp (>1000)",
 };
+
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type PublicOrganization = RouterOutputs["organization"]["getPublicList"]["organizations"][number];
 
 export const Route = createFileRoute("/organizations/")({
   component: OrganizationsPage,
@@ -66,7 +70,7 @@ function OrganizationsPage() {
           </div>
         ) : organizations.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {organizations.map((org: any) => {
+            {organizations.map((org: PublicOrganization) => {
               const initials = (org.name ?? "")
                 .split(" ")
                 .slice(0, 2)

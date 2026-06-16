@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
+import type React from "react";
 import { JobCardItem } from "@/components/job-card";
 import { SearchBar } from "@/components/search-bar";
 import { JobFilters } from "@/components/job-filters";
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/jobs/")({
 });
 
 const ITEMS_PER_PAGE = 4;
+type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
 function JobsPage() {
   const { jobs } = useJobs();
@@ -59,10 +61,12 @@ function JobsPage() {
     () => new Set((savedJobsQuery.data?.jobs ?? []).map((job) => job.id)),
     [savedJobsQuery.data?.jobs],
   );
-  const paginatedJobs = filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE).map((job) => ({
-    ...job,
-    isSaved: savedIds.has(job.id),
-  }));
+  const paginatedJobs: JobCardItemProps["job"][] = filteredJobs
+    .slice(startIndex, startIndex + ITEMS_PER_PAGE)
+    .map((job) => ({
+      ...job,
+      isSaved: savedIds.has(job.id),
+    }));
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -110,7 +114,7 @@ function JobsPage() {
                 {paginatedJobs.map((job) => (
                   <JobCardItem
                     key={job.id}
-                    job={job as any}
+                    job={job}
                     onSave={(jobId) => toggleSavedJob.mutate({ jobId })}
                   />
                 ))}

@@ -1,8 +1,11 @@
 import { useEffect, useRef } from "react";
+import type { ComponentProps } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NotificationBell } from "@07nghiep/ui/components/notification-bell";
 import { trpc } from "../utils/trpc";
 import { env } from "@07nghiep/env/employer";
+
+type NotificationBellNotifications = ComponentProps<typeof NotificationBell>["notifications"];
 
 function createSSEConnection(
   url: string,
@@ -54,7 +57,11 @@ export function NotificationBellContainer() {
 
   const { data: unreadCount = 0 } = useQuery(trpc.notification.getUnreadCount.queryOptions());
   const { data: notificationsData } = useQuery(trpc.notification.list.queryOptions({ limit: 10 }));
-  const notifications = notificationsData?.items || [];
+  const notifications: NotificationBellNotifications =
+    notificationsData?.items.map((notification) => ({
+      ...notification,
+      createdAt: notification.createdAt,
+    })) || [];
 
   const markAsRead = useMutation(
     trpc.notification.markAsRead.mutationOptions({
@@ -97,7 +104,7 @@ export function NotificationBellContainer() {
   return (
     <NotificationBell
       unreadCount={unreadCount}
-      notifications={notifications as any}
+      notifications={notifications}
       onMarkAsRead={(id) => markAsRead.mutate({ id })}
       onMarkAllAsRead={() => markAllAsRead.mutate()}
     />

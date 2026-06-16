@@ -24,7 +24,7 @@ export const Route = createFileRoute("/dashboard")({
     if (!session.data) {
       redirect({ to: "/login", throw: true });
     }
-    const user = session.data!.user as { role?: string };
+    const user = session.data?.user as { role?: string };
     const role = user.role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       toast.error("Bạn không có quyền truy cập trang này");
@@ -59,7 +59,7 @@ const QUICK_ACTIONS = [
 
 function DashboardComponent() {
   const { session } = Route.useRouteContext();
-  const privateData = useQuery(trpc.privateData.queryOptions());
+  const _privateData = useQuery(trpc.privateData.queryOptions());
 
   return (
     <div className="min-h-screen bg-secondary/30 px-4 py-8">

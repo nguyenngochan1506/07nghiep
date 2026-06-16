@@ -1,4 +1,3 @@
-import React from "react";
 import { Check, X } from "lucide-react";
 
 type StepKey = "PENDING" | "VIEWED" | "SHORTLISTED" | "INTERVIEWING" | "OFFERED";

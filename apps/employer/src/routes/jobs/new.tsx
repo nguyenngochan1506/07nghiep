@@ -9,7 +9,7 @@ import { Card } from "@07nghiep/ui/components/card";
 
 import { authorizedRoles } from "@/lib/role-guard";
 import { authClient } from "@/lib/auth-client";
-import { trpc, trpcClient } from "@/utils/trpc";
+import { trpc } from "@/utils/trpc";
 import { JobFormStepper } from "@/components/jobs/job-form-stepper";
 import { JobStep1, type Step1Data } from "@/components/jobs/job-step-1";
 import { JobStep2, type Step2Data } from "@/components/jobs/job-step-2";
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/jobs/new")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) redirect({ to: "/login", throw: true });
-    const role = (session.data!.user as { role?: string }).role ?? "CANDIDATE";
+    const role = (session.data?.user as { role?: string }).role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       await authClient.signOut();
       redirect({ to: "/login", throw: true });
@@ -84,8 +84,8 @@ function validateStep3(data: Step3Data): FormErrors {
   if (!data.salaryNegotiable) {
     const min = Number(data.salaryMin);
     const max = Number(data.salaryMax);
-    if (data.salaryMin && isNaN(min)) errors.salaryMin = "Lương không hợp lệ";
-    if (data.salaryMax && isNaN(max)) errors.salaryMax = "Lương không hợp lệ";
+    if (data.salaryMin && Number.isNaN(min)) errors.salaryMin = "Lương không hợp lệ";
+    if (data.salaryMax && Number.isNaN(max)) errors.salaryMax = "Lương không hợp lệ";
     if (data.salaryMin && data.salaryMax && min > max)
       errors.salaryMax = "Lương tối đa phải lớn hơn lương tối thiểu";
   }
@@ -96,7 +96,7 @@ function validateStep4(data: Step4Data): FormErrors {
   const errors: FormErrors = {};
   if (data.expiresAt) {
     const d = new Date(data.expiresAt);
-    if (isNaN(d.getTime()) || d <= new Date())
+    if (Number.isNaN(d.getTime()) || d <= new Date())
       errors.expiresAt = "Ngày hết hạn phải trong tương lai";
   }
   return errors;

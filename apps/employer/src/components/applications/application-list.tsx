@@ -1,4 +1,4 @@
-import { ApplicationStatus } from "@/types/application";
+import type { ApplicationStatus } from "@/types/application";
 import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
@@ -41,7 +41,7 @@ export function ApplicationList({
   onToggleAll,
 }: ApplicationListProps) {
   const allSelected = applications.length > 0 && selectedIds.length === applications.length;
-  const someSelected = selectedIds.length > 0 && selectedIds.length < applications.length;
+  const _someSelected = selectedIds.length > 0 && selectedIds.length < applications.length;
 
   return (
     <div className="rounded-md border">
