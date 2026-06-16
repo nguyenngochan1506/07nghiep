@@ -26,8 +26,10 @@ Settings > Branches > Add rule: main
   
 ☑ Require status checks to pass before merging
   └─ Required checks:
-     ├─ typecheck (pass)
-     └─ build (pass)
+     ├─ Lint (pass)
+     ├─ Type Check (pass)
+     ├─ Test (pass)
+     └─ Build (pass)
      
 ☑ Require branches to be up to date before merging
 
@@ -47,7 +49,10 @@ Settings > Branches > Add rule: develop
   
 ☑ Require status checks to pass before merging
   └─ Required checks:
-     └─ CI (pass)
+     ├─ Lint (pass)
+     ├─ Type Check (pass)
+     ├─ Test (pass)
+     └─ Build (pass)
      
 ☑ Require branches to be up to date before merging
 
@@ -96,13 +101,16 @@ flowchart LR
 
 ### For `main` Branch (Production)
 All checks must pass:
+- `pnpm lint` (Biome linting)
 - `pnpm check-types` (TypeScript)
+- `pnpm test` (Automated tests)
 - `pnpm build` (Build)
-- `pnpm lint` (Linting)
 
 ### For `develop` Branch (Integration)
 Required checks:
+- `pnpm lint` (Biome linting)
 - `pnpm check-types` (TypeScript)
+- `pnpm test` (Automated tests)
 - `pnpm build` (Build)
 
 ### For Feature Branches
@@ -128,8 +136,10 @@ Require pull request reviews before merging
 
 Require status checks to pass before merging
   Search for status checks:
-  - typecheck
-  - build
+  - Lint
+  - Type Check
+  - Test
+  - Build
 ☑ Require branches to be up to date before merging
 
 ☑ Include administrators
@@ -147,7 +157,10 @@ Require pull request reviews before merging
 
 Require status checks to pass before merging
   Search for status checks:
-  - CI
+  - Lint
+  - Type Check
+  - Test
+  - Build
 
 ☑ Include administrators
 ```
