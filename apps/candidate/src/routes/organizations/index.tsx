@@ -1,12 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Building2, MapPin, Users, ExternalLink, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Building2,
+  MapPin,
+  Users,
+  ChevronRight,
+  BadgeCheck,
+  Briefcase,
+} from "lucide-react";
 import { trpc } from "@/utils/trpc";
 import { Input } from "@07nghiep/ui/components/input";
-import { Button } from "@07nghiep/ui/components/button";
-import { Card, CardContent } from "@07nghiep/ui/components/card";
+import { Badge } from "@07nghiep/ui/components/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardAction,
+} from "@07nghiep/ui/components/card";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@07nghiep/ui/components/avatar";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { Separator } from "@07nghiep/ui/components/separator";
 
 const COMPANY_SIZE_LABELS: Record<string, string> = {
   STARTUP: "Startup (1-10)",
@@ -16,9 +35,11 @@ const COMPANY_SIZE_LABELS: Record<string, string> = {
   ENTERPRISE: "Doanh nghiệp (>1000)",
 };
 
-export const Route = createFileRoute("/organizations/")({
-  component: OrganizationsPage,
-});
+export const Route = createFileRoute("/organizations/")(
+  {
+    component: OrganizationsPage,
+  }
+);
 
 function OrganizationsPage() {
   const [keyword, setKeyword] = useState("");
@@ -33,21 +54,22 @@ function OrganizationsPage() {
   const organizations = data?.organizations ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white py-12 px-4 md:px-8 border-b border-gray-200">
+    <div className="min-h-screen bg-background">
+      {/* Hero header */}
+      <div className="border-b bg-card py-12 px-4 md:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="text-center space-y-3">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
               Công ty
             </h1>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Khám phá các công ty hàng đầu và cơ hội việc làm từ họ
             </p>
           </div>
 
           <div className="max-w-xl mx-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Tìm công ty theo tên..."
                 className="pl-10"
@@ -59,11 +81,28 @@ function OrganizationsPage() {
         </div>
       </div>
 
+      {/* Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 rounded-xl" />
+              <Card key={i}>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="size-10 rounded-xl" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4 rounded-md" />
+                      <Skeleton className="h-3 w-1/2 rounded-md" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         ) : organizations.length > 0 ? (
@@ -82,59 +121,70 @@ function OrganizationsPage() {
                   to="/organizations/$orgId"
                   params={{ orgId: org.id }}
                 >
-                  <Card className="h-full transition-shadow hover:shadow-md cursor-pointer">
-                    <CardContent className="p-6 flex flex-col gap-3">
-                      <div className="flex items-start gap-4">
-                        {org.logoUrl ? (
-                          <img
-                            src={org.logoUrl}
-                            alt={org.name}
-                            className="w-12 h-12 rounded-lg object-cover border border-gray-200 shrink-0"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-bold text-primary">
-                              {initials}
-                            </span>
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 truncate">
-                            {org.name}
+                  <Card className="h-full transition-all duration-200 hover:shadow-md cursor-pointer group/org-card">
+                    <CardHeader>
+                      {/* Avatar + Name */}
+                      <div className="flex items-start gap-3">
+                        <Avatar className="size-10 rounded-xl">
+                          {org.logoUrl ? (
+                            <AvatarImage
+                              src={org.logoUrl}
+                              alt={org.name}
+                              className="rounded-xl"
+                            />
+                          ) : null}
+                          <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-xs font-bold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-sm font-semibold text-foreground truncate">
+                              {org.name}
+                            </h3>
                             {org.verified && (
-                              <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-100 text-green-600 text-[10px]">
-                                ✓
-                              </span>
+                              <BadgeCheck className="size-4 shrink-0 text-primary" />
                             )}
-                          </h3>
+                          </div>
                           {org.industry && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs text-muted-foreground truncate">
                               {org.industry}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      {/* Chevron (top-right) */}
+                      <CardAction>
+                        <ChevronRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover/org-card:translate-x-0.5" />
+                      </CardAction>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3">
+                      {/* Meta badges */}
+                      <div className="flex flex-wrap gap-1.5">
                         {org.location && (
-                          <span className="inline-flex items-center gap-1 bg-gray-100 rounded-full px-2.5 py-0.5">
-                            <MapPin className="h-3 w-3" />
+                          <Badge variant="secondary" className="gap-1 font-normal">
+                            <MapPin className="size-3" />
                             {org.location}
-                          </span>
+                          </Badge>
                         )}
                         {org.companySize && (
-                          <span className="inline-flex items-center gap-1 bg-gray-100 rounded-full px-2.5 py-0.5">
-                            <Users className="h-3 w-3" />
+                          <Badge variant="secondary" className="gap-1 font-normal">
+                            <Users className="size-3" />
                             {COMPANY_SIZE_LABELS[org.companySize] ?? org.companySize}
-                          </span>
+                          </Badge>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between mt-1 pt-3 border-t border-gray-100">
-                        <span className="text-sm font-medium text-primary">
+                      {/* Open jobs count */}
+                      <Separator />
+                      <div className="flex items-center gap-1.5">
+                        <Briefcase className="size-3.5 text-primary" />
+                        <span className="text-xs font-medium text-primary">
                           {org.openJobsCount} việc đang tuyển
                         </span>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
                       </div>
                     </CardContent>
                   </Card>
@@ -143,12 +193,15 @@ function OrganizationsPage() {
             })}
           </div>
         ) : (
+          /* Empty state */
           <div className="text-center py-16">
-            <Building2 className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-600 mb-2">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-muted mb-4">
+              <Building2 className="size-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-2">
               Không tìm thấy công ty
             </h3>
-            <p className="text-gray-500">
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
               {keyword
                 ? `Không có công ty nào khớp với "${keyword}"`
                 : "Chưa có công ty nào đăng ký"}

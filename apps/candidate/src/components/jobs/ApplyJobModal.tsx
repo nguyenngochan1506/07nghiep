@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -47,6 +47,7 @@ function getTriggerState(jobStatus: string, hasApplied: boolean, isProfileComple
 export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileComplete, applicationStatus }: ApplyJobModalProps) {
 	const [open, setOpen] = useState(false);
 	const triggerState = getTriggerState(jobStatus, hasApplied, isProfileComplete, applicationStatus);
+	const queryClient = useQueryClient();
 
 	// get profile to display resume option
 	const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
@@ -90,6 +91,9 @@ export default function ApplyJobModal({ jobId, jobStatus, hasApplied, isProfileC
 			const finalResume = values.resumeChoice === "profile" ? profileQuery.data?.resumeUrl : undefined;
 
 			await mutateAsync({ jobId, coverLetter: values.coverLetter, resumeUrl: finalResume ?? undefined });
+
+			// Invalidate applications list query to immediately update application status / button UI state
+			await queryClient.invalidateQueries({ queryKey: trpc.applications.list.queryKey() });
 
 			toast.success("Đơn đăng ký đã được gửi thành công.");
 			setOpen(false);
