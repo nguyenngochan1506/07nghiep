@@ -84,12 +84,12 @@ Provided by Better Auth at `/api/auth/*`.
 2. [User](#2-user)
 3. [Profile](#3-profile)
 4. [Organization](#4-organization)
-5. [Jobs](#5-jobs) — Planned
-6. [Applications](#6-applications) — Planned
-7. [Saved Jobs](#7-saved-jobs) — Planned
-8. [Conversations](#8-conversations) — Planned
-9. [Messages](#9-messages) — Planned
-10. [Notifications](#10-notifications) — Planned
+5. [Jobs](#5-jobs) — Implemented
+6. [Applications](#6-applications) — Implemented
+7. [Saved Jobs](#7-saved-jobs) — Implemented
+8. [Conversations](#8-conversations) — Implemented
+9. [Messages](#9-messages) — Implemented
+10. [Notifications](#10-notifications) — Implemented
 
 ---
 
@@ -572,17 +572,17 @@ Request organization verification (marks as unverified).
 
 **Response**
 
-Returns the updated organization object with `verified: false`.
+Returns the updated organization object with `verificationStatus: "PENDING"` and `verified: false`.
 
-**Status**: Placeholder — admin review workflow not implemented.
+**Status**: Implemented. Admin review is available under `admin.organizations`.
 
 ---
 
 ## 5. Jobs
 
-**Status**: Not implemented yet. Planned for `apps/server/src/routers/jobs.ts`.
+**Status**: Implemented in `apps/server/src/routers/job.ts`.
 
-### Planned Endpoints
+### Endpoints
 
 ```typescript
 // jobs.list
@@ -663,9 +663,9 @@ Returns the updated organization object with `verified: false`.
 
 ## 6. Applications
 
-**Status**: Not implemented yet. Planned for `apps/server/src/routers/application.ts`.
+**Status**: Implemented in `apps/server/src/routers/application.ts` and `apps/server/src/routers/applications.ts`.
 
-### Planned Endpoints
+### Endpoints
 
 ```typescript
 // applications.applyJob
@@ -743,7 +743,7 @@ type ApplicationStatus =
   | "PENDING"
   | "VIEWED"
   | "SHORTLISTED"
-  | "INTERVIEW"
+  | "INTERVIEWING"
   | "OFFERED"
   | "REJECTED"
   | "WITHDRAWN";
@@ -753,22 +753,22 @@ type ApplicationStatus =
 
 ## 7. Saved Jobs
 
-**Status**: Not implemented yet. Planned for `apps/server/src/routers/savedJob.ts`.
+**Status**: Implemented in `apps/server/src/routers/savedJob.ts`.
 
-### Planned Endpoints
+### Endpoints
 
 ```typescript
-// savedJobs.toggle
+// savedJob.toggle
 // Save or unsave a job
 // Procedure: candidateProcedure.mutation()
 { jobId: string }
 
-// savedJobs.list
+// savedJob.list
 // List the authenticated candidate's saved jobs
 // Procedure: candidateProcedure.query()
 { page?: number; pageSize?: number }
 
-// savedJobs.isSaved
+// savedJob.isSaved
 // Check if a job is saved
 // Procedure: candidateProcedure.query()
 { jobId: string }
@@ -778,9 +778,9 @@ type ApplicationStatus =
 
 ## 8. Conversations
 
-**Status**: Not implemented yet. Planned for `apps/server/src/routers/conversation.ts`.
+**Status**: Implemented in `apps/server/src/routers/conversation.ts`.
 
-### Planned Endpoints
+### Endpoints
 
 ```typescript
 // conversations.list
@@ -815,9 +815,9 @@ type ApplicationStatus =
 
 ## 9. Messages
 
-**Status**: Not implemented yet. Planned for `apps/server/src/routers/message.ts`.
+**Status**: Implemented in `apps/server/src/routers/message.ts`.
 
-### Planned Endpoints
+### Endpoints
 
 ```typescript
 // messages.send
@@ -848,7 +848,7 @@ type ApplicationStatus =
 Messages are delivered via **Server-Sent Events (SSE)** at:
 
 ```
-GET /api/sse/messages
+GET /api/messages/sse?conversation=<conversationId>
 ```
 
 Clients subscribe to receive new messages in real-time.
@@ -857,7 +857,7 @@ Clients subscribe to receive new messages in real-time.
 
 ## 10. Notifications
 
-**Status**: Not implemented yet. Planned for `apps/server/src/routers/notification.ts`.
+**Status**: Implemented in `apps/server/src/routers/notification.ts`.
 
 ### Notification Types
 
@@ -867,12 +867,11 @@ type NotificationType =
   | "APPLICATION_STATUS"    // Candidate's application status changed
   | "MESSAGE"              // New message received
   | "JOB_ALERT"            // New job matching candidate's skills
-  | "JOB_APPROVED"         // Employer's job approved by admin
-  | "JOB_REJECTED"         // Employer's job rejected by admin
-  | "SYSTEM";              // System announcements
+  | "SYSTEM"               // System announcements
+  | "INTERVIEW_INVITATION"; // Interview schedule/update
 ```
 
-### Planned Endpoints
+### Endpoints
 
 ```typescript
 // notifications.list
@@ -1120,7 +1119,7 @@ type ApplicationStatus =
   | "PENDING"
   | "VIEWED"
   | "SHORTLISTED"
-  | "INTERVIEW"
+  | "INTERVIEWING"
   | "OFFERED"
   | "REJECTED"
   | "WITHDRAWN";
