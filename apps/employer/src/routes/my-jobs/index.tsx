@@ -58,7 +58,7 @@ function MyJobsPage() {
   // ── Mutations ─────────────────────────────────────────────────────────────
   const publishMutation = useMutation(
     trpc.job.publish.mutationOptions({
-      onSuccess: () => { toast.success("Đã đăng tin thành công!"); invalidateAll(); },
+      onSuccess: () => { toast.success("Đã gửi tin tuyển dụng để duyệt"); invalidateAll(); },
       onError: (e) => toast.error(e.message),
     })
   );

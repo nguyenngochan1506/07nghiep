@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
+  Building2,
   FileText,
   BarChart3,
   Settings,
@@ -18,7 +19,8 @@ import UserMenu from "./user-menu";
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Users, label: "Người dùng", href: "/admin/users" },
-  { icon: Briefcase, label: "Việc làm", href: "/" },
+  { icon: Building2, label: "Duyệt công ty", href: "/admin/organizations" },
+  { icon: Briefcase, label: "Duyệt việc làm", href: "/admin/jobs" },
   { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
   { icon: BarChart3, label: "Báo cáo", href: "/" },
   { icon: Shield, label: "Bảo mật", href: "/" },

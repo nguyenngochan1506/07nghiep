@@ -69,6 +69,7 @@ interface JobsTableProps {
 const STATUS_TABS = [
   { value: "", label: "Tất cả" },
   { value: "DRAFT", label: "Nháp" },
+  { value: "PENDING_APPROVAL", label: "Chờ duyệt" },
   { value: "OPEN", label: "Đang tuyển" },
   { value: "CLOSED", label: "Đã đóng" },
   { value: "ARCHIVED", label: "Lưu trữ" },
@@ -246,7 +247,7 @@ export function JobsTable({
                         {(job.status === "DRAFT" || job.status === "CLOSED") && (
                           <DropdownMenuItem onClick={() => onPublish(job.id)}>
                             <CheckCircle className="mr-2 h-4 w-4 text-success" />
-                            Đăng tin
+                            Gửi duyệt
                           </DropdownMenuItem>
                         )}
 

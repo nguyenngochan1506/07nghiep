@@ -155,7 +155,7 @@ function NewJobPage() {
     trpc.job.create.mutationOptions({
       onSuccess: () => {
         localStorage.removeItem(DRAFT_KEY);
-        toast.success("Tin tuyển dụng đã được đăng thành công!");
+        toast.success("Tin tuyển dụng đã được gửi duyệt!");
         navigate({ to: "/my-jobs" });
       },
       onError: (err) => toast.error(err.message),
@@ -196,7 +196,7 @@ function NewJobPage() {
     setCurrentStep((s) => Math.max(1, s - 1));
   }
 
-  function buildPayload(status: "DRAFT" | "OPEN") {
+  function buildPayload(status: "DRAFT" | "PENDING_APPROVAL") {
     return {
       title: step1.title,
       jobType: step1.jobType as "FULLTIME" | "PARTIME" | "CONTRACT" | "INTERNSHIP" | "FREELANCE",
@@ -217,7 +217,7 @@ function NewJobPage() {
   }
 
   function handlePublish() {
-    createJob.mutate(buildPayload("OPEN"));
+    createJob.mutate(buildPayload("PENDING_APPROVAL"));
   }
 
   function handleSaveDraft() {
@@ -344,7 +344,7 @@ function NewJobPage() {
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  Đăng tin ngay
+                  Gửi duyệt
                 </Button>
               </>
             ) : (

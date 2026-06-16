@@ -14,6 +14,8 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
+import { Route as AdminOrganizationsIndexRouteImport } from './routes/admin/organizations/index'
+import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -41,6 +43,16 @@ const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOrganizationsIndexRoute = AdminOrganizationsIndexRouteImport.update({
+  id: '/organizations/',
+  path: '/organizations/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJobsIndexRoute = AdminJobsIndexRouteImport.update({
+  id: '/jobs/',
+  path: '/jobs/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
@@ -53,6 +65,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/jobs/': typeof AdminJobsIndexRoute
+  '/admin/organizations/': typeof AdminOrganizationsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +75,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/jobs': typeof AdminJobsIndexRoute
+  '/admin/organizations': typeof AdminOrganizationsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -70,6 +86,8 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/jobs/': typeof AdminJobsIndexRoute
+  '/admin/organizations/': typeof AdminOrganizationsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +98,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/admin/users/$userId'
+    | '/admin/jobs/'
+    | '/admin/organizations/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +108,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/admin/users/$userId'
+    | '/admin/jobs'
+    | '/admin/organizations'
     | '/admin/users'
   id:
     | '__root__'
@@ -96,6 +118,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/admin/users/$userId'
+    | '/admin/jobs/'
+    | '/admin/organizations/'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
 }
@@ -143,6 +167,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/organizations/': {
+      id: '/admin/organizations/'
+      path: '/organizations'
+      fullPath: '/admin/organizations/'
+      preLoaderRoute: typeof AdminOrganizationsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/jobs/': {
+      id: '/admin/jobs/'
+      path: '/jobs'
+      fullPath: '/admin/jobs/'
+      preLoaderRoute: typeof AdminJobsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users/$userId': {
       id: '/admin/users/$userId'
       path: '/users/$userId'
@@ -155,11 +193,15 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
+  AdminJobsIndexRoute: typeof AdminJobsIndexRoute
+  AdminOrganizationsIndexRoute: typeof AdminOrganizationsIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
+  AdminJobsIndexRoute: AdminJobsIndexRoute,
+  AdminOrganizationsIndexRoute: AdminOrganizationsIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
 }
 
