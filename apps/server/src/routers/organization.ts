@@ -215,7 +215,11 @@ export const organizationRouter = router({
 
     return ctx.prisma.organization.update({
       where: { userId: ctx.user.id },
-      data: { verified: false },
+      data: {
+        verified: false,
+        verificationStatus: "PENDING",
+        verificationNote: null,
+      },
     });
   }),
 });

@@ -172,7 +172,7 @@ export const jobRouter = router({
 
   // ── Employer: Create job ──────────────────────────────────────────────────
   create: employerOrAdminProcedure
-    .input(jobCreateSchema.extend({ status: z.enum(["DRAFT", "OPEN"]).default("DRAFT") }))
+    .input(jobCreateSchema.extend({ status: z.enum(["DRAFT", "OPEN", "PENDING_APPROVAL"]).default("DRAFT") }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
         where: { userId: ctx.user!.id },
@@ -186,15 +186,17 @@ export const jobRouter = router({
         });
       }
 
-      const { skills, salaryMin, salaryMax, ...rest } = input;
+      const { skills, salaryMin, salaryMax, status, ...rest } = input;
+      const nextStatus = status === "DRAFT" ? "DRAFT" : "PENDING_APPROVAL";
 
       const job = await ctx.prisma.job.create({
         data: {
           ...rest,
           salaryMin: salaryMin !== undefined ? salaryMin : null,
           salaryMax: salaryMax !== undefined ? salaryMax : null,
+          status: nextStatus,
           organizationId: org.id,
-          publishedAt: input.status === "OPEN" ? new Date() : null,
+          publishedAt: null,
           skills: {
             create: skills.map((skill: string) => ({ skill })),
           },
@@ -268,7 +270,7 @@ export const jobRouter = router({
 
       return ctx.prisma.job.update({
         where: { id: input.id },
-        data: { status: "OPEN", publishedAt: new Date() },
+        data: { status: "PENDING_APPROVAL", publishedAt: null },
       });
     }),
 
