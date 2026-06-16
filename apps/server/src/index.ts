@@ -10,9 +10,6 @@ import { streamSSE } from "hono/streaming";
 import { notificationEvents } from "./lib/notifications/events";
 import { messageEvents } from "./lib/messaging/events";
 
-// ============================================================
-// Seed
-// ============================================================
 const SEED_USERS = [
   { email: "candidate_user@gmail.com", password: "candidate_user", name: "Candidate User", role: "CANDIDATE" as const },
   { email: "employer_user@gmail.com", password: "employer_user", name: "Employer User", role: "EMPLOYER" as const },
