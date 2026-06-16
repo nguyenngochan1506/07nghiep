@@ -108,6 +108,7 @@ export function ConversationList({
 
           return (
             <button
+              type="button"
               key={conv.id}
               onClick={() => onSelect(conv)}
               className={`flex items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${

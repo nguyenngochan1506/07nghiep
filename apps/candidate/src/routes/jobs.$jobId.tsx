@@ -161,6 +161,7 @@ function JobDetailPage() {
 
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button
+                type="button"
                 onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
                 disabled={toggleSavedJob.isPending}
                 className={`flex-1 md:flex-none px-4 py-2 border rounded-md font-medium transition-colors ${

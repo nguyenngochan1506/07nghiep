@@ -15,8 +15,9 @@ export function JobFilters({ filters, setFilters }: JobFiltersProps) {
             <h3 className="font-semibold text-lg mb-4">Bộ lọc</h3>
 
             <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Địa điểm</label>
+                <label htmlFor="job-location-filter" className="block text-sm font-medium mb-2">Địa điểm</label>
                 <select
+                    id="job-location-filter"
                     className="w-full border rounded-md p-2 text-sm"
                     onChange={(e) => handleFilterChange('location', e.target.value)}
                 >
@@ -28,10 +29,11 @@ export function JobFilters({ filters, setFilters }: JobFiltersProps) {
             </div>
 
             <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Hình thức làm việc</label>
+                <p className="block text-sm font-medium mb-2">Hình thức làm việc</p>
                 <div className="flex flex-wrap gap-2">
                     {['Remote', 'Hybrid', 'Onsite'].map(type => (
                         <button
+                            type="button"
                             key={type}
                             onClick={() => handleFilterChange('workType', type)}
                             className={`text-xs px-3 py-1 border rounded-full ${filters.workType === type ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}

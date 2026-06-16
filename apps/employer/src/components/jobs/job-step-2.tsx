@@ -116,6 +116,8 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
         </Label>
 
         {/* Tag display + input */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: composite tag input focuses the nested text input when the container is clicked. */}
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard users can tab directly to the nested input. */}
         <div
           className="flex min-h-[44px] flex-wrap gap-2 rounded-md border bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-ring cursor-text"
           onClick={() => skillInputRef.current?.focus()}

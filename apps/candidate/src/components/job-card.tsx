@@ -38,6 +38,7 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
                     </div>
                 </div>
                 <button
+                    type="button"
                     onClick={(e) => {
                         e.preventDefault();
                         onSave?.(job.id);

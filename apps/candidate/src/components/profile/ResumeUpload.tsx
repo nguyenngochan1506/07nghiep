@@ -94,17 +94,17 @@ export default function ResumeUpload({ value, onChange, onRemove, label = "Resum
     handleSelectedFile(event.target.files?.[0]);
   };
 
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     setIsDragging(true);
   };
 
-  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     setIsDragging(false);
   };
 
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     setIsDragging(false);
     handleSelectedFile(event.dataTransfer.files?.[0]);
@@ -154,26 +154,20 @@ export default function ResumeUpload({ value, onChange, onRemove, label = "Resum
         />
 
         {!displayedUrl ? (
-          <div
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={openFilePicker}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openFilePicker();
-              }
-            }}
             className={[
+              "w-full text-left",
               "cursor-pointer rounded-2xl border-2 border-dashed p-2 transition-colors",
               isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/60 hover:bg-muted/40",
             ].join(" ")}
           >
             {emptyState}
-          </div>
+          </button>
         ) : (
           <div className="rounded-2xl border bg-background p-4 shadow-sm">
             <div className="flex items-start gap-4">

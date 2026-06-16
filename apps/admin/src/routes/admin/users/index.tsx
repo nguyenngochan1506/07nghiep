@@ -283,6 +283,7 @@ function UsersRoute() {
                     <div className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-auto rounded-md border bg-background shadow-md">
                       {suggestionsQuery.data.map((s, idx) => (
                         <button
+                          type="button"
                           key={s.id}
                           className={`block w-full px-3 py-2 text-left hover:bg-muted/30 ${idx === activeIndex ? 'bg-muted/30' : ''}`}
                           onMouseEnter={() => setActiveIndex(idx)}

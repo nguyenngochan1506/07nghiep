@@ -79,9 +79,10 @@ export function NotificationBell({
             <div className="p-8 text-center text-sm text-muted-foreground">Không có thông báo nào</div>
           ) : (
             notifications.map((n) => (
-              <div
+              <button
+                type="button"
                 key={n.id}
-                className={`flex flex-col gap-1 border-b px-4 py-3 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors ${
+                className={`flex flex-col gap-1 border-b px-4 py-3 text-left last:border-0 hover:bg-muted/50 cursor-pointer transition-colors ${
                   !n.read ? "bg-primary/5" : ""
                 }`}
                 onClick={() => !n.read && onMarkAsRead(n.id)}
@@ -94,7 +95,7 @@ export function NotificationBell({
                 <span className="text-[10px] text-muted-foreground">
                   {getRelativeTime(n.createdAt)}
                 </span>
-              </div>
+              </button>
             ))
           )}
         </div>

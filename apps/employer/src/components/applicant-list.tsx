@@ -149,6 +149,7 @@ export function ApplicantList({
 
               return (
                 <button
+                  type="button"
                   key={applicant.id}
                   onClick={() => onSelect(applicant)}
                   className={`flex items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${

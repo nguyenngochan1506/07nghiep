@@ -116,6 +116,7 @@ function JobsPage() {
                             {totalPages > 1 && (
                                 <div className="flex justify-center items-center gap-4 mt-8">
                                     <button
+                                        type="button"
                                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                         disabled={currentPage === 1}
                                         className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md disabled:opacity-50 hover:bg-gray-50 transition"
@@ -126,6 +127,7 @@ function JobsPage() {
                                         Trang {currentPage} / {totalPages}
                                     </span>
                                     <button
+                                        type="button"
                                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                         disabled={currentPage === totalPages}
                                         className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md disabled:opacity-50 hover:bg-gray-50 transition"

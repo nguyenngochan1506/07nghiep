@@ -133,6 +133,7 @@ export function JobsTable({
         <div className="flex gap-1 rounded-lg border bg-muted p-1">
           {STATUS_TABS.map((tab) => (
             <button
+              type="button"
               key={tab.value}
               onClick={() => onStatusChange(tab.value)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -323,6 +324,7 @@ export function JobsTable({
 function Briefcase({ className }: { className?: string }) {
   return (
     <svg
+      aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       fill="none"

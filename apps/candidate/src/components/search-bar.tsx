@@ -52,6 +52,7 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
                 />
                 {keyword && (
                     <button
+                        type="button"
                         onClick={handleClearKeyword}
                         className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
                         aria-label="Clear search"
@@ -76,6 +77,7 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
                 />
                 {location && (
                     <button
+                        type="button"
                         onClick={handleClearLocation}
                         className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
                         aria-label="Clear location"
