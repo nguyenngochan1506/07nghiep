@@ -1,7 +1,7 @@
 export function createSSEConnection(
   url: string,
   onEvent: (event: string, data: string) => void,
-  signal: AbortSignal
+  signal: AbortSignal,
 ) {
   fetch(url, {
     headers: { Accept: "text/event-stream" },

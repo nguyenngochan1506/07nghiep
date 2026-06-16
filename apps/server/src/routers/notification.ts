@@ -9,7 +9,7 @@ export const notificationRouter = router({
         limit: z.number().min(1).max(100).default(20),
         cursor: z.string().nullish(),
         unreadOnly: z.boolean().default(false),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { limit, cursor, unreadOnly } = input;
@@ -129,7 +129,7 @@ export const notificationRouter = router({
         ]),
         pushEnabled: z.boolean().optional(),
         emailEnabled: z.boolean().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { type, pushEnabled, emailEnabled } = input;

@@ -2,7 +2,13 @@ import { Switch } from "./switch";
 import { Label } from "./label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card";
 
-export type NotificationType = "APPLICATION_RECEIVED" | "APPLICATION_STATUS" | "MESSAGE" | "JOB_ALERT" | "SYSTEM" | "INTERVIEW_INVITATION";
+export type NotificationType =
+  | "APPLICATION_RECEIVED"
+  | "APPLICATION_STATUS"
+  | "MESSAGE"
+  | "JOB_ALERT"
+  | "SYSTEM"
+  | "INTERVIEW_INVITATION";
 
 export interface Preference {
   type: NotificationType;
@@ -67,7 +73,9 @@ export function NotificationPreferences({
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor={`${type}-push`} className="flex flex-col gap-1 cursor-pointer">
                   <span className="text-sm font-medium">Thông báo đẩy</span>
-                  <span className="font-normal text-muted-foreground text-xs">Nhận thông báo trực tiếp trên trình duyệt</span>
+                  <span className="font-normal text-muted-foreground text-xs">
+                    Nhận thông báo trực tiếp trên trình duyệt
+                  </span>
                 </Label>
                 <Switch
                   id={`${type}-push`}
@@ -79,7 +87,9 @@ export function NotificationPreferences({
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor={`${type}-email`} className="flex flex-col gap-1 cursor-pointer">
                   <span className="text-sm font-medium">Thông báo qua Email</span>
-                  <span className="font-normal text-muted-foreground text-xs">Nhận thông báo qua email của bạn</span>
+                  <span className="font-normal text-muted-foreground text-xs">
+                    Nhận thông báo qua email của bạn
+                  </span>
                 </Label>
                 <Switch
                   id={`${type}-email`}

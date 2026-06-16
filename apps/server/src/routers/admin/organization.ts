@@ -56,25 +56,27 @@ export const adminOrganizationRouter = router({
       };
     }),
 
-  approve: adminProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ ctx, input }) => {
-    const organization = await ctx.prisma.organization.findUnique({
-      where: { id: input.id },
-      select: { id: true },
-    });
+  approve: adminProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const organization = await ctx.prisma.organization.findUnique({
+        where: { id: input.id },
+        select: { id: true },
+      });
 
-    if (!organization) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tổ chức" });
-    }
+      if (!organization) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tổ chức" });
+      }
 
-    return ctx.prisma.organization.update({
-      where: { id: input.id },
-      data: {
-        verified: true,
-        verificationStatus: "VERIFIED",
-        verificationNote: null,
-      },
-    });
-  }),
+      return ctx.prisma.organization.update({
+        where: { id: input.id },
+        data: {
+          verified: true,
+          verificationStatus: "VERIFIED",
+          verificationNote: null,
+        },
+      });
+    }),
 
   reject: adminProcedure
     .input(z.object({ id: z.string().min(1), note: z.string().trim().min(1).max(500) }))

@@ -1,16 +1,7 @@
 import { Badge } from "@07nghiep/ui/components/badge";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@07nghiep/ui/components/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
 import { Button } from "@07nghiep/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@07nghiep/ui/components/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import {
   ArrowDownToLine,
   Briefcase,
@@ -110,18 +101,12 @@ function mapEducation(value: unknown): EducationItem[] {
       degree: asString(item.degree),
       school: asString(item.school),
       location: asString(item.location),
-      startDate:
-        typeof item.startYear === "number" ? String(item.startYear) : "",
+      startDate: typeof item.startYear === "number" ? String(item.startYear) : "",
       endDate: typeof item.endYear === "number" ? String(item.endYear) : "",
       gpa: asString(item.gpa),
     }))
     .filter(
-      (item) =>
-        item.degree ||
-        item.school ||
-        item.location ||
-        item.startDate ||
-        item.endDate,
+      (item) => item.degree || item.school || item.location || item.startDate || item.endDate,
     );
 }
 
@@ -147,9 +132,7 @@ function inferPortfolioLinks(portfolioUrl?: string | null): PortfolioLinks {
 
 export const Route = createFileRoute("/profile/")({
   loader: async ({ context }) => {
-    return context.queryClient.ensureQueryData(
-      context.trpc.profile.getMyProfile.queryOptions(),
-    );
+    return context.queryClient.ensureQueryData(context.trpc.profile.getMyProfile.queryOptions());
   },
   component: ProfilePage,
 });
@@ -157,16 +140,13 @@ export const Route = createFileRoute("/profile/")({
 function ProfilePage() {
   const profile = Route.useLoaderData() as ProfileApiData;
   const { data: session } = authClient.useSession();
-  const sessionUserId =
-    typeof session?.user?.id === "string" ? session.user.id : "";
+  const sessionUserId = typeof session?.user?.id === "string" ? session.user.id : "";
   const sessionRole =
     typeof (session?.user as { role?: unknown } | undefined)?.role === "string"
       ? (session?.user as { role?: string }).role
       : undefined;
   const canEditProfile =
-    Boolean(sessionRole) &&
-    Boolean(sessionUserId) &&
-    sessionUserId === (profile.userId ?? "");
+    Boolean(sessionRole) && Boolean(sessionUserId) && sessionUserId === (profile.userId ?? "");
 
   const fullName = session?.user.name ?? "Chưa cập nhật họ tên";
   const email = session?.user.email ?? "Chưa cập nhật email";
@@ -184,9 +164,7 @@ function ProfilePage() {
 
   const hasSkills = (profile.skills?.length ?? 0) > 0;
   const hasResume = Boolean(profile.resumeUrl);
-  const hasPortfolioLinks = Boolean(
-    portfolio.linkedin || portfolio.github || portfolio.website,
-  );
+  const hasPortfolioLinks = Boolean(portfolio.linkedin || portfolio.github || portfolio.website);
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 text-foreground">
@@ -196,9 +174,7 @@ function ProfilePage() {
             <div className="flex flex-col gap-5 md:flex-row md:items-center">
               <Avatar className="size-28 rounded-full ring-2 ring-border md:size-32">
                 <AvatarImage src={avatarUrl} alt={fullName} />
-                <AvatarFallback className="text-2xl font-semibold">
-                  {initials}
-                </AvatarFallback>
+                <AvatarFallback className="text-2xl font-semibold">{initials}</AvatarFallback>
               </Avatar>
 
               <div className="flex flex-col gap-3">
@@ -310,11 +286,7 @@ function ProfilePage() {
               {hasPortfolioLinks ? (
                 <>
                   {portfolio.linkedin ? (
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="w-full justify-start rounded-xl"
-                    >
+                    <Button asChild variant="outline" className="w-full justify-start rounded-xl">
                       <a
                         href={portfolio.linkedin}
                         target="_blank"
@@ -327,11 +299,7 @@ function ProfilePage() {
                     </Button>
                   ) : null}
                   {portfolio.github ? (
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="w-full justify-start rounded-xl"
-                    >
+                    <Button asChild variant="outline" className="w-full justify-start rounded-xl">
                       <a
                         href={portfolio.github}
                         target="_blank"
@@ -344,11 +312,7 @@ function ProfilePage() {
                     </Button>
                   ) : null}
                   {portfolio.website ? (
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="w-full justify-start rounded-xl"
-                    >
+                    <Button asChild variant="outline" className="w-full justify-start rounded-xl">
                       <a
                         href={portfolio.website}
                         target="_blank"
@@ -448,8 +412,7 @@ function TimelineCard({
                         </div>
                         <div className="text-right text-xs text-muted-foreground">
                           <p>
-                            {item.startDate || "?"} -{" "}
-                            {item.endDate || "Hiện tại"}
+                            {item.startDate || "?"} - {item.endDate || "Hiện tại"}
                           </p>
                           <p>{item.location || ""}</p>
                         </div>

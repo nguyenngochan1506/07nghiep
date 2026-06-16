@@ -7,14 +7,14 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-    plugins: [tailwindcss(), tanstackRouter({}), react(), tsconfigPaths()],
-    resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "./src"),
-            "@candidate": path.resolve(__dirname, "../candidate/src"),
-        },
+  plugins: [tailwindcss(), tanstackRouter({}), react(), tsconfigPaths()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@candidate": path.resolve(__dirname, "../candidate/src"),
     },
-    server: {
-        port: 3003,
-    },
+  },
+  server: {
+    port: 3003,
+  },
 });

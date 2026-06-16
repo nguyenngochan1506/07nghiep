@@ -44,7 +44,9 @@ export default function ExperienceSection({ form }: ExperienceSectionProps) {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
                   <CardTitle>Kinh nghiệm {index + 1}</CardTitle>
-                  <p className="text-xs text-muted-foreground">Thông tin công việc gần đây nhất của bạn</p>
+                  <p className="text-xs text-muted-foreground">
+                    Thông tin công việc gần đây nhất của bạn
+                  </p>
                 </div>
 
                 <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>

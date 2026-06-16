@@ -2,9 +2,7 @@ import "dotenv/config";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-const urlList = z.string().transform((val) =>
-  val.split(",").map((s) => s.trim())
-);
+const urlList = z.string().transform((val) => val.split(",").map((s) => s.trim()));
 
 export const env = createEnv({
   server: {

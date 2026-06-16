@@ -56,10 +56,7 @@ function JobDetailPage() {
   const contextJob = jobs.find((j) => j.id === jobId);
 
   const { data: apiJob, isLoading: apiLoading } = useQuery(
-    trpc.job.getPublicById.queryOptions(
-      { id: jobId },
-      { enabled: !contextJob }
-    )
+    trpc.job.getPublicById.queryOptions({ id: jobId }, { enabled: !contextJob }),
   );
 
   const contextJobView: JobDetailView | null = contextJob
@@ -72,9 +69,7 @@ function JobDetailPage() {
 
   const job: JobDetailView | null = contextJobView ?? (apiJob ? mapJob(apiJob) : null);
 
-  const hasAppliedQuery = useQuery(
-    trpc.applications.list.queryOptions({ search: undefined })
-  );
+  const hasAppliedQuery = useQuery(trpc.applications.list.queryOptions({ search: undefined }));
   const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
   const savedJobOptions = trpc.savedJob.isSaved.queryOptions({ jobId });
   const savedJobQuery = useQuery(savedJobOptions);

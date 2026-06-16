@@ -90,9 +90,7 @@ export function ApplicationList({
                     <span className="font-medium">{app.candidate.name || "Unknown Candidate"}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {app.job?.title || "N/A"}
-                </TableCell>
+                <TableCell className="text-muted-foreground">{app.job?.title || "N/A"}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {format(new Date(app.appliedAt), "MMM d, yyyy")}
                 </TableCell>

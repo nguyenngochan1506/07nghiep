@@ -2,7 +2,7 @@ import { prisma } from "@07nghiep/db";
 import { emitNotification } from "./events";
 import { sendEmail } from "./email";
 
-export type NotificationType = 
+export type NotificationType =
   | "APPLICATION_RECEIVED"
   | "APPLICATION_STATUS"
   | "MESSAGE"

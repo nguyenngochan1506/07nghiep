@@ -10,16 +10,18 @@ async function run() {
         type: "SYSTEM",
         title: "🔔 Thông báo hệ thống",
         body: `Đây là thông báo test cho ${user.email} vào lúc ${new Date().toLocaleTimeString()}`,
-      }
+      },
     });
 
     emitNotification({
       ...notif,
       type: notif.type,
-      createdAt: notif.createdAt.toISOString()
+      createdAt: notif.createdAt.toISOString(),
     });
     console.log(`Đã gửi thông báo tới: ${user.email}`);
   }
 }
 
-run().catch(console.error).finally(() => process.exit(0));
+run()
+  .catch(console.error)
+  .finally(() => process.exit(0));

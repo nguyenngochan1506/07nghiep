@@ -78,7 +78,7 @@ export const interviewRouter = router({
         location: z.string().max(500).optional(),
         meetingLink: z.string().url().optional().or(z.literal("")),
         notes: z.string().max(2000).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const application = await ctx.prisma.application.findUnique({
@@ -150,7 +150,7 @@ export const interviewRouter = router({
         location: z.string().max(500).optional().nullable(),
         meetingLink: z.string().url().optional().or(z.literal("")).nullable(),
         notes: z.string().max(2000).optional().nullable(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const interview = await ctx.prisma.interview.findUnique({
@@ -219,7 +219,7 @@ export const interviewRouter = router({
       z.object({
         id: z.string().min(1),
         action: z.enum(["CONFIRMED", "CANCELLED"]),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const interview = await ctx.prisma.interview.findUnique({

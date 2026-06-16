@@ -69,7 +69,9 @@ export const applicationsRouter = router({
       select: { id: true, headline: true, summary: true, skills: true, resumeUrl: true },
     });
 
-    const hasBasicProfile = Boolean(profile?.headline?.trim() && profile?.summary?.trim() && (profile.skills?.length ?? 0) > 0);
+    const hasBasicProfile = Boolean(
+      profile?.headline?.trim() && profile?.summary?.trim() && (profile.skills?.length ?? 0) > 0,
+    );
     if (!hasBasicProfile) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "Complete profile to apply" });
     }
@@ -135,16 +137,9 @@ export const applicationsRouter = router({
     .input(
       z.object({
         id: z.string().min(1),
-        status: z.enum([
-          "PENDING",
-          "VIEWED",
-          "SHORTLISTED",
-          "INTERVIEWING",
-          "OFFERED",
-          "REJECTED",
-        ]),
+        status: z.enum(["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEWING", "OFFERED", "REJECTED"]),
         note: z.string().max(500).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { id, status, note } = input;
@@ -211,79 +206,83 @@ export const applicationsRouter = router({
       return updated;
     }),
 
-  list: candidateProcedure.input(listApplicationsSchema.optional()).query(async ({ ctx, input }) => {
-    if (!ctx.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
-    }
+  list: candidateProcedure
+    .input(listApplicationsSchema.optional())
+    .query(async ({ ctx, input }) => {
+      if (!ctx.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      }
 
-    const where = {
-      candidateId: ctx.user.id,
-      ...(input?.status ? { status: input.status } : {}),
-      ...(input?.search
-        ? {
-            job: {
-              is: {
-                OR: [
-                  { title: { contains: input.search } },
-                  {
-                    organization: {
-                      is: {
-                        name: { contains: input.search },
+      const where = {
+        candidateId: ctx.user.id,
+        ...(input?.status ? { status: input.status } : {}),
+        ...(input?.search
+          ? {
+              job: {
+                is: {
+                  OR: [
+                    { title: { contains: input.search } },
+                    {
+                      organization: {
+                        is: {
+                          name: { contains: input.search },
+                        },
                       },
                     },
-                  },
-                ],
+                  ],
+                },
               },
+            }
+          : {}),
+      };
+
+      return ctx.prisma.application.findMany({
+        where,
+        include: {
+          job: {
+            include: {
+              organization: true,
             },
-          }
-        : {}),
-    };
-
-    return ctx.prisma.application.findMany({
-      where,
-      include: {
-        job: {
-          include: {
-            organization: true,
           },
         },
-      },
-      orderBy: {
-        appliedAt: input?.sortBy === "oldest" ? "asc" : "desc",
-      },
-    });
-  }),
+        orderBy: {
+          appliedAt: input?.sortBy === "oldest" ? "asc" : "desc",
+        },
+      });
+    }),
 
-  getById: candidateProcedure.input(z.object({ id: z.string().min(1) })).query(async ({ ctx, input }) => {
-    if (!ctx.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
-    }
+  getById: candidateProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      if (!ctx.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      }
 
-    const application = await ctx.prisma.application.findFirst({
-      where: {
-        id: input.id,
-        candidateId: ctx.user.id,
-      },
-      include: {
-        job: {
-          include: {
-            organization: true,
+      const application = await ctx.prisma.application.findFirst({
+        where: {
+          id: input.id,
+          candidateId: ctx.user.id,
+        },
+        include: {
+          job: {
+            include: {
+              organization: true,
+            },
+          },
+          histories: {
+            orderBy: {
+              createdAt: "asc",
+            },
           },
         },
-        histories: {
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-      },
-    });
+      });
 
-    if (!application) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
-    }
+      if (!application) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+      }
 
-    return application;
-  }),
+      return application;
+    }),
 
   update: candidateProcedure.input(updateApplicationSchema).mutation(async ({ ctx, input }) => {
     if (!ctx.user) {
@@ -306,7 +305,10 @@ export const applicationsRouter = router({
     }
 
     if (application.status !== "PENDING") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Only pending applications can be edited" });
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Only pending applications can be edited",
+      });
     }
 
     return ctx.prisma.application.update({
@@ -337,7 +339,9 @@ export const applicationsRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
     }
 
-    if (!withdrawableStatuses.includes(application.status as (typeof withdrawableStatuses)[number])) {
+    if (
+      !withdrawableStatuses.includes(application.status as (typeof withdrawableStatuses)[number])
+    ) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Only PENDING or VIEWED applications can be withdrawn",

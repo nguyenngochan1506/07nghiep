@@ -2,13 +2,7 @@ import { useState } from "react";
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Plus,
-  Briefcase,
-  FileText,
-  Eye,
-  TrendingUp,
-} from "lucide-react";
+import { Plus, Briefcase, FileText, Eye, TrendingUp } from "lucide-react";
 
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
@@ -47,8 +41,10 @@ function MyJobsPage() {
       page,
       pageSize: 10,
       search: search || undefined,
-      status: (statusFilter as "DRAFT" | "OPEN" | "CLOSED" | "ARCHIVED" | "PENDING_APPROVAL") || undefined,
-    })
+      status:
+        (statusFilter as "DRAFT" | "OPEN" | "CLOSED" | "ARCHIVED" | "PENDING_APPROVAL") ||
+        undefined,
+    }),
   );
 
   function invalidateAll() {
@@ -58,30 +54,42 @@ function MyJobsPage() {
   // ── Mutations ─────────────────────────────────────────────────────────────
   const publishMutation = useMutation(
     trpc.job.publish.mutationOptions({
-      onSuccess: () => { toast.success("Đã gửi tin tuyển dụng để duyệt"); invalidateAll(); },
+      onSuccess: () => {
+        toast.success("Đã gửi tin tuyển dụng để duyệt");
+        invalidateAll();
+      },
       onError: (e) => toast.error(e.message),
-    })
+    }),
   );
 
   const closeMutation = useMutation(
     trpc.job.close.mutationOptions({
-      onSuccess: () => { toast.success("Đã đóng tin tuyển dụng"); invalidateAll(); },
+      onSuccess: () => {
+        toast.success("Đã đóng tin tuyển dụng");
+        invalidateAll();
+      },
       onError: (e) => toast.error(e.message),
-    })
+    }),
   );
 
   const cloneMutation = useMutation(
     trpc.job.clone.mutationOptions({
-      onSuccess: () => { toast.success("Đã nhân bản tin tuyển dụng → Nháp mới"); invalidateAll(); },
+      onSuccess: () => {
+        toast.success("Đã nhân bản tin tuyển dụng → Nháp mới");
+        invalidateAll();
+      },
       onError: (e) => toast.error(e.message),
-    })
+    }),
   );
 
   const deleteMutation = useMutation(
     trpc.job.delete.mutationOptions({
-      onSuccess: () => { toast.success("Đã xóa tin tuyển dụng"); invalidateAll(); },
+      onSuccess: () => {
+        toast.success("Đã xóa tin tuyển dụng");
+        invalidateAll();
+      },
       onError: (e) => toast.error(e.message),
-    })
+    }),
   );
 
   const stats = statsQuery.data;
@@ -120,9 +128,7 @@ function MyJobsPage() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Quản lý tin tuyển dụng</h1>
-            <p className="text-sm text-muted-foreground">
-              Quản lý tất cả tin tuyển dụng của bạn
-            </p>
+            <p className="text-sm text-muted-foreground">Quản lý tất cả tin tuyển dụng của bạn</p>
           </div>
           <Link to="/jobs/new">
             <Button id="new-job-btn" className="gap-2">
@@ -166,8 +172,14 @@ function MyJobsPage() {
             totalPages={jobsQuery.data?.pagination.totalPages ?? 1}
             search={search}
             statusFilter={statusFilter}
-            onSearchChange={(v) => { setSearch(v); setPage(1); }}
-            onStatusChange={(v) => { setStatusFilter(v); setPage(1); }}
+            onSearchChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            onStatusChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
             onPageChange={setPage}
             onPublish={(id) => publishMutation.mutate({ id })}
             onClose={(id) => closeMutation.mutate({ id })}

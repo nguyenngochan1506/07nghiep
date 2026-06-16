@@ -7,7 +7,7 @@ import { env } from "@07nghiep/env/admin";
 function createSSEConnection(
   url: string,
   onEvent: (event: string, data: string) => void,
-  signal: AbortSignal
+  signal: AbortSignal,
 ) {
   fetch(url, {
     headers: { Accept: "text/event-stream" },
@@ -56,19 +56,23 @@ export function NotificationBellContainer() {
   const { data: notificationsData } = useQuery(trpc.notification.list.queryOptions({ limit: 10 }));
   const notifications = notificationsData?.items || [];
 
-  const markAsRead = useMutation(trpc.notification.markAsRead.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
-      queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
-    },
-  }));
+  const markAsRead = useMutation(
+    trpc.notification.markAsRead.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
+        queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
+      },
+    }),
+  );
 
-  const markAllAsRead = useMutation(trpc.notification.markAllAsRead.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
-      queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
-    },
-  }));
+  const markAllAsRead = useMutation(
+    trpc.notification.markAllAsRead.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
+        queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
+      },
+    }),
+  );
 
   useEffect(() => {
     const abort = new AbortController();
@@ -82,7 +86,7 @@ export function NotificationBellContainer() {
           queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
         }
       },
-      abort.signal
+      abort.signal,
     );
 
     return () => {

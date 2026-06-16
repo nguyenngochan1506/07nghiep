@@ -11,9 +11,24 @@ import { notificationEvents } from "./lib/notifications/events";
 import { messageEvents } from "./lib/messaging/events";
 
 const SEED_USERS = [
-  { email: "candidate_user@gmail.com", password: "candidate_user", name: "Candidate User", role: "CANDIDATE" as const },
-  { email: "employer_user@gmail.com", password: "employer_user", name: "Employer User", role: "EMPLOYER" as const },
-  { email: "admin_user@gmail.com", password: "admin_user", name: "Admin User", role: "ADMIN" as const },
+  {
+    email: "candidate_user@gmail.com",
+    password: "candidate_user",
+    name: "Candidate User",
+    role: "CANDIDATE" as const,
+  },
+  {
+    email: "employer_user@gmail.com",
+    password: "employer_user",
+    name: "Employer User",
+    role: "EMPLOYER" as const,
+  },
+  {
+    email: "admin_user@gmail.com",
+    password: "admin_user",
+    name: "Admin User",
+    role: "ADMIN" as const,
+  },
 ];
 
 async function seedUsers() {

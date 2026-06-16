@@ -15,16 +15,16 @@ function getRelativeTime(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return 'Vừa xong';
+
+  if (diffInSeconds < 60) return "Vừa xong";
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `${diffInHours} giờ trước`;
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 30) return `${diffInDays} ngày trước`;
-  
-  return date.toLocaleDateString('vi-VN');
+
+  return date.toLocaleDateString("vi-VN");
 }
 
 function NotificationsPage() {
@@ -37,7 +37,7 @@ function NotificationsPage() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["notification"] });
       },
-    })
+    }),
   );
 
   const markAllAsRead = useMutation(
@@ -46,7 +46,7 @@ function NotificationsPage() {
         queryClient.invalidateQueries({ queryKey: ["notification"] });
         toast.success("Đã đánh dấu tất cả là đã đọc");
       },
-    })
+    }),
   );
 
   const deleteNotification = useMutation(
@@ -55,7 +55,7 @@ function NotificationsPage() {
         queryClient.invalidateQueries({ queryKey: ["notification"] });
         toast.success("Đã xóa thông báo");
       },
-    })
+    }),
   );
 
   if (isLoading) {
@@ -67,9 +67,11 @@ function NotificationsPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Thông báo</h1>
-          <p className="text-muted-foreground">Quản lý các cập nhật quan trọng từ ứng viên và hệ thống.</p>
+          <p className="text-muted-foreground">
+            Quản lý các cập nhật quan trọng từ ứng viên và hệ thống.
+          </p>
         </div>
-        {notifications.some(n => !n.read) && (
+        {notifications.some((n) => !n.read) && (
           <Button variant="outline" size="sm" onClick={() => markAllAsRead.mutate()}>
             <Check className="mr-2 h-4 w-4" />
             Đánh dấu tất cả đã đọc
@@ -83,7 +85,9 @@ function NotificationsPage() {
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <BellOff className="mb-4 h-12 w-12 text-muted-foreground opacity-20" />
               <p className="text-lg font-medium">Bạn chưa có thông báo nào</p>
-              <p className="text-sm text-muted-foreground">Các ứng tuyển mới và cập nhật sẽ xuất hiện ở đây.</p>
+              <p className="text-sm text-muted-foreground">
+                Các ứng tuyển mới và cập nhật sẽ xuất hiện ở đây.
+              </p>
             </CardContent>
           </Card>
         ) : (

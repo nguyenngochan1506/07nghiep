@@ -1,7 +1,17 @@
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { Plus, FileText, Eye, Briefcase, TrendingUp, Calendar, Users, Building, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  FileText,
+  Eye,
+  Briefcase,
+  TrendingUp,
+  Calendar,
+  Users,
+  Building,
+  AlertCircle,
+} from "lucide-react";
 
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
@@ -53,10 +63,25 @@ function DashboardComponent() {
   const isOrgMissing = orgQuery.isError && (orgQuery.error as any)?.data?.code === "NOT_FOUND";
 
   const STAT_CARDS = [
-    { icon: Briefcase, label: "Đang tuyển", value: stats?.openJobs ?? 0, change: `${stats?.draftJobs ?? 0} nháp` },
-    { icon: FileText, label: "Đơn ứng tuyển", value: stats?.totalApplications ?? 0, change: "Tất cả tin" },
+    {
+      icon: Briefcase,
+      label: "Đang tuyển",
+      value: stats?.openJobs ?? 0,
+      change: `${stats?.draftJobs ?? 0} nháp`,
+    },
+    {
+      icon: FileText,
+      label: "Đơn ứng tuyển",
+      value: stats?.totalApplications ?? 0,
+      change: "Tất cả tin",
+    },
     { icon: Eye, label: "Tổng lượt xem", value: stats?.totalViews ?? 0, change: "Tất cả tin" },
-    { icon: Users, label: "Tổng tin đăng", value: stats?.totalJobs ?? 0, change: `${stats?.closedJobs ?? 0} đã đóng` },
+    {
+      icon: Users,
+      label: "Tổng tin đăng",
+      value: stats?.totalJobs ?? 0,
+      change: `${stats?.closedJobs ?? 0} đã đóng`,
+    },
   ];
 
   return (
@@ -65,9 +90,7 @@ function DashboardComponent() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold">Chào mừng, {session.data?.user.name}</h1>
-          <p className="text-muted-foreground">
-            Cập nhật tình trạng tin tuyển dụng của bạn
-          </p>
+          <p className="text-muted-foreground">Cập nhật tình trạng tin tuyển dụng của bạn</p>
         </div>
 
         {/* Missing Org Alert */}
@@ -78,9 +101,12 @@ function DashboardComponent() {
                 <AlertCircle className="h-5 w-5" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-destructive">Chưa có thông tin công ty</h3>
+                <h3 className="text-lg font-semibold text-destructive">
+                  Chưa có thông tin công ty
+                </h3>
                 <p className="mt-1 text-sm text-destructive/90">
-                  Bạn cần thiết lập hồ sơ công ty (Tên, Logo, Giới thiệu,...) trước khi có thể đăng tin tuyển dụng.
+                  Bạn cần thiết lập hồ sơ công ty (Tên, Logo, Giới thiệu,...) trước khi có thể đăng
+                  tin tuyển dụng.
                 </p>
                 <Link to="/settings/organization" className="mt-3 inline-block">
                   <Button size="sm" variant="destructive" className="gap-2">

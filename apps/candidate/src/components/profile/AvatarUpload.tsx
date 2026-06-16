@@ -21,7 +21,12 @@ function isValidAvatarType(file: File) {
   return ACCEPTED_TYPES.includes(file.type);
 }
 
-export default function AvatarUpload({ value, onChange, label = "Ảnh đại diện", maxSize }: AvatarUploadProps) {
+export default function AvatarUpload({
+  value,
+  onChange,
+  label = "Ảnh đại diện",
+  maxSize,
+}: AvatarUploadProps) {
   const inputId = useId();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");

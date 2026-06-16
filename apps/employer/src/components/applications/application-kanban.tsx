@@ -42,7 +42,7 @@ export function ApplicationKanban({ applications }: ApplicationKanbanProps) {
         toast.error(error.message || "Failed to update status");
         queryClient.invalidateQueries();
       },
-    })
+    }),
   );
 
   const onDragEnd = (result: DropResult) => {
@@ -52,10 +52,7 @@ export function ApplicationKanban({ applications }: ApplicationKanbanProps) {
       return;
     }
 
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
+    if (destination.droppableId === source.droppableId && destination.index === source.index) {
       return;
     }
 
@@ -85,7 +82,7 @@ export function ApplicationKanban({ applications }: ApplicationKanbanProps) {
                   {columnApps.length}
                 </span>
               </div>
-              
+
               <Droppable droppableId={column.id}>
                 {(provided, snapshot) => (
                   <ScrollArea className="flex-1">

@@ -33,7 +33,7 @@ function OrganizationDetailPage() {
   const { orgId } = Route.useParams();
 
   const { data: org, isLoading: orgLoading } = useQuery(
-    trpc.organization.getById.queryOptions({ id: orgId })
+    trpc.organization.getById.queryOptions({ id: orgId }),
   );
 
   const { data: jobsData, isLoading: jobsLoading } = useQuery(
@@ -42,7 +42,7 @@ function OrganizationDetailPage() {
       status: "OPEN",
       page: 1,
       pageSize: 20,
-    })
+    }),
   );
 
   const isLoading = orgLoading || jobsLoading;
@@ -63,12 +63,8 @@ function OrganizationDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
         <Building2 className="h-16 w-16 text-gray-300 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Không tìm thấy công ty
-        </h1>
-        <p className="text-gray-500 mb-6">
-          Công ty này không tồn tại hoặc đã bị xóa.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Không tìm thấy công ty</h1>
+        <p className="text-gray-500 mb-6">Công ty này không tồn tại hoặc đã bị xóa.</p>
         <Link to="/organizations">
           <Button variant="outline">Quay lại danh sách</Button>
         </Link>
@@ -108,27 +104,24 @@ function OrganizationDetailPage() {
                 />
               ) : (
                 <div className="w-20 h-20 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-2xl font-bold text-primary">
-                    {initials}
-                  </span>
+                  <span className="text-2xl font-bold text-primary">{initials}</span>
                 </div>
               )}
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {org.name}
-                  </h1>
+                  <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
                   {org.verified && (
-                    <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-700 border-green-200"
+                    >
                       Đã xác thực
                     </Badge>
                   )}
                 </div>
 
-                {org.industry && (
-                  <p className="text-muted-foreground mt-1">{org.industry}</p>
-                )}
+                {org.industry && <p className="text-muted-foreground mt-1">{org.industry}</p>}
 
                 <div className="flex flex-wrap gap-3 mt-4">
                   {org.location && (
@@ -167,9 +160,7 @@ function OrganizationDetailPage() {
 
             {org.description && (
               <div className="mt-6 pt-6 border-t border-gray-100">
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  Giới thiệu
-                </h3>
+                <h3 className="font-semibold text-gray-900 mb-2">Giới thiệu</h3>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                   {org.description}
                 </p>
@@ -187,17 +178,11 @@ function OrganizationDetailPage() {
           {jobs.length > 0 ? (
             <div className="space-y-3">
               {jobs.map((job: any) => (
-                <Link
-                  key={job.id}
-                  to="/jobs/$jobId"
-                  params={{ jobId: job.id }}
-                >
+                <Link key={job.id} to="/jobs/$jobId" params={{ jobId: job.id }}>
                   <Card className="transition-shadow hover:shadow-md cursor-pointer">
                     <CardContent className="p-5 flex items-center justify-between">
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {job.title}
-                        </h3>
+                        <h3 className="font-semibold text-gray-900 truncate">{job.title}</h3>
                         <div className="flex flex-wrap items-center gap-2 mt-1.5">
                           {job.location && (
                             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -229,12 +214,8 @@ function OrganizationDetailPage() {
             </div>
           ) : (
             <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
-              <h3 className="text-lg font-medium text-gray-600 mb-2">
-                Chưa có việc làm nào
-              </h3>
-              <p className="text-gray-500">
-                Công ty này hiện chưa đăng tin tuyển dụng nào.
-              </p>
+              <h3 className="text-lg font-medium text-gray-600 mb-2">Chưa có việc làm nào</h3>
+              <p className="text-gray-500">Công ty này hiện chưa đăng tin tuyển dụng nào.</p>
             </div>
           )}
         </div>

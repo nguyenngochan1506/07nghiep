@@ -27,7 +27,7 @@ function OrganizationsPage() {
     trpc.organization.getPublicList.queryOptions({
       keyword: keyword || undefined,
       limit: 30,
-    })
+    }),
   );
 
   const organizations = data?.organizations ?? [];
@@ -37,9 +37,7 @@ function OrganizationsPage() {
       <div className="bg-white py-12 px-4 md:px-8 border-b border-gray-200">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="text-center space-y-3">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
-              Công ty
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">Công ty</h1>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
               Khám phá các công ty hàng đầu và cơ hội việc làm từ họ
             </p>
@@ -77,11 +75,7 @@ function OrganizationsPage() {
                 .toUpperCase();
 
               return (
-                <Link
-                  key={org.id}
-                  to="/organizations/$orgId"
-                  params={{ orgId: org.id }}
-                >
+                <Link key={org.id} to="/organizations/$orgId" params={{ orgId: org.id }}>
                   <Card className="h-full transition-shadow hover:shadow-md cursor-pointer">
                     <CardContent className="p-6 flex flex-col gap-3">
                       <div className="flex items-start gap-4">
@@ -93,9 +87,7 @@ function OrganizationsPage() {
                           />
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-bold text-primary">
-                              {initials}
-                            </span>
+                            <span className="text-sm font-bold text-primary">{initials}</span>
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
@@ -108,9 +100,7 @@ function OrganizationsPage() {
                             )}
                           </h3>
                           {org.industry && (
-                            <p className="text-sm text-muted-foreground">
-                              {org.industry}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{org.industry}</p>
                           )}
                         </div>
                       </div>
@@ -145,9 +135,7 @@ function OrganizationsPage() {
         ) : (
           <div className="text-center py-16">
             <Building2 className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-600 mb-2">
-              Không tìm thấy công ty
-            </h3>
+            <h3 className="text-lg font-medium text-gray-600 mb-2">Không tìm thấy công ty</h3>
             <p className="text-gray-500">
               {keyword
                 ? `Không có công ty nào khớp với "${keyword}"`

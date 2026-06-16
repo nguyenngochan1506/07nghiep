@@ -34,7 +34,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
   function removeSkill(skill: string) {
     onChange(
       "skills",
-      data.skills.filter((s) => s !== skill)
+      data.skills.filter((s) => s !== skill),
     );
   }
 
@@ -76,9 +76,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
           ) : (
             <span />
           )}
-          <p className="text-xs text-muted-foreground">
-            {data.description.length} ký tự
-          </p>
+          <p className="text-xs text-muted-foreground">{data.description.length} ký tự</p>
         </div>
       </div>
 
@@ -109,10 +107,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
       {/* Skills */}
       <div className="space-y-2">
         <Label htmlFor="skills-input">
-          Kỹ năng yêu cầu{" "}
-          <span className="text-muted-foreground">
-            ({data.skills.length}/20)
-          </span>
+          Kỹ năng yêu cầu <span className="text-muted-foreground">({data.skills.length}/20)</span>
         </Label>
 
         {/* Tag display + input */}
@@ -123,11 +118,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
           onClick={() => skillInputRef.current?.focus()}
         >
           {data.skills.map((skill) => (
-            <Badge
-              key={skill}
-              variant="secondary"
-              className="flex items-center gap-1 pr-1"
-            >
+            <Badge key={skill} variant="secondary" className="flex items-center gap-1 pr-1">
               {skill}
               <button
                 type="button"
@@ -164,9 +155,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
             <Plus className="mr-1 h-3 w-3" />
             Thêm
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Nhấn Enter hoặc dấu phẩy để thêm kỹ năng
-          </p>
+          <p className="text-xs text-muted-foreground">Nhấn Enter hoặc dấu phẩy để thêm kỹ năng</p>
         </div>
       </div>
     </div>

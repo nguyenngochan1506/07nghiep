@@ -65,7 +65,10 @@ interface ApplicationCardProps {
 }
 
 export function ApplicationCard({ application, compact = false }: ApplicationCardProps) {
-  const appliedDate = typeof application.appliedAt === "string" ? new Date(application.appliedAt) : application.appliedAt;
+  const appliedDate =
+    typeof application.appliedAt === "string"
+      ? new Date(application.appliedAt)
+      : application.appliedAt;
 
   return (
     <Card className="hover:border-primary/50 transition-colors group">
@@ -83,9 +86,7 @@ export function ApplicationCard({ application, compact = false }: ApplicationCar
                 {application.candidate.name || "Unknown Candidate"}
               </h4>
               {!compact && application.job && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {application.job.title}
-                </p>
+                <p className="text-xs text-muted-foreground truncate">{application.job.title}</p>
               )}
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                 <Calendar className="h-3 w-3" />

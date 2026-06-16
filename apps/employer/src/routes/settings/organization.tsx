@@ -63,7 +63,7 @@ function OrganizationSettingsPage() {
         queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
       },
       onError: (err) => toast.error(err.message),
-    })
+    }),
   );
 
   const updateMutation = useMutation(
@@ -73,7 +73,7 @@ function OrganizationSettingsPage() {
         queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
       },
       onError: (err) => toast.error(err.message),
-    })
+    }),
   );
 
   const form = useForm({
@@ -93,9 +93,7 @@ function OrganizationSettingsPage() {
         description: value.description || undefined,
         website: value.website || undefined,
         industry: value.industry || undefined,
-        companySize: value.companySize
-          ? (value.companySize as any)
-          : undefined,
+        companySize: value.companySize ? (value.companySize as any) : undefined,
         foundedYear: value.foundedYear ? parseInt(value.foundedYear, 10) : undefined,
         location: value.location || undefined,
         logoUrl: value.logoUrl || undefined,
@@ -121,7 +119,7 @@ function OrganizationSettingsPage() {
             .regex(/^\d{4}$/, "Năm phải có 4 chữ số")
             .refine(
               (v) => !v || (parseInt(v, 10) >= 1800 && parseInt(v, 10) <= new Date().getFullYear()),
-              "Năm thành lập không hợp lệ"
+              "Năm thành lập không hợp lệ",
             ),
         ]),
         location: z.string(),
@@ -215,16 +213,16 @@ function OrganizationSettingsPage() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <form.Field name="industry">
                   {(field) => (
-                     <div className="space-y-2">
-                       <Label htmlFor={field.name}>Ngành nghề chính</Label>
-                       <Input
-                         id={field.name}
-                         placeholder="VD: Công nghệ thông tin, Bán lẻ..."
-                         value={field.state.value}
-                         onBlur={field.handleBlur}
-                         onChange={(e) => field.handleChange(e.target.value)}
-                       />
-                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={field.name}>Ngành nghề chính</Label>
+                      <Input
+                        id={field.name}
+                        placeholder="VD: Công nghệ thông tin, Bán lẻ..."
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                    </div>
                   )}
                 </form.Field>
 
@@ -339,12 +337,13 @@ function OrganizationSettingsPage() {
                   <div className="space-y-4">
                     {field.state.value ? (
                       <div className="flex justify-center">
-                        <img 
-                          src={field.state.value} 
-                          alt="Company logo preview" 
+                        <img
+                          src={field.state.value}
+                          alt="Company logo preview"
                           className="h-24 w-24 object-contain rounded-md border p-1"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=L%E1%BB%97i+Logo";
+                            (e.target as HTMLImageElement).src =
+                              "https://via.placeholder.com/150?text=L%E1%BB%97i+Logo";
                           }}
                         />
                       </div>
@@ -384,18 +383,14 @@ function OrganizationSettingsPage() {
             })}
           >
             {({ canSubmit }) => (
-              <Button 
-                type="submit" 
-                size="lg" 
+              <Button
+                type="submit"
+                size="lg"
                 disabled={!canSubmit || isSubmitting}
                 className="gap-2"
               >
                 <Save className="h-4 w-4" />
-                {isSubmitting 
-                  ? "Đang lưu..." 
-                  : isEditing 
-                    ? "Lưu thay đổi" 
-                    : "Hoàn tất tạo hồ sơ"}
+                {isSubmitting ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Hoàn tất tạo hồ sơ"}
               </Button>
             )}
           </form.Subscribe>

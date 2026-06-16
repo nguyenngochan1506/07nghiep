@@ -10,7 +10,9 @@ export const Route = createFileRoute("/profile/notifications")({
 
 function NotificationPreferencesPage() {
   const queryClient = useQueryClient();
-  const { data: preferences = [], isLoading } = useQuery(trpc.notification.getPreferences.queryOptions());
+  const { data: preferences = [], isLoading } = useQuery(
+    trpc.notification.getPreferences.queryOptions(),
+  );
 
   const updatePreference = useMutation(
     trpc.notification.updatePreference.mutationOptions({
@@ -21,15 +23,15 @@ function NotificationPreferencesPage() {
       onError: (err) => {
         toast.error(err.message || "Không thể cập nhật tùy chọn");
       },
-    })
+    }),
   );
 
   const handleUpdate = (type: any, field: any, value: boolean) => {
     const existing = preferences.find((p: any) => p.type === type);
     updatePreference.mutate({
       type,
-      pushEnabled: field === "pushEnabled" ? value : existing?.pushEnabled ?? true,
-      emailEnabled: field === "emailEnabled" ? value : existing?.emailEnabled ?? true,
+      pushEnabled: field === "pushEnabled" ? value : (existing?.pushEnabled ?? true),
+      emailEnabled: field === "emailEnabled" ? value : (existing?.emailEnabled ?? true),
     });
   };
 
@@ -37,7 +39,9 @@ function NotificationPreferencesPage() {
     <div className="container max-w-2xl py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">Cài đặt thông báo</h1>
-        <p className="text-sm text-muted-foreground">Quản lý cách bạn nhận thông báo từ hệ thống.</p>
+        <p className="text-sm text-muted-foreground">
+          Quản lý cách bạn nhận thông báo từ hệ thống.
+        </p>
       </div>
       <NotificationPreferences
         preferences={preferences as any}

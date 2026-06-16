@@ -17,7 +17,7 @@ export const messageRouter = router({
       z.object({
         conversationId: z.string(),
         content: z.string().min(1).max(2000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
@@ -34,10 +34,7 @@ export const messageRouter = router({
         });
       }
 
-      if (
-        conversation.employerId !== userId &&
-        conversation.candidateId !== userId
-      ) {
+      if (conversation.employerId !== userId && conversation.candidateId !== userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have access to this conversation",
@@ -67,9 +64,7 @@ export const messageRouter = router({
       });
 
       const targetUserId =
-        conversation.employerId === userId
-          ? conversation.candidateId
-          : conversation.employerId;
+        conversation.employerId === userId ? conversation.candidateId : conversation.employerId;
 
       const { createNotification } = await import("../lib/notifications/service");
       await createNotification({
@@ -92,7 +87,7 @@ export const messageRouter = router({
         conversationId: z.string(),
         cursor: z.string().optional(),
         limit: z.number().min(1).max(50).default(50),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
@@ -110,10 +105,7 @@ export const messageRouter = router({
         });
       }
 
-      if (
-        conversation.employerId !== userId &&
-        conversation.candidateId !== userId
-      ) {
+      if (conversation.employerId !== userId && conversation.candidateId !== userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have access to this conversation",
@@ -159,10 +151,7 @@ export const messageRouter = router({
         });
       }
 
-      if (
-        conversation.employerId !== userId &&
-        conversation.candidateId !== userId
-      ) {
+      if (conversation.employerId !== userId && conversation.candidateId !== userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have access to this conversation",

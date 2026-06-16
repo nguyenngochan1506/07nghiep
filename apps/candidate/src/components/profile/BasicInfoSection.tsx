@@ -39,10 +39,7 @@ export default function BasicInfoSection({ form, email, onAvatarChange }: BasicI
 
   return (
     <div className="flex flex-col gap-6">
-      <AvatarUpload
-        value={avatarUrl}
-        onChange={onAvatarChange}
-      />
+      <AvatarUpload value={avatarUrl} onChange={onAvatarChange} />
 
       <Card>
         <CardHeader>

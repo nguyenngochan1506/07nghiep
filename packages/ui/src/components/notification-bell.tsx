@@ -9,7 +9,13 @@ import {
 } from "./dropdown-menu";
 import { Badge } from "./badge";
 
-export type NotificationType = "APPLICATION_RECEIVED" | "APPLICATION_STATUS" | "MESSAGE" | "JOB_ALERT" | "SYSTEM" | "INTERVIEW_INVITATION";
+export type NotificationType =
+  | "APPLICATION_RECEIVED"
+  | "APPLICATION_STATUS"
+  | "MESSAGE"
+  | "JOB_ALERT"
+  | "SYSTEM"
+  | "INTERVIEW_INVITATION";
 
 export interface NotificationItem {
   id: string;
@@ -31,16 +37,16 @@ function getRelativeTime(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return 'Vừa xong';
+
+  if (diffInSeconds < 60) return "Vừa xong";
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `${diffInHours} giờ trước`;
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 30) return `${diffInDays} ngày trước`;
-  
-  return date.toLocaleDateString('vi-VN');
+
+  return date.toLocaleDateString("vi-VN");
 }
 
 export function NotificationBell({
@@ -68,7 +74,12 @@ export function NotificationBell({
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm font-semibold">Thông báo</span>
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={onMarkAllAsRead} className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onMarkAllAsRead}
+              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent"
+            >
               Đánh dấu tất cả đã đọc
             </Button>
           )}
@@ -76,7 +87,9 @@ export function NotificationBell({
         <DropdownMenuSeparator className="m-0" />
         <div className="flex max-h-[350px] flex-col overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">Không có thông báo nào</div>
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              Không có thông báo nào
+            </div>
           ) : (
             notifications.map((n) => (
               <button

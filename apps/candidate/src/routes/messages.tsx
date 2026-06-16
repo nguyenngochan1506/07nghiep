@@ -2,7 +2,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react-router";
 import { trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
-import { ConversationList, type ConversationItem } from "@07nghiep/ui/components/message/conversation-list";
+import {
+  ConversationList,
+  type ConversationItem,
+} from "@07nghiep/ui/components/message/conversation-list";
 import { useEffect } from "react";
 import { env } from "@07nghiep/env/candidate";
 import { createSSEConnection } from "@07nghiep/ui/lib/sse";
@@ -21,7 +24,7 @@ function MessagesLayout() {
   const { data: conversations, isLoading } = useQuery(
     trpc.conversation.list.queryOptions(undefined, {
       enabled: !!currentUserId,
-    })
+    }),
   );
 
   useEffect(() => {
@@ -42,7 +45,7 @@ function MessagesLayout() {
           queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
         }
       },
-      abort.signal
+      abort.signal,
     );
 
     return () => abort.abort();
@@ -78,9 +81,7 @@ function MessagesLayout() {
             <div className="text-center">
               <div className="mb-3 text-5xl">💬</div>
               <h3 className="text-lg font-medium">Tin nhắn của bạn</h3>
-              <p className="text-sm text-muted-foreground">
-                Chọn một cuộc trò chuyện để bắt đầu
-              </p>
+              <p className="text-sm text-muted-foreground">Chọn một cuộc trò chuyện để bắt đầu</p>
             </div>
           </div>
         )}

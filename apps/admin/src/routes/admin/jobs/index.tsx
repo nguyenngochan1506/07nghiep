@@ -5,7 +5,13 @@ import { toast } from "sonner";
 
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@07nghiep/ui/components/card";
 import {
   Table,
   TableBody,
@@ -37,15 +43,12 @@ type PendingJobRow = {
   };
 };
 
-function formatSalary(job: {
-  salaryMin: unknown;
-  salaryMax: unknown;
-  salaryNegotiable: boolean;
-}) {
+function formatSalary(job: { salaryMin: unknown; salaryMax: unknown; salaryNegotiable: boolean }) {
   if (job.salaryNegotiable) return "Thỏa thuận";
   const min = job.salaryMin == null ? null : Number(job.salaryMin);
   const max = job.salaryMax == null ? null : Number(job.salaryMax);
-  if (min != null && max != null) return `${min.toLocaleString("vi-VN")} - ${max.toLocaleString("vi-VN")}`;
+  if (min != null && max != null)
+    return `${min.toLocaleString("vi-VN")} - ${max.toLocaleString("vi-VN")}`;
   if (min != null) return `Từ ${min.toLocaleString("vi-VN")}`;
   if (max != null) return `Đến ${max.toLocaleString("vi-VN")}`;
   return "Chưa cập nhật";
@@ -136,7 +139,9 @@ function AdminJobsRoute() {
                           {skill}
                         </Badge>
                       ))}
-                      {job.skills.length > 4 ? <Badge variant="outline">+{job.skills.length - 4}</Badge> : null}
+                      {job.skills.length > 4 ? (
+                        <Badge variant="outline">+{job.skills.length - 4}</Badge>
+                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell>

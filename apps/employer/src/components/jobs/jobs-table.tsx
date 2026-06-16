@@ -196,9 +196,7 @@ export function JobsTable({
                   <TableCell>
                     <div>
                       <p className="font-medium leading-tight">{job.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {job.location}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{job.location}</p>
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
@@ -214,9 +212,7 @@ export function JobsTable({
                     {job.applicationsCount}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                    {job.expiresAt
-                      ? new Date(job.expiresAt).toLocaleDateString("vi-VN")
-                      : "—"}
+                    {job.expiresAt ? new Date(job.expiresAt).toLocaleDateString("vi-VN") : "—"}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -271,9 +267,7 @@ export function JobsTable({
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          {confirmDeleteId === job.id
-                            ? "Xác nhận xóa?"
-                            : "Xóa tin"}
+                          {confirmDeleteId === job.id ? "Xác nhận xóa?" : "Xóa tin"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

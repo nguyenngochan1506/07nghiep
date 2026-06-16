@@ -49,41 +49,45 @@ export const adminJobRouter = router({
       };
     }),
 
-  approve: adminProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ ctx, input }) => {
-    const job = await ctx.prisma.job.findUnique({
-      where: { id: input.id },
-      select: { id: true, publishedAt: true },
-    });
+  approve: adminProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const job = await ctx.prisma.job.findUnique({
+        where: { id: input.id },
+        select: { id: true, publishedAt: true },
+      });
 
-    if (!job) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
-    }
+      if (!job) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
+      }
 
-    return ctx.prisma.job.update({
-      where: { id: input.id },
-      data: {
-        status: "OPEN",
-        publishedAt: job.publishedAt ?? new Date(),
-      },
-    });
-  }),
+      return ctx.prisma.job.update({
+        where: { id: input.id },
+        data: {
+          status: "OPEN",
+          publishedAt: job.publishedAt ?? new Date(),
+        },
+      });
+    }),
 
-  reject: adminProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ ctx, input }) => {
-    const job = await ctx.prisma.job.findUnique({
-      where: { id: input.id },
-      select: { id: true },
-    });
+  reject: adminProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const job = await ctx.prisma.job.findUnique({
+        where: { id: input.id },
+        select: { id: true },
+      });
 
-    if (!job) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
-    }
+      if (!job) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
+      }
 
-    return ctx.prisma.job.update({
-      where: { id: input.id },
-      data: {
-        status: "DRAFT",
-        publishedAt: null,
-      },
-    });
-  }),
+      return ctx.prisma.job.update({
+        where: { id: input.id },
+        data: {
+          status: "DRAFT",
+          publishedAt: null,
+        },
+      });
+    }),
 });

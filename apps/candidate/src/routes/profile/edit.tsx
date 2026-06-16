@@ -70,8 +70,7 @@ function mapProfileApiToFormValues(
           location: typeof item.location === "string" ? item.location : "",
           startDate: typeof item.startDate === "string" ? item.startDate : "",
           endDate: typeof item.endDate === "string" ? item.endDate : "",
-          description:
-            typeof item.description === "string" ? item.description : "",
+          description: typeof item.description === "string" ? item.description : "",
         }))
         .filter(
           (item) =>
@@ -91,18 +90,12 @@ function mapProfileApiToFormValues(
           degree: typeof item.degree === "string" ? item.degree : "",
           school: typeof item.school === "string" ? item.school : "",
           location: typeof item.location === "string" ? item.location : "",
-          startDate:
-            typeof item.startYear === "number" ? `${item.startYear}-01-01` : "",
+          startDate: typeof item.startYear === "number" ? `${item.startYear}-01-01` : "",
           endDate: typeof item.endYear === "number" ? `${item.endYear}-01-01` : "",
           gpa: typeof item.gpa === "string" ? item.gpa : "",
         }))
         .filter(
-          (item) =>
-            item.degree ||
-            item.school ||
-            item.location ||
-            item.startDate ||
-            item.endDate,
+          (item) => item.degree || item.school || item.location || item.startDate || item.endDate,
         )
     : [];
 
@@ -135,10 +128,7 @@ function mapFormValuesToProfileUpdateInput(values: ProfileFormValues) {
     location: values.location || undefined,
     skills: values.skills,
     portfolioUrl:
-      values.portfolio.website ||
-      values.portfolio.linkedin ||
-      values.portfolio.github ||
-      undefined,
+      values.portfolio.website || values.portfolio.linkedin || values.portfolio.github || undefined,
     experience: values.experience
       .filter((item) => Boolean(item.title || item.company))
       .map((item) => ({
@@ -155,9 +145,7 @@ function mapFormValuesToProfileUpdateInput(values: ProfileFormValues) {
         const startYear = item.startDate
           ? Number.parseInt(item.startDate.slice(0, 4), 10)
           : Number.NaN;
-        const endYear = item.endDate
-          ? Number.parseInt(item.endDate.slice(0, 4), 10)
-          : Number.NaN;
+        const endYear = item.endDate ? Number.parseInt(item.endDate.slice(0, 4), 10) : Number.NaN;
 
         if (Number.isNaN(startYear)) {
           return null;
@@ -178,8 +166,7 @@ function mapFormValuesToProfileUpdateInput(values: ProfileFormValues) {
 
 function ProfileEditPage() {
   const { data: session } = authClient.useSession();
-  const sessionName =
-    typeof session?.user?.name === "string" ? session.user.name : null;
+  const sessionName = typeof session?.user?.name === "string" ? session.user.name : null;
   const initializedRef = useRef(false);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const form = useForm<ProfileFormValues>({
@@ -190,21 +177,15 @@ function ProfileEditPage() {
 
   const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
   const profileData = profileQuery.data as ProfileApiData | undefined;
-  const { mutate } = useMutation(
-    trpc.profile.updateMyProfile.mutationOptions(),
-  );
+  const { mutate } = useMutation(trpc.profile.updateMyProfile.mutationOptions());
   const { mutateAsync: requestAvatarUpload } = useMutation(
     trpc.profile.uploadAvatar.mutationOptions(),
   );
   const { mutateAsync: requestResumeUpload } = useMutation(
     trpc.profile.uploadResume.mutationOptions(),
   );
-  const { mutateAsync: deleteResume } = useMutation(
-    trpc.profile.deleteResume.mutationOptions(),
-  );
-  const { mutateAsync: updateUserName } = useMutation(
-    trpc.user.updateMe.mutationOptions(),
-  );
+  const { mutateAsync: deleteResume } = useMutation(trpc.profile.deleteResume.mutationOptions());
+  const { mutateAsync: updateUserName } = useMutation(trpc.user.updateMe.mutationOptions());
 
   const isDirty = form.formState.isDirty;
 
@@ -248,10 +229,7 @@ function ProfileEditPage() {
 
       toast.success("Tải ảnh đại diện thành công");
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Đã xảy ra lỗi không xác định.";
+      const message = error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định.";
       toast.error("Không thể tải ảnh đại diện: " + message);
     }
   };
@@ -403,18 +381,15 @@ function ProfileEditPage() {
 
   return (
     <div className="container mx-auto flex max-w-4xl flex-col gap-8 py-8">
-      <form
-        className="flex flex-col gap-8"
-        onSubmit={form.handleSubmit(() => undefined)}
-      >
+      <form className="flex flex-col gap-8" onSubmit={form.handleSubmit(() => undefined)}>
         <div className="flex flex-col gap-4">
           <Button asChild variant="outline" className="w-fit">
-            <Link to="/profile" onClick={handleBackToProfileClick}>Quay lại Profile</Link>
+            <Link to="/profile" onClick={handleBackToProfileClick}>
+              Quay lại Profile
+            </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Chỉnh sửa hồ sơ
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Chỉnh sửa hồ sơ</h1>
             <p className="text-sm text-muted-foreground">
               Cập nhật thông tin cá nhân, kinh nghiệm và kỹ năng của bạn.
             </p>
@@ -440,7 +415,9 @@ function ProfileEditPage() {
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button asChild variant="outline">
-            <Link to="/profile" onClick={handleBackToProfileClick}>Hủy</Link>
+            <Link to="/profile" onClick={handleBackToProfileClick}>
+              Hủy
+            </Link>
           </Button>
           <Button onClick={handleSave} disabled={!isDirty}>
             Lưu thay đổi

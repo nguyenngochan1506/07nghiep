@@ -81,9 +81,7 @@ export default function Sidebar({ children }: SidebarProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex flex-1 flex-col overflow-auto">
-        {children}
-      </main>
+      <main className="flex flex-1 flex-col overflow-auto">{children}</main>
     </div>
   );
 }

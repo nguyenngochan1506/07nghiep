@@ -16,7 +16,6 @@ export const Route = createFileRoute("/login")({
   component: RouteComponent,
 });
 
-
 function RouteComponent() {
   return <SignInForm />;
 }

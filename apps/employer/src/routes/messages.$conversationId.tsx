@@ -25,7 +25,9 @@ function getInitials(name: string | null) {
     .slice(0, 2);
 }
 
-function getAvatarUrl(user: { image: string | null; profile: { avatarUrl: string | null } | null } | undefined) {
+function getAvatarUrl(
+  user: { image: string | null; profile: { avatarUrl: string | null } | null } | undefined,
+) {
   if (!user) return undefined;
   return user.profile?.avatarUrl || user.image || undefined;
 }
@@ -41,15 +43,21 @@ function ConversationDetail() {
   const messagesQueryKey = trpc.message.list.queryKey({ conversationId });
 
   const { data: conversation, isLoading: convLoading } = useQuery(
-    trpc.conversation.getById.queryOptions({ id: conversationId }, {
-      enabled: !!conversationId,
-    })
+    trpc.conversation.getById.queryOptions(
+      { id: conversationId },
+      {
+        enabled: !!conversationId,
+      },
+    ),
   );
 
   const { data: messagesData, isLoading: msgLoading } = useQuery(
-    trpc.message.list.queryOptions({ conversationId, limit: 50 }, {
-      enabled: !!conversationId,
-    })
+    trpc.message.list.queryOptions(
+      { conversationId, limit: 50 },
+      {
+        enabled: !!conversationId,
+      },
+    ),
   );
 
   const markAsRead = useMutation(
@@ -58,7 +66,7 @@ function ConversationDetail() {
         queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
         queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
       },
-    })
+    }),
   );
 
   const sendMessage = useMutation(
@@ -97,7 +105,7 @@ function ConversationDetail() {
         queryClient.invalidateQueries({ queryKey: messagesQueryKey });
         queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
       },
-    })
+    }),
   );
 
   useEffect(() => {
@@ -126,20 +134,20 @@ function ConversationDetail() {
             }
             queryClient.invalidateQueries({ queryKey: messagesQueryKey });
             queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
-            queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
+            queryClient.invalidateQueries({
+              queryKey: trpc.conversation.getUnreadCount.queryKey(),
+            });
           }
         } catch {}
       },
-      abort.signal
+      abort.signal,
     );
 
     return () => abort.abort();
   }, [conversationId, currentUserId, queryClient, markAsRead, messagesQueryKey]);
 
   const otherUser =
-    conversation?.employer?.id === currentUserId
-      ? conversation?.candidate
-      : conversation?.employer;
+    conversation?.employer?.id === currentUserId ? conversation?.candidate : conversation?.employer;
 
   return (
     <div className="flex h-full flex-col">
@@ -160,9 +168,7 @@ function ConversationDetail() {
           <div>
             <p className="text-sm font-medium">{otherUser.name || "Người dùng"}</p>
             {conversation?.job && (
-              <p className="text-xs text-muted-foreground">
-                {conversation.job.title}
-              </p>
+              <p className="text-xs text-muted-foreground">{conversation.job.title}</p>
             )}
           </div>
         </div>

@@ -11,8 +11,7 @@ import {
 
 export const organizationRouter = router({
   getMyOrganization: employerOrAdminProcedure.query(async ({ ctx }) => {
-    if (!ctx.user)
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+    if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
     const org = await ctx.prisma.organization.findUnique({
       where: { userId: ctx.user.id },
@@ -31,8 +30,7 @@ export const organizationRouter = router({
   create: employerOrAdminProcedure
     .input(organizationCreateSchema)
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.user)
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
       const existing = await ctx.prisma.organization.findUnique({
         where: { userId: ctx.user.id },
@@ -56,8 +54,7 @@ export const organizationRouter = router({
   update: employerOrAdminProcedure
     .input(organizationUpdateSchema)
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.user)
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
       const org = await ctx.prisma.organization.findUnique({
         where: { userId: ctx.user.id },
@@ -84,7 +81,7 @@ export const organizationRouter = router({
         industry: z.string().optional(),
         limit: z.number().min(1).max(50).default(20),
         offset: z.number().min(0).default(0),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const where: any = {};
@@ -125,34 +122,32 @@ export const organizationRouter = router({
       };
     }),
 
-  getById: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const org = await ctx.prisma.organization.findUnique({
-        where: { id: input.id },
-        include: {
-          _count: {
-            select: {
-              jobs: {
-                where: { status: "OPEN" },
-              },
+  getById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const org = await ctx.prisma.organization.findUnique({
+      where: { id: input.id },
+      include: {
+        _count: {
+          select: {
+            jobs: {
+              where: { status: "OPEN" },
             },
           },
         },
+      },
+    });
+
+    if (!org) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Organization not found",
       });
+    }
 
-      if (!org) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Organization not found",
-        });
-      }
-
-      return {
-        ...org,
-        openJobsCount: org._count.jobs,
-      };
-    }),
+    return {
+      ...org,
+      openJobsCount: org._count.jobs,
+    };
+  }),
 
   getJobs: publicProcedure
     .input(
@@ -161,7 +156,7 @@ export const organizationRouter = router({
         status: z.enum(["OPEN", "CLOSED"]).optional(),
         page: z.number().int().min(1).default(1),
         pageSize: z.number().int().min(1).max(50).default(10),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { page, pageSize, organizationId, status } = input;
@@ -210,8 +205,7 @@ export const organizationRouter = router({
     }),
 
   requestVerification: employerOrAdminProcedure.mutation(async ({ ctx }) => {
-    if (!ctx.user)
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+    if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
     return ctx.prisma.organization.update({
       where: { userId: ctx.user.id },

@@ -38,7 +38,7 @@ export default function Sidebar({ children }: SidebarProps) {
   const { data: unreadCount } = useQuery(
     trpc.conversation.getUnreadCount.queryOptions(undefined, {
       refetchInterval: 15000,
-    })
+    }),
   );
 
   return (
@@ -70,7 +70,10 @@ export default function Sidebar({ children }: SidebarProps) {
                   <item.icon className="h-4 w-4" />
                   <span className="flex-1">{item.label}</span>
                   {(item as any).hasMessageBadge && unreadCount && unreadCount > 0 ? (
-                    <Badge variant="destructive" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
+                    <Badge
+                      variant="destructive"
+                      className="h-4 min-w-4 rounded-full px-1 text-[10px]"
+                    >
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </Badge>
                   ) : null}
@@ -91,9 +94,7 @@ export default function Sidebar({ children }: SidebarProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex flex-1 flex-col overflow-auto">
-        {children}
-      </main>
+      <main className="flex flex-1 flex-col overflow-auto">{children}</main>
     </div>
   );
 }

@@ -15,121 +15,122 @@ import { createContext, useContext, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 export type JobType = {
-    id: string;
-    companyName: string;
-    companyLogo: string;
-    isVerified: boolean;
-    title: string;
-    location: string;
-    workType: string;
-    jobType: string;
-    experience: string;
-    salaryRange: string;
-    skills: string[];
-    postedDate: string;
-    viewCount: number;
-    isSaved?: boolean;
+  id: string;
+  companyName: string;
+  companyLogo: string;
+  isVerified: boolean;
+  title: string;
+  location: string;
+  workType: string;
+  jobType: string;
+  experience: string;
+  salaryRange: string;
+  skills: string[];
+  postedDate: string;
+  viewCount: number;
+  isSaved?: boolean;
 };
 
 export const JobsContext = createContext<{
-    jobs: JobType[];
+  jobs: JobType[];
 } | null>(null);
 
 export function useJobs() {
-    const context = useContext(JobsContext);
-    if (!context) throw new Error("useJobs must be used within RootComponent");
-    return context;
+  const context = useContext(JobsContext);
+  if (!context) throw new Error("useJobs must be used within RootComponent");
+  return context;
 }
 
 export interface RouterAppContext {
-    trpc: typeof trpc;
-    queryClient: QueryClient;
+  trpc: typeof trpc;
+  queryClient: QueryClient;
 }
 
 function mapJob(raw: any): JobType {
-    const salaryRange =
-        raw.salaryMin && raw.salaryMax
-            ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
-            : "Thỏa thuận";
+  const salaryRange =
+    raw.salaryMin && raw.salaryMax
+      ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
+      : "Thỏa thuận";
 
-    const postedAt = new Date(raw.createdAt);
-    const now = new Date();
-    const diffMs = now.getTime() - postedAt.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const postedDate =
-        diffDays === 0 ? "Hôm nay" :
-        diffDays === 1 ? "1 ngày trước" :
-        diffDays < 30 ? `${diffDays} ngày trước` :
-        `${Math.floor(diffDays / 30)} tháng trước`;
+  const postedAt = new Date(raw.createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - postedAt.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const postedDate =
+    diffDays === 0
+      ? "Hôm nay"
+      : diffDays === 1
+        ? "1 ngày trước"
+        : diffDays < 30
+          ? `${diffDays} ngày trước`
+          : `${Math.floor(diffDays / 30)} tháng trước`;
 
-    return {
-        id: raw.id,
-        companyName: raw.organization?.name ?? "Unknown",
-        companyLogo: raw.organization?.logoUrl ?? "",
-        isVerified: raw.organization?.verified ?? false,
-        title: raw.title,
-        location: raw.location ?? "",
-        workType: raw.workType ?? "",
-        jobType: raw.jobType ?? "",
-        experience: raw.experience ?? "",
-        salaryRange,
-        skills: raw.skills ?? [],
-        postedDate,
-        viewCount: raw.views ?? 0,
-    };
+  return {
+    id: raw.id,
+    companyName: raw.organization?.name ?? "Unknown",
+    companyLogo: raw.organization?.logoUrl ?? "",
+    isVerified: raw.organization?.verified ?? false,
+    title: raw.title,
+    location: raw.location ?? "",
+    workType: raw.workType ?? "",
+    jobType: raw.jobType ?? "",
+    experience: raw.experience ?? "",
+    salaryRange,
+    skills: raw.skills ?? [],
+    postedDate,
+    viewCount: raw.views ?? 0,
+  };
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
-    component: RootComponent,
-    notFoundComponent: NotFoundComponent,
-    head: () => ({
-        meta: [
-            {
-                title: "Tìm việc | 07nghiep",
-            },
-            {
-                name: "description",
-                content: "Cổng tìm việc 07nghiep - Tìm kiếm việc làm và ứng tuyển trực tuyến",
-            },
-        ],
-        links: [
-            {
-                rel: "icon",
-                href: "/favicon.ico",
-            },
-        ],
-    }),
+  component: RootComponent,
+  notFoundComponent: NotFoundComponent,
+  head: () => ({
+    meta: [
+      {
+        title: "Tìm việc | 07nghiep",
+      },
+      {
+        name: "description",
+        content: "Cổng tìm việc 07nghiep - Tìm kiếm việc làm và ứng tuyển trực tuyến",
+      },
+    ],
+    links: [
+      {
+        rel: "icon",
+        href: "/favicon.ico",
+      },
+    ],
+  }),
 });
 
 function RootComponent() {
-    const { data, isLoading } = useQuery(
-        trpc.job.getPublicList.queryOptions({ limit: 50 })
-    );
+  const { data, isLoading } = useQuery(trpc.job.getPublicList.queryOptions({ limit: 50 }));
 
-    const jobs: JobType[] = useMemo(() => {
-        if (!data?.jobs) return [];
-        return data.jobs.map((job: any) => mapJob(job));
-    }, [data]);
+  const jobs: JobType[] = useMemo(() => {
+    if (!data?.jobs) return [];
+    return data.jobs.map((job: any) => mapJob(job));
+  }, [data]);
 
-    return (
-        <>
-            <HeadContent />
-            <ThemeProvider
-                attribute="class"
-                defaultTheme="dark"
-                disableTransitionOnChange
-                storageKey="vite-ui-theme"
-            >
-                <div className="grid grid-rows-[auto_1fr] h-svh">
-                    <Header />
-                    <JobsContext.Provider value={{ jobs }}>
-                        <Outlet />
-                    </JobsContext.Provider>
-                </div>
-                <Toaster richColors />
-            </ThemeProvider>
-            <TanStackRouterDevtools position="bottom-left" />
-            <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
-        </>
-    );
+  return (
+    <>
+      <HeadContent />
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="dark"
+        disableTransitionOnChange
+        storageKey="vite-ui-theme"
+      >
+        <div className="grid grid-rows-[auto_1fr] h-svh">
+          <Header />
+          <JobsContext.Provider value={{ jobs }}>
+            <Outlet />
+          </JobsContext.Provider>
+        </div>
+        <Toaster richColors />
+      </ThemeProvider>
+      <TanStackRouterDevtools position="bottom-left" />
+      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+    </>
+  );
 }

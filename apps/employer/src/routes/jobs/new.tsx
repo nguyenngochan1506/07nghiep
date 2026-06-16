@@ -64,13 +64,11 @@ export const Route = createFileRoute("/jobs/new")({
 
 function validateStep1(data: Step1Data): FormErrors {
   const errors: FormErrors = {};
-  if (!data.title || data.title.trim().length < 5)
-    errors.title = "Tiêu đề phải có ít nhất 5 ký tự";
+  if (!data.title || data.title.trim().length < 5) errors.title = "Tiêu đề phải có ít nhất 5 ký tự";
   if (!data.jobType) errors.jobType = "Vui lòng chọn loại hợp đồng";
   if (!data.workType) errors.workType = "Vui lòng chọn hình thức làm việc";
   if (!data.experienceLevel) errors.experienceLevel = "Vui lòng chọn cấp độ kinh nghiệm";
-  if (!data.location || data.location.trim().length < 2)
-    errors.location = "Địa điểm là bắt buộc";
+  if (!data.location || data.location.trim().length < 2) errors.location = "Địa điểm là bắt buộc";
   return errors;
 }
 
@@ -159,7 +157,7 @@ function NewJobPage() {
         navigate({ to: "/my-jobs" });
       },
       onError: (err) => toast.error(err.message),
-    })
+    }),
   );
 
   const saveDraftMutation = useMutation(
@@ -170,7 +168,7 @@ function NewJobPage() {
         navigate({ to: "/my-jobs" });
       },
       onError: (err) => toast.error(err.message),
-    })
+    }),
   );
 
   // ── Step navigation ───────────────────────────────────────────────────────
@@ -201,14 +199,22 @@ function NewJobPage() {
       title: step1.title,
       jobType: step1.jobType as "FULLTIME" | "PARTIME" | "CONTRACT" | "INTERNSHIP" | "FREELANCE",
       workType: step1.workType as "REMOTE" | "HYBRID" | "ONSITE",
-      experienceLevel: step1.experienceLevel as "ENTRY" | "JUNIOR" | "MIDDLE" | "SENIOR" | "LEAD" | "EXECUTIVE",
+      experienceLevel: step1.experienceLevel as
+        | "ENTRY"
+        | "JUNIOR"
+        | "MIDDLE"
+        | "SENIOR"
+        | "LEAD"
+        | "EXECUTIVE",
       location: step1.location,
       description: step2.description,
       requirements: step2.requirements || undefined,
       benefits: step2.benefits || undefined,
       skills: step2.skills,
       salaryNegotiable: step3.salaryNegotiable,
-      salaryType: step3.salaryType ? (step3.salaryType as "HOURLY" | "MONTHLY" | "YEARLY") : undefined,
+      salaryType: step3.salaryType
+        ? (step3.salaryType as "HOURLY" | "MONTHLY" | "YEARLY")
+        : undefined,
       salaryMin: step3.salaryMin ? Number(step3.salaryMin) : undefined,
       salaryMax: step3.salaryMax ? Number(step3.salaryMax) : undefined,
       expiresAt: step4.expiresAt ? new Date(step4.expiresAt) : undefined,
@@ -247,12 +253,7 @@ function NewJobPage() {
               )}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleManualSave}
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={handleManualSave} className="gap-2">
             <Save className="h-4 w-4" />
             Lưu nháp
           </Button>
@@ -267,18 +268,14 @@ function NewJobPage() {
             <JobStep1
               data={step1}
               errors={errors}
-              onChange={(field, value) =>
-                setStep1((prev) => ({ ...prev, [field]: value }))
-              }
+              onChange={(field, value) => setStep1((prev) => ({ ...prev, [field]: value }))}
             />
           )}
           {currentStep === 2 && (
             <JobStep2
               data={step2}
               errors={errors}
-              onChange={(field, value) =>
-                setStep2((prev) => ({ ...prev, [field]: value }))
-              }
+              onChange={(field, value) => setStep2((prev) => ({ ...prev, [field]: value }))}
             />
           )}
           {currentStep === 3 && (
@@ -294,9 +291,7 @@ function NewJobPage() {
             <JobStep4
               data={step4}
               errors={errors}
-              onChange={(field, value) =>
-                setStep4((prev) => ({ ...prev, [field]: value }))
-              }
+              onChange={(field, value) => setStep4((prev) => ({ ...prev, [field]: value }))}
             />
           )}
           {currentStep === 5 && (
@@ -334,11 +329,7 @@ function NewJobPage() {
                   <Save className="h-4 w-4" />
                   Lưu nháp
                 </Button>
-                <Button
-                  onClick={handlePublish}
-                  disabled={isSubmitting}
-                  className="gap-2"
-                >
+                <Button onClick={handlePublish} disabled={isSubmitting} className="gap-2">
                   {isSubmitting ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : (

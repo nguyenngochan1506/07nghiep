@@ -1,7 +1,16 @@
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Users, Briefcase, FileText, DollarSign, Settings, Shield, Activity, Server } from "lucide-react";
+import {
+  Users,
+  Briefcase,
+  FileText,
+  DollarSign,
+  Settings,
+  Shield,
+  Activity,
+  Server,
+} from "lucide-react";
 
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
@@ -114,11 +123,7 @@ function DashboardComponent() {
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {QUICK_ACTIONS.map((action) => (
-                <Button
-                  key={action.label}
-                  variant="outline"
-                  className="h-auto flex-col py-4 gap-2"
-                >
+                <Button key={action.label} variant="outline" className="h-auto flex-col py-4 gap-2">
                   <action.icon className="h-5 w-5 text-primary" />
                   <span className="text-sm font-medium">{action.label}</span>
                 </Button>
@@ -132,13 +137,9 @@ function DashboardComponent() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold">Báo cáo tháng này</h3>
-              <p className="text-sm text-muted-foreground">
-                Tạo lúc ngày 13 tháng 4 năm 2026
-              </p>
+              <p className="text-sm text-muted-foreground">Tạo lúc ngày 13 tháng 4 năm 2026</p>
             </div>
-            <Button variant="outline">
-              Xem báo cáo
-            </Button>
+            <Button variant="outline">Xem báo cáo</Button>
           </div>
         </Card>
       </div>

@@ -18,7 +18,6 @@ import { LayoutGrid, List as ListIcon, Search } from "lucide-react";
 import { useDebounce } from "../../hooks/use-debounce";
 import { toast } from "sonner";
 
-
 export const Route = createFileRoute("/applications/")({
   component: ApplicationsPage,
 });
@@ -33,12 +32,14 @@ function ApplicationsPage() {
 
   // Queries
   const { data: jobsData } = useQuery(trpc.job.getMyJobs.queryOptions({ page: 1, pageSize: 50 }));
-  const { data: applicationsData, isLoading } = useQuery(trpc.application.list.queryOptions({
-    limit: 50,
-    status: statusFilter === "ALL" ? undefined : statusFilter,
-    jobId: jobFilter === "ALL" ? undefined : jobFilter,
-    search: debouncedSearch || undefined,
-  }));
+  const { data: applicationsData, isLoading } = useQuery(
+    trpc.application.list.queryOptions({
+      limit: 50,
+      status: statusFilter === "ALL" ? undefined : statusFilter,
+      jobId: jobFilter === "ALL" ? undefined : jobFilter,
+      search: debouncedSearch || undefined,
+    }),
+  );
 
   const applications = applicationsData?.items || [];
 
@@ -52,13 +53,11 @@ function ApplicationsPage() {
       onError: (err: any) => {
         toast.error(err.message || "Failed to update applications");
       },
-    })
+    }),
   );
 
   const handleToggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const handleToggleAll = (selectAll: boolean) => {
@@ -115,10 +114,7 @@ function ApplicationsPage() {
           />
         </div>
 
-        <Select
-          value={jobFilter as any}
-          onValueChange={setJobFilter as any}
-        >
+        <Select value={jobFilter as any} onValueChange={setJobFilter as any}>
           <SelectTrigger className="w-full sm:w-[250px] bg-background">
             <SelectValue placeholder="All Jobs" />
           </SelectTrigger>
@@ -132,10 +128,7 @@ function ApplicationsPage() {
           </SelectContent>
         </Select>
 
-        <Select
-          value={statusFilter as any}
-          onValueChange={(val) => setStatusFilter(val as any)}
-        >
+        <Select value={statusFilter as any} onValueChange={(val) => setStatusFilter(val as any)}>
           <SelectTrigger className="w-full sm:w-[200px] bg-background">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
@@ -152,9 +145,7 @@ function ApplicationsPage() {
 
       {viewMode === "list" && selectedIds.length > 0 && (
         <div className="flex items-center gap-4 p-4 bg-primary/5 text-primary border-primary/20 border rounded-xl">
-          <span className="font-medium text-sm">
-            {selectedIds.length} application(s) selected
-          </span>
+          <span className="font-medium text-sm">{selectedIds.length} application(s) selected</span>
           <div className="flex-1" />
           <span className="text-sm">Change status to:</span>
           <Select onValueChange={(val) => handleBulkStatusUpdate(val as any)}>
@@ -162,11 +153,11 @@ function ApplicationsPage() {
               <SelectValue placeholder="Select status..." />
             </SelectTrigger>
             <SelectContent>
-            {(Object.values(ApplicationStatus) as ApplicationStatus[]).map((status) => (
-              <SelectItem key={status} value={status}>
-                {status}
-              </SelectItem>
-            ))}
+              {(Object.values(ApplicationStatus) as ApplicationStatus[]).map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

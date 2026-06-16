@@ -17,7 +17,5 @@
       "@07nghiep/ui/*": ["../../packages/ui/src/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }

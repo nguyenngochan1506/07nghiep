@@ -139,7 +139,10 @@ export const adminUserRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    const prev = await ctx.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    const prev = await ctx.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
     const updated = await ctx.prisma.user.update({ where: { id: userId }, data: { role } });
 
     // Record role change as internal notification for history
@@ -215,23 +218,36 @@ export const adminUserRouter = router({
     }
 
     // Activity snapshots
-    const [applications, jobsPosted, messagesCount, lastSession, recentSessions, adminNotesRaw] = await Promise.all([
-      ctx.prisma.application.findMany({ where: { candidateId: id }, orderBy: { appliedAt: "desc" }, take: 10 }),
-      ctx.prisma.job.findMany({ where: { organization: { userId: id } }, orderBy: { createdAt: "desc" }, take: 10 }),
-      ctx.prisma.message.count({ where: { senderId: id } }),
-      ctx.prisma.session.findFirst({ where: { userId: id }, orderBy: { updatedAt: "desc" } }),
-      ctx.prisma.session.findMany({ where: { userId: id }, orderBy: { updatedAt: "desc" }, take: 20 }),
-      ctx.prisma.notification.findMany({
-        where: {
-          userId: id,
-          type: "SYSTEM",
-          title: "ADMIN_NOTE",
-          data: { path: ["internal"], equals: true },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 30,
-      }),
-    ]);
+    const [applications, jobsPosted, messagesCount, lastSession, recentSessions, adminNotesRaw] =
+      await Promise.all([
+        ctx.prisma.application.findMany({
+          where: { candidateId: id },
+          orderBy: { appliedAt: "desc" },
+          take: 10,
+        }),
+        ctx.prisma.job.findMany({
+          where: { organization: { userId: id } },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        }),
+        ctx.prisma.message.count({ where: { senderId: id } }),
+        ctx.prisma.session.findFirst({ where: { userId: id }, orderBy: { updatedAt: "desc" } }),
+        ctx.prisma.session.findMany({
+          where: { userId: id },
+          orderBy: { updatedAt: "desc" },
+          take: 20,
+        }),
+        ctx.prisma.notification.findMany({
+          where: {
+            userId: id,
+            type: "SYSTEM",
+            title: "ADMIN_NOTE",
+            data: { path: ["internal"], equals: true },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 30,
+        }),
+      ]);
 
     // fetch role change history
     const roleChangesRaw = await ctx.prisma.notification.findMany({

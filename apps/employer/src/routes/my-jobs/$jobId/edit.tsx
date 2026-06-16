@@ -107,7 +107,7 @@ function EditJobPage() {
         navigate({ to: "/my-jobs" });
       },
       onError: (err) => toast.error(err.message),
-    })
+    }),
   );
 
   function handleSave(status?: "DRAFT" | "OPEN") {

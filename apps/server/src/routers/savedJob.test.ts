@@ -31,7 +31,11 @@ describe("savedJobRouter", () => {
     const { ctx, prisma } = createCtx();
     prisma.job.findFirst.mockResolvedValue({ id: "job-1" });
     prisma.savedJob.findUnique.mockResolvedValue(null);
-    prisma.savedJob.create.mockResolvedValue({ id: "saved-1", userId: "candidate-1", jobId: "job-1" });
+    prisma.savedJob.create.mockResolvedValue({
+      id: "saved-1",
+      userId: "candidate-1",
+      jobId: "job-1",
+    });
 
     const result = await savedJobRouter.createCaller(ctx).toggle({ jobId: "job-1" });
 
@@ -44,7 +48,11 @@ describe("savedJobRouter", () => {
   it("unsaves an already saved job", async () => {
     const { ctx, prisma } = createCtx();
     prisma.job.findFirst.mockResolvedValue({ id: "job-1" });
-    prisma.savedJob.findUnique.mockResolvedValue({ id: "saved-1", userId: "candidate-1", jobId: "job-1" });
+    prisma.savedJob.findUnique.mockResolvedValue({
+      id: "saved-1",
+      userId: "candidate-1",
+      jobId: "job-1",
+    });
     prisma.savedJob.delete.mockResolvedValue({ id: "saved-1" });
 
     const result = await savedJobRouter.createCaller(ctx).toggle({ jobId: "job-1" });

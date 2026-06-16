@@ -6,7 +6,13 @@ import { toast } from "sonner";
 
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@07nghiep/ui/components/card";
 import { Textarea } from "@07nghiep/ui/components/textarea";
 import {
   Table,
@@ -91,7 +97,9 @@ function AdminOrganizationsRoute() {
                 <TableRow key={organization.id}>
                   <TableCell>
                     <div className="font-medium">{organization.name}</div>
-                    <div className="text-xs text-muted-foreground">{organization.website ?? organization.location ?? "Chưa cập nhật"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {organization.website ?? organization.location ?? "Chưa cập nhật"}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div>{organization.user.name}</div>
@@ -131,7 +139,9 @@ function AdminOrganizationsRoute() {
                         onClick={() =>
                           rejectMutation.mutate({
                             id: organization.id,
-                            note: rejectNotes[organization.id]?.trim() || "Thông tin công ty chưa đủ điều kiện xác thực.",
+                            note:
+                              rejectNotes[organization.id]?.trim() ||
+                              "Thông tin công ty chưa đủ điều kiện xác thực.",
                           })
                         }
                         disabled={approveMutation.isPending || rejectMutation.isPending}

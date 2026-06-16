@@ -1,18 +1,11 @@
 import "dotenv/config";
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { env } from "@07nghiep/env/server";
 
 const isR2Configured =
-  env.R2_ACCOUNT_ID &&
-  env.R2_ACCESS_KEY_ID &&
-  env.R2_SECRET_ACCESS_KEY &&
-  env.R2_BUCKET_NAME;
+  env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_BUCKET_NAME;
 
 let r2Client: S3Client | null = null;
 
@@ -74,7 +67,7 @@ export async function generatePresignedUploadUrl(
   type: UploadType,
   userId: string,
   filename: string,
-  contentType: string
+  contentType: string,
 ): Promise<PresignedUploadResult> {
   if (!isStorageConfigured()) {
     throw new Error("Storage is not configured");
@@ -82,9 +75,7 @@ export async function generatePresignedUploadUrl(
 
   const allowed = ALLOWED_MIME_TYPES[type];
   if (!allowed.includes(contentType)) {
-    throw new Error(
-      `Invalid content type for ${type}. Allowed: ${allowed.join(", ")}`
-    );
+    throw new Error(`Invalid content type for ${type}. Allowed: ${allowed.join(", ")}`);
   }
 
   const extension = filename.split(".").pop()?.toLowerCase() ?? "bin";
@@ -119,7 +110,7 @@ export async function deleteFile(key: string): Promise<void> {
     new DeleteObjectCommand({
       Bucket: env.R2_BUCKET_NAME!,
       Key: key,
-    })
+    }),
   );
 }
 

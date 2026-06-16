@@ -26,11 +26,15 @@ function ctxWithRole(role: "CANDIDATE" | "EMPLOYER" | "ADMIN") {
 
 describe("candidateProcedure", () => {
   it("allows candidates", async () => {
-    await expect(testRouter.createCaller(ctxWithRole("CANDIDATE")).candidateOnly()).resolves.toBe("ok");
+    await expect(testRouter.createCaller(ctxWithRole("CANDIDATE")).candidateOnly()).resolves.toBe(
+      "ok",
+    );
   });
 
   it("allows employers", async () => {
-    await expect(testRouter.createCaller(ctxWithRole("EMPLOYER")).candidateOnly()).resolves.toBe("ok");
+    await expect(testRouter.createCaller(ctxWithRole("EMPLOYER")).candidateOnly()).resolves.toBe(
+      "ok",
+    );
   });
 
   it("allows admins", async () => {
@@ -40,13 +44,17 @@ describe("candidateProcedure", () => {
 
 describe("employerProcedure", () => {
   it("rejects candidates", async () => {
-    await expect(testRouter.createCaller(ctxWithRole("CANDIDATE")).employerOnly()).rejects.toMatchObject({
+    await expect(
+      testRouter.createCaller(ctxWithRole("CANDIDATE")).employerOnly(),
+    ).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
   });
 
   it("allows employers", async () => {
-    await expect(testRouter.createCaller(ctxWithRole("EMPLOYER")).employerOnly()).resolves.toBe("ok");
+    await expect(testRouter.createCaller(ctxWithRole("EMPLOYER")).employerOnly()).resolves.toBe(
+      "ok",
+    );
   });
 
   it("allows admins", async () => {
@@ -56,13 +64,17 @@ describe("employerProcedure", () => {
 
 describe("adminProcedure", () => {
   it("rejects candidates", async () => {
-    await expect(testRouter.createCaller(ctxWithRole("CANDIDATE")).adminOnly()).rejects.toMatchObject({
+    await expect(
+      testRouter.createCaller(ctxWithRole("CANDIDATE")).adminOnly(),
+    ).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
   });
 
   it("rejects employers", async () => {
-    await expect(testRouter.createCaller(ctxWithRole("EMPLOYER")).adminOnly()).rejects.toMatchObject({
+    await expect(
+      testRouter.createCaller(ctxWithRole("EMPLOYER")).adminOnly(),
+    ).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
   });
