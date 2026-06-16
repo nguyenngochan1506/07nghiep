@@ -25,6 +25,13 @@ enum CompanySize {
   ENTERPRISE
 }
 
+enum OrganizationVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 enum SalaryType {
   HOURLY
   MONTHLY
@@ -122,11 +129,13 @@ model Organization {
   companySize CompanySize?
   foundedYear Int?
   location    String?
-  verified    Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  verified    Boolean                        @default(false)
+  verificationStatus OrganizationVerificationStatus @default(UNVERIFIED)
+  verificationNote   String?
+  createdAt   DateTime                       @default(now())
+  updatedAt   DateTime                       @updatedAt
   jobs        Job[]
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Job {
