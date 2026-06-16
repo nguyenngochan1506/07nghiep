@@ -33,7 +33,7 @@ async function seedUsers() {
     }
 
     // Create user + account via Better Auth API (handles password hashing correctly)
-    const res = await fetch("http://localhost:3000/api/auth/sign-up/email", {
+    const res = await fetch(`${env.BETTER_AUTH_URL}/api/auth/sign-up/email`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: "http://localhost:3000" },
       body: JSON.stringify({
@@ -175,14 +175,16 @@ app.get("/", (c) => c.text("OK"));
 async function main() {
   const { serve } = await import("@hono/node-server");
 
-  serve({ fetch: app.fetch, port: 3000 });
-  console.log(`Server running on http://localhost:3000`);
+  serve({ fetch: app.fetch, port: env.SERVER_PORT });
+  console.log(`Server running on http://localhost:${env.SERVER_PORT}`);
 
-  // Give the server a moment to start listening
-  await new Promise((r) => setTimeout(r, 100));
+  if (env.SEED_DEMO_USERS) {
+    // Give the server a moment to start listening before calling its auth API.
+    await new Promise((r) => setTimeout(r, 100));
 
-  console.log("Seeding users...");
-  await seedUsers();
+    console.log("Seeding demo users...");
+    await seedUsers();
+  }
 }
 
 main().catch((err) => {
