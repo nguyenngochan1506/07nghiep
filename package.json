@@ -25,7 +25,9 @@
     "db:start": "turbo -F @07nghiep/db db:start",
     "db:watch": "turbo -F @07nghiep/db db:watch",
     "db:stop": "turbo -F @07nghiep/db db:stop",
-    "db:down": "turbo -F @07nghiep/db db:down"
+    "db:down": "turbo -F @07nghiep/db db:down",
+    "job:crawl": "uv run --with-requirements scripts/job-crawler/crawler/requirements.txt python scripts/job-crawler/crawler/run.py",
+    "job:import": "pnpm --filter @07nghiep/server exec tsx ../../scripts/job-crawler/importer/import-jobs.ts"
   },
   "dependencies": {
     "@07nghiep/env": "workspace:*",
