@@ -23,6 +23,7 @@ import {
 } from "@07nghiep/ui/components/select";
 
 import { trpc } from "@/utils/trpc";
+import { authClient } from "@/lib/auth-client";
 import {
   ApplicationCard,
   type ApplicationCardProps,
@@ -67,6 +68,9 @@ function isApplicationStatusFilter(value: unknown): value is ApplicationStatusFi
 }
 
 function ApplicationsPage() {
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
+
   // Controlled UI state
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -81,11 +85,14 @@ function ApplicationsPage() {
 
   // Use trpc queryOptions with useQuery so TanStack Query auto-refetches when inputs change
   const { data, isLoading, isFetching } = useQuery(
-    trpc.applications.list.queryOptions({
-      search: debouncedSearchTerm || undefined,
-      status: statusFilter === "ALL" ? undefined : (statusFilter as ApplicationStatus),
-      sortBy: sortBy,
-    }),
+    trpc.applications.list.queryOptions(
+      {
+        search: debouncedSearchTerm || undefined,
+        status: statusFilter === "ALL" ? undefined : (statusFilter as ApplicationStatus),
+        sortBy: sortBy,
+      },
+      { enabled: isLoggedIn },
+    ),
   );
 
   const applicationsSource =
@@ -188,7 +195,43 @@ function ApplicationsPage() {
             </div>
           </div>
         )}
-        {isLoading ? (
+        {sessionPending ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index} className="p-0">
+                <CardHeader className="space-y-3 border-b pb-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-4/5" />
+                  <Skeleton className="h-4 w-2/3" />
+                </CardHeader>
+                <CardContent className="space-y-3 pt-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-8 w-28 rounded-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : !isLoggedIn ? (
+          <div className="flex min-h-96 items-center justify-center">
+            <Card className="w-full max-w-xl border-dashed bg-card/70 p-0 text-center">
+              <CardContent className="flex flex-col items-center gap-4 px-8 py-16">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <BriefcaseBusiness className="h-8 w-8" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-semibold">Đăng nhập để xem đơn ứng tuyển</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Danh sách đơn ứng tuyển chỉ khả dụng sau khi bạn đăng nhập.
+                  </p>
+                </div>
+                <Button asChild>
+                  <Link to="/login">Đăng nhập</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        ) : isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <Card key={index} className="p-0">

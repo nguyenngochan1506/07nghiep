@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@07nghiep/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import BasicInfoSection from "@/components/profile/BasicInfoSection";
 import EducationSection from "@/components/profile/EducationSection";
 import ExperienceSection from "@/components/profile/ExperienceSection";
@@ -165,7 +167,8 @@ function mapFormValuesToProfileUpdateInput(values: ProfileFormValues) {
 }
 
 function ProfileEditPage() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
   const sessionName = typeof session?.user?.name === "string" ? session.user.name : null;
   const initializedRef = useRef(false);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -175,7 +178,9 @@ function ProfileEditPage() {
     mode: "onChange",
   });
 
-  const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
+  const profileQuery = useQuery(
+    trpc.profile.getMyProfile.queryOptions(undefined, { enabled: isLoggedIn }),
+  );
   const profileData = profileQuery.data as ProfileApiData | undefined;
   const { mutate } = useMutation(trpc.profile.updateMyProfile.mutationOptions());
   const { mutateAsync: requestAvatarUpload } = useMutation(
@@ -379,8 +384,36 @@ function ProfileEditPage() {
 
   const watchedValues = form.watch();
 
+  if (sessionPending) {
+    return (
+      <div className="container mx-auto min-h-[100dvh] max-w-4xl bg-background py-8 text-foreground">
+        <Skeleton className="h-56 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 text-foreground">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <CardTitle>Đăng nhập để chỉnh hồ sơ</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <p className="text-sm leading-6 text-muted-foreground">
+              Trang chỉnh sửa hồ sơ chỉ khả dụng sau khi bạn đăng nhập vào tài khoản ứng viên.
+            </p>
+            <Button asChild>
+              <Link to="/login">Đăng nhập</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto flex max-w-4xl flex-col gap-8 py-8">
+    <div className="container mx-auto flex min-h-[100dvh] max-w-4xl flex-col gap-8 bg-background py-8 text-foreground">
       <form className="flex flex-col gap-8" onSubmit={form.handleSubmit(() => undefined)}>
         <div className="flex flex-col gap-4">
           <Button asChild variant="outline" className="w-fit">

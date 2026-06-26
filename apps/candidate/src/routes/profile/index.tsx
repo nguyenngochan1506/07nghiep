@@ -2,6 +2,8 @@ import { Badge } from "@07nghiep/ui/components/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
 import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDownToLine,
   Briefcase,
@@ -17,6 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
+import { trpc } from "@/utils/trpc";
 
 type ProfileApiData = {
   userId?: string | null;
@@ -131,16 +134,78 @@ function inferPortfolioLinks(portfolioUrl?: string | null): PortfolioLinks {
 }
 
 export const Route = createFileRoute("/profile/")({
-  loader: async ({ context }) => {
-    return context.queryClient.ensureQueryData(context.trpc.profile.getMyProfile.queryOptions());
-  },
   component: ProfilePage,
 });
 
 function ProfilePage() {
-  const profile = Route.useLoaderData() as ProfileApiData;
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const sessionUserId = typeof session?.user?.id === "string" ? session.user.id : "";
+  const isLoggedIn = Boolean(sessionUserId);
+  const profileQuery = useQuery(
+    trpc.profile.getMyProfile.queryOptions(undefined, { enabled: isLoggedIn }),
+  );
+
+  if (sessionPending) {
+    return (
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground">
+        <div className="container mx-auto max-w-6xl">
+          <Skeleton className="h-56 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 text-foreground">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <CardTitle>Đăng nhập để xem hồ sơ</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <p className="text-sm leading-6 text-muted-foreground">
+              Hồ sơ ứng viên chỉ khả dụng sau khi bạn đăng nhập vào tài khoản.
+            </p>
+            <Button asChild>
+              <Link to="/login">Đăng nhập</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (profileQuery.isLoading) {
+    return (
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground">
+        <div className="container mx-auto max-w-6xl">
+          <Skeleton className="h-56 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (profileQuery.isError || !profileQuery.data) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 text-foreground">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <CardTitle>Không tải được hồ sơ</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <p className="text-sm leading-6 text-muted-foreground">
+              Vui lòng thử lại sau hoặc cập nhật hồ sơ từ trang chỉnh sửa.
+            </p>
+            <Button asChild variant="outline">
+              <Link to="/jobs">Quay lại việc làm</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const profile = profileQuery.data as ProfileApiData;
   const sessionRole =
     typeof (session?.user as { role?: unknown } | undefined)?.role === "string"
       ? (session?.user as { role?: string }).role

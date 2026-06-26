@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link as RouterLink } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import type { AppRouter } from "@07nghiep/server/routers/index";
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/interviews")({
   component: CandidateInterviewsPage,
@@ -79,7 +80,11 @@ function getMonthStart(date: Date) {
 
 function CandidateInterviewsPage() {
   const queryClient = useQueryClient();
-  const { data: interviews, isLoading } = useQuery(trpc.interview.getMyInterviews.queryOptions());
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
+  const { data: interviews, isLoading } = useQuery(
+    trpc.interview.getMyInterviews.queryOptions(undefined, { enabled: isLoggedIn }),
+  );
 
   const respondInterview = useMutation(
     trpc.interview.respond.mutationOptions({
@@ -149,10 +154,50 @@ function CandidateInterviewsPage() {
     return interviews.filter((iv) => iv.status === "COMPLETED" || iv.status === "CANCELLED");
   }, [interviews]);
 
+  if (sessionPending) {
+    return (
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
+          <Skeleton className="h-10 w-60" />
+          <Skeleton className="h-[600px] rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+        <div className="mx-auto flex max-w-[900px] flex-col gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Lịch phỏng vấn</h1>
+            <p className="mt-1 text-muted-foreground">Quản lý các buổi phỏng vấn của bạn</p>
+          </div>
+          <Card className="border-dashed text-center">
+            <CardContent className="flex flex-col items-center gap-5 py-12">
+              <CalendarDays className="size-12 text-muted-foreground" />
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Đăng nhập để xem lịch phỏng vấn
+                </h2>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  Các buổi phỏng vấn được đồng bộ theo tài khoản ứng viên của bạn.
+                </p>
+              </div>
+              <Button asChild>
+                <RouterLink to="/login">Đăng nhập</RouterLink>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8 md:px-8">
-        <div className="max-w-[1400px] mx-auto space-y-4">
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
           <Skeleton className="h-10 w-60" />
           <Skeleton className="h-[600px] rounded-xl" />
         </div>
@@ -161,11 +206,11 @@ function CandidateInterviewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8 md:px-8">
-      <div className="max-w-[1800px] mx-auto space-y-6">
+    <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+      <div className="mx-auto flex max-w-[1800px] flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Lịch phỏng vấn</h1>
-          <p className="text-muted-foreground mt-1">Quản lý các buổi phỏng vấn của bạn</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Lịch phỏng vấn</h1>
+          <p className="mt-1 text-muted-foreground">Quản lý các buổi phỏng vấn của bạn</p>
         </div>
 
         {/* View toggle */}
@@ -283,14 +328,14 @@ function CandidateInterviewsPage() {
                           {/* Red current time line */}
                           {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
                             <div
-                              className="absolute left-0 right-0 z-20 border-t-2 border-red-500 pointer-events-none"
+                              className="pointer-events-none absolute left-0 right-0 z-20 border-t-2 border-destructive"
                               style={{
                                 top:
                                   (((now.getHours() - START_HOUR) * 60 + now.getMinutes()) / 60) *
                                   HOUR_HEIGHT,
                               }}
                             >
-                              <div className="h-2 w-2 rounded-full bg-red-500 -mt-1 -ml-1" />
+                              <div className="-ml-1 -mt-1 size-2 rounded-full bg-destructive" />
                             </div>
                           )}
 
@@ -510,7 +555,7 @@ function CandidateInterviewsPage() {
         {viewMode === "list" && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Sắp tới</h2>
+              <h2 className="mb-4 text-lg font-semibold text-foreground">Sắp tới</h2>
               {upcoming.length > 0 ? (
                 <div className="space-y-3">
                   {upcoming.map((iv) => {
@@ -528,8 +573,8 @@ function CandidateInterviewsPage() {
                                   className="w-10 h-10 rounded-lg object-cover"
                                 />
                               ) : (
-                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                  <Building2 className="h-5 w-5 text-primary" />
+                                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                                  <Building2 className="size-5 text-primary" />
                                 </div>
                               )}
                               <div className="space-y-1.5">
@@ -600,15 +645,15 @@ function CandidateInterviewsPage() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
-                  <CalendarDays className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                  <p className="text-gray-500">Chưa có lịch phỏng vấn nào sắp tới</p>
+                <div className="rounded-xl border border-dashed bg-card py-12 text-center">
+                  <CalendarDays className="mx-auto mb-3 size-12 text-muted-foreground" />
+                  <p className="text-muted-foreground">Chưa có lịch phỏng vấn nào sắp tới</p>
                 </div>
               )}
             </div>
             {past.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Đã qua</h2>
+                <h2 className="mb-4 text-lg font-semibold text-foreground">Đã qua</h2>
                 <div className="space-y-2">
                   {past.map((iv) => {
                     const job = iv.application?.job;
@@ -617,8 +662,8 @@ function CandidateInterviewsPage() {
                       <Card key={iv.id} className="opacity-70">
                         <CardContent className="p-4 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
+                              <Building2 className="size-4 text-muted-foreground" />
                             </div>
                             <div>
                               <p className="text-sm font-medium">
