@@ -35,6 +35,8 @@ export type JobType = {
 
 export const JobsContext = createContext<{
   jobs: JobType[];
+  isLoading: boolean;
+  isError: boolean;
 } | null>(null);
 
 export function useJobs() {
@@ -110,7 +112,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
-  const { data } = useQuery(trpc.job.getPublicList.queryOptions({ limit: 50 }));
+  const { data, isLoading, isError } = useQuery(trpc.job.getPublicList.queryOptions({ limit: 50 }));
 
   const jobs: JobType[] = useMemo(() => {
     if (!data?.jobs) return [];
@@ -128,7 +130,7 @@ function RootComponent() {
       >
         <div className="grid grid-rows-[auto_1fr] h-svh">
           <Header />
-          <JobsContext.Provider value={{ jobs }}>
+          <JobsContext.Provider value={{ jobs, isLoading, isError }}>
             <Outlet />
           </JobsContext.Provider>
         </div>

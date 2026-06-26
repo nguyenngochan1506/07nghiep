@@ -36,24 +36,22 @@ export default function Header() {
   const navLinks = isLoggedIn ? [...publicLinks, ...protectedLinks] : publicLinks;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        {/* Logo & Branding */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-bold text-primary-foreground">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
+        <Link to="/" className="flex min-w-fit items-center gap-2">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm">
             07
           </div>
-          <span className="font-semibold">07nghiep</span>
+          <span className="text-sm font-semibold tracking-tight">07nghiep</span>
         </Link>
 
-        {/* Navigation */}
-        <nav className="hidden gap-1 md:flex">
+        <nav className="hidden items-center gap-1 rounded-full border bg-card p-1 shadow-sm md:flex">
           {navLinks.map(({ to, label, hasMessageBadge }) => (
             <Link
               key={label}
               to={to}
-              activeProps={{ className: "bg-secondary text-foreground font-bold" }}
-              className="relative flex items-center gap-1 rounded-sm px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              activeProps={{ className: "bg-secondary text-foreground" }}
+              className="relative flex h-9 items-center gap-1 rounded-full px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               {label}
               {hasMessageBadge && unreadCount && unreadCount > 0 ? (
@@ -65,7 +63,6 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Actions */}
         <div className="flex items-center gap-2">
           {isLoggedIn && <NotificationBellContainer />}
           <ModeToggle />
