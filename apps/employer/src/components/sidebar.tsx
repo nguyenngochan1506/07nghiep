@@ -50,10 +50,7 @@ export default function Sidebar({ children }: SidebarProps) {
         {/* Logo */}
         <div className="flex h-14 items-center gap-2 border-b px-4">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-bold text-primary-foreground">
-              07
-            </div>
-            <span className="font-semibold">07nghiep</span>
+            <img src="/07logo.png" alt="07nghiep" className="h-9 w-auto object-contain" />
             <span className="ml-1 rounded-sm bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               Employer
             </span>

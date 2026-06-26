@@ -39,10 +39,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
         <Link to="/" className="flex min-w-fit items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm">
-            07
-          </div>
-          <span className="text-sm font-semibold tracking-tight">07nghiep</span>
+          <img src="/07logo.png" alt="07nghiep" className="h-10 w-auto object-contain" />
         </Link>
 
         <nav className="hidden items-center gap-1 rounded-full border bg-card p-1 shadow-sm md:flex">
