@@ -1,14 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import type { AppRouter } from "@07nghiep/server/routers/index";
-import type { inferRouterOutputs } from "@trpc/server";
-import { Search, Building2, MapPin, Users, ChevronRight, CheckCircle2 } from "lucide-react";
-import { trpc } from "@/utils/trpc";
-import { Input } from "@07nghiep/ui/components/input";
-import { Card, CardContent } from "@07nghiep/ui/components/card";
-import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { Badge } from "@07nghiep/ui/components/badge";
+import { Card, CardContent } from "@07nghiep/ui/components/card";
+import { Input } from "@07nghiep/ui/components/input";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Building2, CheckCircle2, ChevronRight, MapPin, Search, Users } from "lucide-react";
+import { useState } from "react";
+
+import { trpc } from "@/utils/trpc";
 
 const COMPANY_SIZE_LABELS: Record<string, string> = {
   STARTUP: "Startup (1-10)",
@@ -18,8 +17,16 @@ const COMPANY_SIZE_LABELS: Record<string, string> = {
   ENTERPRISE: "Doanh nghiệp (>1000)",
 };
 
-type RouterOutputs = inferRouterOutputs<AppRouter>;
-type PublicOrganization = RouterOutputs["organization"]["getPublicList"]["organizations"][number];
+type PublicOrganization = {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  verified: boolean;
+  industry: string | null;
+  location: string | null;
+  companySize: string | null;
+  openJobsCount: number;
+};
 
 export const Route = createFileRoute("/organizations/")({
   component: OrganizationsPage,
@@ -35,7 +42,7 @@ function OrganizationsPage() {
     }),
   );
 
-  const organizations = data?.organizations ?? [];
+  const organizations = (data?.organizations ?? []) as unknown as PublicOrganization[];
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -73,7 +80,7 @@ function OrganizationsPage() {
           </div>
         ) : organizations.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {organizations.map((org: PublicOrganization) => {
+            {organizations.map((org) => {
               const initials = (org.name ?? "")
                 .split(" ")
                 .slice(0, 2)

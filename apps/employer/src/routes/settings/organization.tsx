@@ -1,16 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
 import type { CompanySize } from "@07nghiep/db";
-import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
-import { toast } from "sonner";
-import { Building, Save, Globe, MapPin, Calendar, Image as ImageIcon } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
-import { Textarea } from "@07nghiep/ui/components/textarea";
 import {
   Select,
   SelectContent,
@@ -18,11 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@07nghiep/ui/components/select";
+import { Textarea } from "@07nghiep/ui/components/textarea";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Building, Calendar, Globe, Image as ImageIcon, MapPin, Save } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
 
+import Loader from "@/components/loader";
 import { authClient } from "@/lib/auth-client";
 import { authorizedRoles } from "@/lib/role-guard";
-import { trpc } from "@/utils/trpc";
-import Loader from "@/components/loader";
+import { trpc, trpcClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/settings/organization")({
   beforeLoad: async () => {
@@ -52,6 +51,17 @@ type ErrorWithTRPCCode = {
   };
 };
 
+type OrganizationFormPayload = {
+  name: string;
+  description?: string;
+  website?: string;
+  industry?: string;
+  companySize?: CompanySize;
+  foundedYear?: number;
+  location?: string;
+  logoUrl?: string;
+};
+
 function isCompanySize(value: string): value is CompanySize {
   return COMPANY_SIZES.some((size) => size.value === value);
 }
@@ -68,25 +78,23 @@ function OrganizationSettingsPage() {
   const isLoading = orgQuery.isLoading;
   const isEditing = !isNotFound && !!orgQuery.data;
 
-  const createMutation = useMutation(
-    trpc.organization.create.mutationOptions({
-      onSuccess: () => {
-        toast.success("Tạo thông tin tổ chức thành công!");
-        queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
-      },
-      onError: (err) => toast.error(err.message),
-    }),
-  );
+  const createMutation = useMutation({
+    mutationFn: (input: OrganizationFormPayload) => trpcClient.organization.create.mutate(input),
+    onSuccess: () => {
+      toast.success("Tạo thông tin tổ chức thành công!");
+      queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
-  const updateMutation = useMutation(
-    trpc.organization.update.mutationOptions({
-      onSuccess: () => {
-        toast.success("Cập nhật thông tin tổ chức thành công!");
-        queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
-      },
-      onError: (err) => toast.error(err.message),
-    }),
-  );
+  const updateMutation = useMutation({
+    mutationFn: (input: OrganizationFormPayload) => trpcClient.organization.update.mutate(input),
+    onSuccess: () => {
+      toast.success("Cập nhật thông tin tổ chức thành công!");
+      queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const form = useForm({
     defaultValues: {

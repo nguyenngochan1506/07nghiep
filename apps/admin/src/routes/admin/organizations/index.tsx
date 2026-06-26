@@ -1,9 +1,3 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle, XCircle } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 import {
@@ -13,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@07nghiep/ui/components/card";
-import { Textarea } from "@07nghiep/ui/components/textarea";
 import {
   Table,
   TableBody,
@@ -22,8 +15,28 @@ import {
   TableHeader,
   TableRow,
 } from "@07nghiep/ui/components/table";
+import { Textarea } from "@07nghiep/ui/components/textarea";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { CheckCircle, XCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { queryClient, trpc } from "@/utils/trpc";
+import { queryClient, trpc, trpcClient } from "@/utils/trpc";
+
+type AdminOrganizationRow = {
+  id: string;
+  name: string;
+  website: string | null;
+  location: string | null;
+  industry: string | null;
+  companySize: string | null;
+  jobsCount: number;
+  user: {
+    name: string;
+    email: string;
+  };
+};
 
 export const Route = createFileRoute("/admin/organizations/")({
   component: AdminOrganizationsRoute,
@@ -38,27 +51,26 @@ function AdminOrganizationsRoute() {
   });
   const query = useQuery(queryOptions);
 
-  const approveMutation = useMutation(
-    trpc.admin.organizations.approve.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã duyệt công ty");
-        queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
-      },
-      onError: (error) => toast.error(error.message),
-    }),
-  );
+  const approveMutation = useMutation({
+    mutationFn: (input: { id: string }) => trpcClient.admin.organizations.approve.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã duyệt công ty");
+      queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
-  const rejectMutation = useMutation(
-    trpc.admin.organizations.reject.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã từ chối công ty");
-        queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
-      },
-      onError: (error) => toast.error(error.message),
-    }),
-  );
+  const rejectMutation = useMutation({
+    mutationFn: (input: { id: string; note: string }) =>
+      trpcClient.admin.organizations.reject.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã từ chối công ty");
+      queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
-  const organizations = query.data?.organizations ?? [];
+  const organizations = (query.data?.organizations ?? []) as unknown as AdminOrganizationRow[];
 
   return (
     <Card>
