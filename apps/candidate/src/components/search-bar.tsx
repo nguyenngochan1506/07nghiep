@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, X } from "lucide-react";
 import { Button } from "@07nghiep/ui/components/button";
-// Nếu bạn chưa có component Input từ shadcn, hãy dùng thẻ <input> HTML mặc định tạm thời như dưới đây,
-// hoặc chạy lệnh: pnpm dlx shadcn@latest add input -c packages/ui để cài nhé!
 
 interface SearchBarProps {
   onSearch: (keyword: string, location: string) => void;
@@ -38,14 +36,13 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
   const handleClearLocation = () => setLocation("");
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-card rounded-2xl shadow-sm border p-2 flex flex-col md:flex-row items-center gap-2 relative z-10">
-      {/* Ô tìm kiếm theo từ khóa */}
-      <div className="relative flex-grow w-full md:w-auto flex items-center h-12">
-        <Search className="absolute left-4 h-5 w-5 text-muted-foreground shrink-0" />
+    <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center gap-2 rounded-2xl border bg-card p-2 shadow-sm md:flex-row">
+      <div className="relative flex h-12 w-full flex-grow items-center md:w-auto">
+        <Search className="absolute left-4 size-5 shrink-0 text-muted-foreground" />
         <input
           type="text"
           placeholder="Job title, keywords, or company..."
-          className="w-full h-full pl-11 pr-10 border-0 bg-transparent shadow-none focus:outline-none text-base text-foreground"
+          className="h-full w-full border-0 bg-transparent pl-11 pr-10 text-base text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
@@ -53,24 +50,22 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
           <button
             type="button"
             onClick={handleClearKeyword}
-            className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Clear search"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </button>
         )}
       </div>
 
-      {/* Đường kẻ dọc chia tách (chỉ hiện trên Desktop) */}
-      <div className="hidden md:block w-px h-8 bg-border shrink-0"></div>
+      <div className="hidden h-8 w-px shrink-0 bg-border md:block" />
 
-      {/* Ô tìm kiếm theo địa điểm */}
-      <div className="relative flex-grow md:w-1/3 w-full flex items-center h-12 border-t md:border-t-0 pt-2 md:pt-0">
-        <MapPin className="absolute left-4 h-5 w-5 text-muted-foreground shrink-0" />
+      <div className="relative flex h-12 w-full flex-grow items-center border-t pt-2 md:w-1/3 md:border-t-0 md:pt-0">
+        <MapPin className="absolute left-4 size-5 shrink-0 text-muted-foreground" />
         <input
           type="text"
           placeholder="City, state, or 'Remote'"
-          className="w-full h-full pl-11 pr-10 border-0 bg-transparent shadow-none focus:outline-none text-base text-foreground"
+          className="h-full w-full border-0 bg-transparent pl-11 pr-10 text-base text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
@@ -78,17 +73,16 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
           <button
             type="button"
             onClick={handleClearLocation}
-            className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Clear location"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </button>
         )}
       </div>
 
-      {/* Nút Tìm kiếm */}
       <Button
-        className="w-full md:w-auto h-12 px-8 rounded-xl font-medium"
+        className="h-12 w-full rounded-xl px-8 font-medium md:w-auto"
         onClick={() => onSearch(keyword, location)}
       >
         Search

@@ -5,6 +5,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
 import { queryClient, trpc } from "@/utils/trpc";
+import { authClient } from "@/lib/auth-client";
+import { Badge } from "@07nghiep/ui/components/badge";
+import { Button } from "@07nghiep/ui/components/button";
+import { Card, CardContent } from "@07nghiep/ui/components/card";
+import { ArrowLeft, Building2, Heart } from "lucide-react";
 
 type JobDetailView = {
   id: string;
@@ -68,6 +73,8 @@ export const Route = createFileRoute("/jobs/$jobId")({
 function JobDetailPage() {
   const { jobId } = Route.useParams();
   const { jobs } = useJobs();
+  const { data: session } = authClient.useSession();
+  const isLoggedIn = !!session;
 
   const contextJob = jobs.find((j) => j.id === jobId);
 
@@ -86,9 +93,13 @@ function JobDetailPage() {
   const job: JobDetailView | null =
     contextJobView ?? (apiJob ? mapJob(apiJob as unknown as PublicJobDetail) : null);
 
-  const hasAppliedQuery = useQuery(trpc.applications.list.queryOptions({ search: undefined }));
-  const profileQuery = useQuery(trpc.profile.getMyProfile.queryOptions());
-  const savedJobOptions = trpc.savedJob.isSaved.queryOptions({ jobId });
+  const hasAppliedQuery = useQuery(
+    trpc.applications.list.queryOptions({ search: undefined }, { enabled: isLoggedIn }),
+  );
+  const profileQuery = useQuery(
+    trpc.profile.getMyProfile.queryOptions(undefined, { enabled: isLoggedIn }),
+  );
+  const savedJobOptions = trpc.savedJob.isSaved.queryOptions({ jobId }, { enabled: isLoggedIn });
   const savedJobQuery = useQuery(savedJobOptions);
   const toggleSavedJob = useMutation(
     trpc.savedJob.toggle.mutationOptions({
@@ -124,24 +135,21 @@ function JobDetailPage() {
 
   if (!job && !apiLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-        <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background p-4 text-foreground">
+        <h1 className="mb-4 text-2xl font-bold text-foreground md:text-4xl">
           Không tìm thấy công việc
         </h1>
-        <p className="text-gray-500 mb-6">Công việc này có thể đã bị xóa hoặc hết hạn.</p>
-        <Link
-          to="/jobs"
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Quay lại danh sách
-        </Link>
+        <p className="mb-6 text-muted-foreground">Công việc này có thể đã bị xóa hoặc hết hạn.</p>
+        <Button asChild>
+          <Link to="/jobs">Quay lại danh sách</Link>
+        </Button>
       </div>
     );
   }
 
   if (!job) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
         <Skeleton className="h-96 w-full max-w-4xl rounded-xl" />
       </div>
     );
@@ -150,98 +158,105 @@ function JobDetailPage() {
   const isSaved = savedJobQuery.data?.saved ?? false;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Link to="/jobs" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-          &larr; Quay lại danh sách
+    <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6">
+        <Link to="/jobs" className="flex items-center gap-1 text-sm text-primary hover:underline">
+          <ArrowLeft className="size-4" />
+          Quay lại danh sách
         </Link>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div className="flex items-center gap-4">
-              {job.companyLogo ? (
-                <img
-                  src={job.companyLogo}
-                  alt={job.companyName}
-                  className="w-16 h-16 rounded-lg object-cover border border-gray-200 shrink-0"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200 shrink-0">
-                  <span className="text-xs text-gray-500">Logo</span>
+        <Card>
+          <CardContent className="p-6 md:p-8">
+            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
+              <div className="flex items-center gap-4">
+                {job.companyLogo ? (
+                  <img
+                    src={job.companyLogo}
+                    alt={job.companyName}
+                    className="size-16 shrink-0 rounded-lg border object-cover"
+                  />
+                ) : (
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-lg border bg-muted">
+                    <Building2 className="size-6 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">{job.title}</h1>
+                  <p className="mt-1 text-lg text-muted-foreground">{job.companyName}</p>
                 </div>
-              )}
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
-                <p className="text-lg text-gray-600 mt-1">{job.companyName}</p>
+              </div>
+
+              <div className="flex w-full items-center gap-3 md:w-auto">
+                <Button
+                  type="button"
+                  onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
+                  disabled={!isLoggedIn || toggleSavedJob.isPending}
+                  variant={isSaved ? "default" : "outline"}
+                  className="flex-1 md:flex-none"
+                >
+                  <Heart data-icon="inline-start" />
+                  {isSaved ? "Đã lưu" : "Lưu công việc"}
+                </Button>
+
+                {isLoadingTrigger ? (
+                  <Skeleton className="h-10 w-32 md:w-40 rounded-md" />
+                ) : isLoggedIn ? (
+                  <ApplyJobModal
+                    jobId={job.id}
+                    jobStatus={job.status || "OPEN"}
+                    hasApplied={hasApplied}
+                    isProfileComplete={isProfileComplete}
+                    applicationStatus={applicationStatus}
+                  />
+                ) : (
+                  <Button asChild>
+                    <Link to="/login">Đăng nhập để ứng tuyển</Link>
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <button
-                type="button"
-                onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
-                disabled={toggleSavedJob.isPending}
-                className={`flex-1 md:flex-none px-4 py-2 border rounded-md font-medium transition-colors ${
-                  isSaved
-                    ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                {isSaved ? "Đã lưu" : "Lưu công việc"}
-              </button>
+            <hr className="my-8 border-border" />
 
-              {isLoadingTrigger ? (
-                <Skeleton className="h-10 w-32 md:w-40 rounded-md" />
-              ) : (
-                <ApplyJobModal
-                  jobId={job.id}
-                  jobStatus={job.status || "OPEN"}
-                  hasApplied={hasApplied}
-                  isProfileComplete={isProfileComplete}
-                  applicationStatus={applicationStatus}
-                />
-              )}
+            <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="rounded-lg bg-secondary p-4">
+                <p className="mb-1 text-sm text-muted-foreground">Địa điểm</p>
+                <p className="font-semibold text-foreground">{job.location}</p>
+              </div>
+              <div className="rounded-lg bg-secondary p-4">
+                <p className="mb-1 text-sm text-muted-foreground">Mức lương</p>
+                <p className="font-semibold text-foreground">{job.salaryRange}</p>
+              </div>
+              <div className="rounded-lg bg-secondary p-4">
+                <p className="mb-1 text-sm text-muted-foreground">Hình thức</p>
+                <p className="font-semibold text-foreground">{job.workType}</p>
+              </div>
+              <div className="rounded-lg bg-secondary p-4">
+                <p className="mb-1 text-sm text-muted-foreground">Loại công việc</p>
+                <p className="font-semibold text-foreground">{job.jobType}</p>
+              </div>
             </div>
-          </div>
 
-          <hr className="my-8 border-gray-100" />
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500 mb-1">Địa điểm</p>
-              <p className="font-semibold text-gray-900">{job.location}</p>
+            <div className="flex flex-col gap-4">
+              <h2 className="text-xl font-bold text-foreground">Mô tả công việc</h2>
+              <div className="flex flex-col gap-2 leading-relaxed text-muted-foreground">
+                <p>{job.description || "Chưa có mô tả chi tiết."}</p>
+                {job.skills.length > 0 && (
+                  <>
+                    <p className="mt-4 font-semibold text-foreground">Yêu cầu kỹ năng:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {job.skills.map((skill: string) => (
+                        <Badge key={skill} variant="outline">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500 mb-1">Mức lương</p>
-              <p className="font-semibold text-gray-900">{job.salaryRange}</p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500 mb-1">Hình thức</p>
-              <p className="font-semibold text-gray-900">{job.workType}</p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500 mb-1">Loại công việc</p>
-              <p className="font-semibold text-gray-900">{job.jobType}</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-900">Mô tả công việc</h2>
-            <div className="text-gray-700 leading-relaxed space-y-2">
-              <p>{job.description || "Chưa có mô tả chi tiết."}</p>
-              {job.skills.length > 0 && (
-                <>
-                  <p className="font-semibold text-gray-800 mt-4">Yêu cầu kỹ năng:</p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {job.skills.map((skill: string) => (
-                      <li key={skill}>{skill}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

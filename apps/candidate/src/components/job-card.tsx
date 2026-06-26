@@ -1,4 +1,16 @@
 import { Link } from "@tanstack/react-router";
+import {
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  Clock3,
+  DollarSign,
+  Heart,
+  MapPin,
+} from "lucide-react";
+import { Badge } from "@07nghiep/ui/components/badge";
+import { Button } from "@07nghiep/ui/components/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 
 export interface Job {
   id: string;
@@ -22,58 +34,85 @@ interface JobCardProps {
 
 export function JobCardItem({ job, onSave }: JobCardProps) {
   return (
-    <div className="border rounded-lg p-4 mb-4 shadow-sm bg-white flex flex-col gap-3">
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
-            <span className="text-xs text-gray-500">Logo</span>
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted">
+              {job.companyLogo ? (
+                <img
+                  src={job.companyLogo}
+                  alt={`${job.companyName} logo`}
+                  className="size-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <Building2 className="size-5 text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <CardTitle>
+                <Link
+                  to={`/jobs/$jobId`}
+                  params={{ jobId: job.id }}
+                  className="text-primary hover:underline"
+                >
+                  {job.title}
+                </Link>
+              </CardTitle>
+              <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                {job.companyName}
+                {job.isVerified ? <CheckCircle2 className="size-4 text-primary" /> : null}
+              </p>
+            </div>
           </div>
-          <div>
-            <Link
-              to={`/jobs/$jobId`}
-              params={{ jobId: job.id }}
-              className="text-lg font-semibold hover:underline text-blue-600"
-            >
-              {job.title}
-            </Link>
-            <p className="text-sm text-gray-600">
-              {job.companyName} {job.isVerified && <span className="text-green-500 ml-1">✓</span>}
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            onSave?.(job.id);
-          }}
-          className="text-gray-500 hover:text-red-500 transition-colors"
-        >
-          {job.isSaved ? "❤️" : "🤍"}
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-        <span className="bg-gray-100 px-2 py-1 rounded">📍 {job.location}</span>
-        <span className="bg-gray-100 px-2 py-1 rounded">🏢 {job.workType}</span>
-        <span className="bg-gray-100 px-2 py-1 rounded">⏱️ {job.jobType}</span>
-        <span className="bg-gray-100 px-2 py-1 rounded text-green-600 font-medium">
-          💰 {job.salaryRange}
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-2 mt-1">
-        {job.skills.map((skill) => (
-          <span
-            key={skill}
-            className="bg-blue-50 text-blue-600 border border-blue-100 text-xs px-2 py-1 rounded-md"
+          <Button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onSave?.(job.id);
+            }}
+            variant="ghost"
+            size="icon-sm"
+            aria-label={job.isSaved ? "Bỏ lưu việc làm" : "Lưu việc làm"}
           >
-            {skill}
-          </span>
-        ))}
-      </div>
+            <Heart className={job.isSaved ? "size-4 fill-current text-destructive" : "size-4"} />
+          </Button>
+        </div>
+      </CardHeader>
 
-      <div className="text-xs text-gray-400 mt-2">Đăng: {job.postedDate}</div>
-    </div>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          <Badge variant="secondary">
+            <MapPin data-icon="inline-start" />
+            {job.location}
+          </Badge>
+          <Badge variant="secondary">
+            <BriefcaseBusiness data-icon="inline-start" />
+            {job.workType}
+          </Badge>
+          <Badge variant="secondary">
+            <Clock3 data-icon="inline-start" />
+            {job.jobType}
+          </Badge>
+          <Badge variant="outline">
+            <DollarSign data-icon="inline-start" />
+            {job.salaryRange}
+          </Badge>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {job.skills.map((skill) => (
+            <Badge key={skill} variant="outline">
+              {skill}
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
+
+      <CardFooter>
+        <div className="text-xs text-muted-foreground">Đăng: {job.postedDate}</div>
+      </CardFooter>
+    </Card>
   );
 }

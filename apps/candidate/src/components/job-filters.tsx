@@ -1,4 +1,6 @@
 import type React from "react";
+import { Button } from "@07nghiep/ui/components/button";
+import { Label } from "@07nghiep/ui/components/label";
 
 export type JobFiltersValue = {
   location: string;
@@ -16,17 +18,16 @@ export function JobFilters({ filters, setFilters }: JobFiltersProps) {
   };
 
   return (
-    <div className="w-64 p-4 border-r hidden md:block">
-      <h3 className="font-semibold text-lg mb-4">Bộ lọc</h3>
+    <div className="hidden w-64 rounded-xl border bg-card p-4 md:block">
+      <h3 className="mb-4 text-lg font-semibold text-foreground">Bộ lọc</h3>
 
-      <div className="mb-4">
-        <label htmlFor="job-location-filter" className="block text-sm font-medium mb-2">
-          Địa điểm
-        </label>
+      <div className="mb-4 flex flex-col gap-2">
+        <Label htmlFor="job-location-filter">Địa điểm</Label>
         <select
           id="job-location-filter"
-          className="w-full border rounded-md p-2 text-sm"
+          className="w-full rounded-md border bg-background p-2 text-sm text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
           onChange={(e) => handleFilterChange("location", e.target.value)}
+          value={filters.location}
         >
           <option value="">Tất cả địa điểm</option>
           <option value="HCM">Hồ Chí Minh</option>
@@ -36,17 +37,19 @@ export function JobFilters({ filters, setFilters }: JobFiltersProps) {
       </div>
 
       <div className="mb-4">
-        <p className="block text-sm font-medium mb-2">Hình thức làm việc</p>
+        <p className="mb-2 block text-sm font-medium text-foreground">Hình thức làm việc</p>
         <div className="flex flex-wrap gap-2">
           {["Remote", "Hybrid", "Onsite"].map((type) => (
-            <button
+            <Button
               type="button"
               key={type}
               onClick={() => handleFilterChange("workType", type)}
-              className={`text-xs px-3 py-1 border rounded-full ${filters.workType === type ? "bg-blue-600 text-white" : "bg-white text-gray-700"}`}
+              variant={filters.workType === type ? "default" : "outline"}
+              size="sm"
+              className="rounded-full"
             >
               {type}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

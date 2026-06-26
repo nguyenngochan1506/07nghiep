@@ -5,8 +5,18 @@ import type React from "react";
 import { JobCardItem } from "@/components/job-card";
 import { SearchBar } from "@/components/search-bar";
 import { JobFilters } from "@/components/job-filters";
+import { authClient } from "@/lib/auth-client";
 import { useJobs } from "@/routes/__root";
 import { queryClient, trpc } from "@/utils/trpc";
+import { Button } from "@07nghiep/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@07nghiep/ui/components/card";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
 export const Route = createFileRoute("/jobs/")({
   component: JobsPage,
@@ -16,8 +26,13 @@ const ITEMS_PER_PAGE = 4;
 type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
 function JobsPage() {
-  const { jobs } = useJobs();
-  const savedJobsOptions = trpc.savedJob.list.queryOptions({ pageSize: 50 });
+  const { jobs, isLoading, isError } = useJobs();
+  const { data: session } = authClient.useSession();
+  const isLoggedIn = !!session;
+  const savedJobsOptions = trpc.savedJob.list.queryOptions(
+    { pageSize: 50 },
+    { enabled: isLoggedIn },
+  );
   const savedJobsQuery = useQuery(savedJobsOptions);
   const toggleSavedJob = useMutation(
     trpc.savedJob.toggle.mutationOptions({
@@ -69,14 +84,14 @@ function JobsPage() {
     }));
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="bg-white py-12 px-4 md:px-8 border-b border-gray-200">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="text-center space-y-3">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-gray-900">
-              Find Your Dream Job
+    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
+      <div className="border-b bg-secondary/30 px-4 py-12 md:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8">
+          <div className="mx-auto flex max-w-3xl flex-col gap-3 text-center">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-5xl">
+              Tìm việc đúng với bạn
             </h1>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
               Khám phá hàng ngàn cơ hội việc làm phù hợp với kỹ năng, vị trí và mức độ kinh nghiệm
               của bạn.
             </p>
@@ -86,8 +101,8 @@ function JobsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 py-8 flex gap-8 flex-col lg:flex-row">
-        <aside className="shrink-0 w-full lg:w-[280px]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 lg:flex-row">
+        <aside className="w-full shrink-0 lg:w-[280px]">
           <JobFilters
             filters={filters}
             setFilters={(newFilters) => {
@@ -101,56 +116,88 @@ function JobsPage() {
           />
         </aside>
 
-        <main className="flex-1 space-y-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-700">
+        <main className="flex flex-1 flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">
               Tìm thấy {filteredJobs.length} công việc
             </h2>
           </div>
 
-          {paginatedJobs.length > 0 ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {isLoading ? (
+            <JobsLoadingState />
+          ) : isError ? (
+            <Card className="border-destructive/30">
+              <CardHeader>
+                <CardTitle>Không tải được danh sách việc</CardTitle>
+                <CardDescription>Vui lòng thử lại sau khi kết nối API ổn định.</CardDescription>
+              </CardHeader>
+            </Card>
+          ) : paginatedJobs.length > 0 ? (
+            <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 {paginatedJobs.map((job) => (
                   <JobCardItem
                     key={job.id}
                     job={job}
-                    onSave={(jobId) => toggleSavedJob.mutate({ jobId })}
+                    onSave={isLoggedIn ? (jobId) => toggleSavedJob.mutate({ jobId }) : undefined}
                   />
                 ))}
               </div>
 
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-4 mt-8">
-                  <button
-                    type="button"
+                <div className="mt-2 flex items-center justify-center gap-4">
+                  <Button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md disabled:opacity-50 hover:bg-gray-50 transition"
+                    variant="outline"
                   >
                     Trang trước
-                  </button>
-                  <span className="text-sm text-gray-600 font-medium">
+                  </Button>
+                  <span className="text-sm font-medium text-muted-foreground">
                     Trang {currentPage} / {totalPages}
                   </span>
-                  <button
-                    type="button"
+                  <Button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md disabled:opacity-50 hover:bg-gray-50 transition"
+                    variant="outline"
                   >
                     Trang sau
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-              <p className="text-gray-500">Không có công việc nào phù hợp với bộ lọc hiện tại.</p>
-            </div>
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Không có công việc nào phù hợp với bộ lọc hiện tại.
+              </CardContent>
+            </Card>
           )}
         </main>
       </div>
+    </div>
+  );
+}
+
+function JobsLoadingState() {
+  return (
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      {[0, 1, 2, 3].map((item) => (
+        <Card key={item}>
+          <CardHeader>
+            <Skeleton className="h-6 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Skeleton className="h-5 w-40" />
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-5 w-16" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

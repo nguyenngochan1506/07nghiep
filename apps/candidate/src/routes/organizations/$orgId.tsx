@@ -54,8 +54,8 @@ function OrganizationDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-4xl mx-auto space-y-6">
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground">
+        <div className="mx-auto flex max-w-4xl flex-col gap-6">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-48 rounded-xl" />
           <Skeleton className="h-64 rounded-xl" />
@@ -66,10 +66,10 @@ function OrganizationDetailPage() {
 
   if (!org) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-        <Building2 className="h-16 w-16 text-gray-300 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Không tìm thấy công ty</h1>
-        <p className="text-gray-500 mb-6">Công ty này không tồn tại hoặc đã bị xóa.</p>
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background p-4 text-foreground">
+        <Building2 className="mb-4 size-16 text-muted-foreground" />
+        <h1 className="mb-2 text-2xl font-bold text-foreground">Không tìm thấy công ty</h1>
+        <p className="mb-6 text-muted-foreground">Công ty này không tồn tại hoặc đã bị xóa.</p>
         <Link to="/organizations">
           <Button variant="outline">Quay lại danh sách</Button>
         </Link>
@@ -87,13 +87,13 @@ function OrganizationDetailPage() {
   const jobs = jobsData?.jobs ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <Link
           to="/organizations"
-          className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="size-4" />
           Quay lại danh sách
         </Link>
 
@@ -105,39 +105,32 @@ function OrganizationDetailPage() {
                 <img
                   src={org.logoUrl}
                   alt={org.name}
-                  className="w-20 h-20 rounded-xl object-cover border border-gray-200 shrink-0"
+                  className="size-20 shrink-0 rounded-xl border object-cover"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <div className="flex size-20 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                   <span className="text-2xl font-bold text-primary">{initials}</span>
                 </div>
               )}
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
-                  {org.verified && (
-                    <Badge
-                      variant="default"
-                      className="bg-green-100 text-green-700 border-green-200"
-                    >
-                      Đã xác thực
-                    </Badge>
-                  )}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold text-foreground">{org.name}</h1>
+                  {org.verified && <Badge variant="secondary">Đã xác thực</Badge>}
                 </div>
 
-                {org.industry && <p className="text-muted-foreground mt-1">{org.industry}</p>}
+                {org.industry && <p className="mt-1 text-muted-foreground">{org.industry}</p>}
 
-                <div className="flex flex-wrap gap-3 mt-4">
+                <div className="mt-4 flex flex-wrap gap-3">
                   {org.location && (
                     <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
+                      <MapPin className="size-4" />
                       {org.location}
                     </span>
                   )}
                   {org.companySize && (
                     <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
+                      <Users className="size-4" />
                       {COMPANY_SIZE_LABELS[org.companySize] ?? org.companySize}
                     </span>
                   )}
@@ -148,14 +141,14 @@ function OrganizationDetailPage() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
                     >
-                      <Globe className="h-4 w-4" />
+                      <Globe className="size-4" />
                       Website
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="size-3" />
                     </a>
                   )}
                   {org.foundedYear && (
                     <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="size-4" />
                       Thành lập {org.foundedYear}
                     </span>
                   )}
@@ -164,9 +157,9 @@ function OrganizationDetailPage() {
             </div>
 
             {org.description && (
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <h3 className="font-semibold text-gray-900 mb-2">Giới thiệu</h3>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+              <div className="mt-6 border-t pt-6">
+                <h3 className="mb-2 font-semibold text-foreground">Giới thiệu</h3>
+                <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
                   {org.description}
                 </p>
               </div>
@@ -176,7 +169,7 @@ function OrganizationDetailPage() {
 
         {/* Open Jobs */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <h2 className="mb-4 text-xl font-semibold text-foreground">
             Việc đang tuyển ({jobs.length})
           </h2>
 
@@ -184,14 +177,14 @@ function OrganizationDetailPage() {
             <div className="space-y-3">
               {jobs.map((job) => (
                 <Link key={job.id} to="/jobs/$jobId" params={{ jobId: job.id }}>
-                  <Card className="transition-shadow hover:shadow-md cursor-pointer">
-                    <CardContent className="p-5 flex items-center justify-between">
+                  <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                    <CardContent className="flex items-center justify-between p-5">
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 truncate">{job.title}</h3>
-                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                        <h3 className="truncate font-semibold text-foreground">{job.title}</h3>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
                           {job.location && (
                             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                              <MapPin className="h-3 w-3" />
+                              <MapPin className="size-3" />
                               {job.location}
                             </span>
                           )}
@@ -206,7 +199,7 @@ function OrganizationDetailPage() {
                             </Badge>
                           )}
                           {(job.salaryMin || job.salaryMax || job.salaryNegotiable) && (
-                            <span className="text-sm font-medium text-primary ml-auto">
+                            <span className="ml-auto text-sm font-medium text-primary">
                               {formatSalary(job)}
                             </span>
                           )}
@@ -218,10 +211,14 @@ function OrganizationDetailPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
-              <h3 className="text-lg font-medium text-gray-600 mb-2">Chưa có việc làm nào</h3>
-              <p className="text-gray-500">Công ty này hiện chưa đăng tin tuyển dụng nào.</p>
-            </div>
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center">
+                <h3 className="mb-2 text-lg font-medium text-foreground">Chưa có việc làm nào</h3>
+                <p className="text-muted-foreground">
+                  Công ty này hiện chưa đăng tin tuyển dụng nào.
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
