@@ -8,6 +8,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, CheckCircle2, ChevronRight, MapPin, Search, Users } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ProvinceMultiSelect } from "@/components/province-multi-select";
 import { trpc } from "@/utils/trpc";
 
 const ITEMS_PER_PAGE = 15;
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/organizations/")({
 
 function OrganizationsPage() {
   const [keyword, setKeyword] = useState("");
+  const [locations, setLocations] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollResultsRef = useRef(false);
@@ -44,6 +46,7 @@ function OrganizationsPage() {
   const { data, isFetching, isLoading } = useQuery(
     trpc.organization.getPublicList.queryOptions({
       keyword: keyword || undefined,
+      locations: locations.length > 0 ? locations : undefined,
       limit: ITEMS_PER_PAGE,
       offset: (currentPage - 1) * ITEMS_PER_PAGE,
     }),
@@ -81,17 +84,30 @@ function OrganizationsPage() {
             </p>
           </div>
 
-          <div className="mx-auto max-w-xl">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="mx-auto grid w-full max-w-3xl gap-2 rounded-xl border bg-card p-2 shadow-md shadow-primary/5 md:grid-cols-[1fr_0.8fr]">
+            <div className="relative flex h-11 w-full items-center">
+              <Search className="absolute left-3 size-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm công ty theo tên..."
-                className="pl-10"
+                className="h-11 border-transparent bg-transparent pl-10 focus-visible:border-ring"
                 value={keyword}
                 onChange={(e) => {
                   setKeyword(e.target.value);
                   setCurrentPage(1);
                 }}
+              />
+            </div>
+
+            <div className="relative flex min-h-11 w-full items-center">
+              <MapPin className="pointer-events-none absolute left-3 z-10 size-4 shrink-0 text-muted-foreground" />
+              <ProvinceMultiSelect
+                value={locations}
+                onValueChange={(nextLocations) => {
+                  setLocations(nextLocations);
+                  setCurrentPage(1);
+                }}
+                placeholder="Tỉnh/thành phố"
+                triggerClassName="min-h-11 border-transparent bg-transparent pl-9 focus-visible:border-ring"
               />
             </div>
           </div>

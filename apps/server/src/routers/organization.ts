@@ -12,6 +12,12 @@ import {
 
 const PUBLIC_ORGANIZATIONS_LIMIT_MAX = 100;
 
+function normalizeLocations(location?: string, locations?: string[]) {
+  return Array.from(
+    new Set([...(locations ?? []), location].filter((item): item is string => !!item?.trim())),
+  );
+}
+
 export const organizationRouter = router({
   getMyOrganization: employerOrAdminProcedure.query(async ({ ctx }) => {
     if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
@@ -82,12 +88,15 @@ export const organizationRouter = router({
       z.object({
         keyword: z.string().optional(),
         industry: z.string().optional(),
+        location: z.string().optional(),
+        locations: z.array(z.string()).optional(),
         limit: z.number().int().min(1).max(PUBLIC_ORGANIZATIONS_LIMIT_MAX).default(20),
         offset: z.number().min(0).default(0),
       }),
     )
     .query(async ({ ctx, input }) => {
       const where: Prisma.OrganizationWhereInput = {};
+      const locations = normalizeLocations(input.location, input.locations);
 
       if (input.keyword) {
         where.name = { contains: input.keyword, mode: "insensitive" };
@@ -95,6 +104,12 @@ export const organizationRouter = router({
 
       if (input.industry) {
         where.industry = { contains: input.industry, mode: "insensitive" };
+      }
+
+      if (locations.length > 0) {
+        where.OR = locations.map((location) => ({
+          location: { contains: location, mode: "insensitive" },
+        }));
       }
 
       const [orgs, total] = await Promise.all([

@@ -18,6 +18,12 @@ function isWorkType(value: string): value is WorkType {
   return WORK_TYPES.includes(value as WorkType);
 }
 
+function normalizeLocations(location?: string, locations?: string[]) {
+  return Array.from(
+    new Set([...(locations ?? []), location].filter((item): item is string => !!item?.trim())),
+  );
+}
+
 export const jobRouter = router({
   // ── Employer: Get my jobs ─────────────────────────────────────────────────
   getMyJobs: employerOrAdminProcedure.input(jobListQuerySchema).query(async ({ ctx, input }) => {
@@ -367,28 +373,41 @@ export const jobRouter = router({
       z.object({
         keyword: z.string().optional(),
         location: z.string().optional(),
+        locations: z.array(z.string()).optional(),
         workType: z.string().optional(),
         limit: z.number().int().min(1).max(PUBLIC_JOBS_LIMIT_MAX).default(20),
         offset: z.number().min(0).default(0),
       }),
     )
     .query(async ({ ctx, input }) => {
-      const where: Prisma.JobWhereInput = { status: "OPEN" };
+      const andConditions: Prisma.JobWhereInput[] = [];
+      const locations = normalizeLocations(input.location, input.locations);
 
       if (input.keyword) {
-        where.OR = [
-          { title: { contains: input.keyword, mode: "insensitive" } },
-          {
-            organization: {
-              name: { contains: input.keyword, mode: "insensitive" },
+        andConditions.push({
+          OR: [
+            { title: { contains: input.keyword, mode: "insensitive" } },
+            {
+              organization: {
+                name: { contains: input.keyword, mode: "insensitive" },
+              },
             },
-          },
-        ];
+          ],
+        });
       }
 
-      if (input.location) {
-        where.location = { contains: input.location, mode: "insensitive" };
+      if (locations.length > 0) {
+        andConditions.push({
+          OR: locations.map((location) => ({
+            location: { contains: location, mode: "insensitive" },
+          })),
+        });
       }
+
+      const where: Prisma.JobWhereInput = {
+        status: "OPEN",
+        ...(andConditions.length > 0 ? { AND: andConditions } : {}),
+      };
 
       if (input.workType && isWorkType(input.workType)) {
         where.workType = input.workType;

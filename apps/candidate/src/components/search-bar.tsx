@@ -2,22 +2,27 @@ import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, X } from "lucide-react";
 import { Button } from "@07nghiep/ui/components/button";
 import { Input } from "@07nghiep/ui/components/input";
-import { ProvinceCombobox } from "@/components/province-combobox";
+import { ProvinceMultiSelect } from "@/components/province-multi-select";
 
 interface SearchBarProps {
-  onSearch: (keyword: string, location: string) => void;
+  onSearch: (keyword: string, locations: string[]) => void;
   initialKeyword?: string;
-  initialLocation?: string;
+  initialLocations?: string[];
 }
 
-export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" }: SearchBarProps) {
+export function SearchBar({
+  onSearch,
+  initialKeyword = "",
+  initialLocations = [],
+}: SearchBarProps) {
   const [keyword, setKeyword] = useState(initialKeyword);
-  const [location, setLocation] = useState(initialLocation);
+  const [locations, setLocations] = useState(initialLocations);
+  const initialLocationsKey = initialLocations.join("|");
 
   useEffect(() => {
     setKeyword(initialKeyword);
-    setLocation(initialLocation);
-  }, [initialKeyword, initialLocation]);
+    setLocations(initialLocations);
+  }, [initialKeyword, initialLocationsKey]);
 
   // Dùng useRef để giữ giá trị timeout ID (phục vụ cho Debounce)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -29,7 +34,7 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
     }
 
     debounceTimeoutRef.current = setTimeout(() => {
-      onSearch(keyword, location);
+      onSearch(keyword, locations);
     }, 300);
 
     return () => {
@@ -37,10 +42,10 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [keyword, location, onSearch]);
+  }, [keyword, locations, onSearch]);
 
   const handleClearKeyword = () => setKeyword("");
-  const handleClearLocation = () => setLocation("");
+  const handleClearLocations = () => setLocations([]);
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-2 rounded-xl border bg-card p-2 shadow-md shadow-primary/5 md:grid-cols-[1fr_0.7fr_auto]">
@@ -67,15 +72,16 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
 
       <div className="relative flex h-11 w-full items-center">
         <MapPin className="pointer-events-none absolute left-3 z-10 size-4 shrink-0 text-muted-foreground" />
-        <ProvinceCombobox
-          value={location}
-          onValueChange={setLocation}
-          inputClassName="h-11 border-transparent bg-transparent pl-9 pr-16 focus-visible:border-ring"
+        <ProvinceMultiSelect
+          value={locations}
+          onValueChange={setLocations}
+          placeholder="Tỉnh/thành phố"
+          triggerClassName="min-h-11 border-transparent bg-transparent pl-9 pr-16 focus-visible:border-ring"
         />
-        {location && (
+        {locations.length > 0 && (
           <button
             type="button"
-            onClick={handleClearLocation}
+            onClick={handleClearLocations}
             className="absolute right-9 z-10 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Xóa địa điểm"
           >
@@ -86,7 +92,7 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
 
       <Button
         className="h-11 w-full bg-brand-orange px-8 text-brand-orange-foreground shadow-sm hover:bg-brand-orange/90 md:w-auto"
-        onClick={() => onSearch(keyword, location)}
+        onClick={() => onSearch(keyword, locations)}
       >
         <Search data-icon="inline-start" />
         Tìm việc

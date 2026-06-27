@@ -13,7 +13,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JobCardItem } from "@/components/job-card";
-import { JobFilters } from "@/components/job-filters";
 import { SearchBar } from "@/components/search-bar";
 import { authClient } from "@/lib/auth-client";
 import { mapJob } from "@/routes/__root";
@@ -35,6 +34,15 @@ export const Route = createFileRoute("/jobs/")({
 const ITEMS_PER_PAGE = 15;
 type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
+function splitLocationSearchParam(location?: string) {
+  if (!location) return [];
+
+  return location
+    .split("|")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function JobsPage() {
   const search = Route.useSearch();
   const { data: session } = authClient.useSession();
@@ -53,18 +61,15 @@ function JobsPage() {
   );
 
   const [keyword, setKeyword] = useState(search.keyword ?? "");
-  const [location, setLocation] = useState(search.location ?? "");
+  const [locations, setLocations] = useState(() => splitLocationSearchParam(search.location));
 
-  const [filters, setFilters] = useState({ location: "", workType: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollResultsRef = useRef(false);
-  const searchLocation = location || filters.location;
   const jobsQuery = useQuery(
     trpc.job.getPublicList.queryOptions({
       keyword: keyword || undefined,
-      location: searchLocation || undefined,
-      workType: filters.workType || undefined,
+      locations: locations.length > 0 ? locations : undefined,
       limit: ITEMS_PER_PAGE,
       offset: (currentPage - 1) * ITEMS_PER_PAGE,
     }),
@@ -72,13 +77,13 @@ function JobsPage() {
 
   useEffect(() => {
     setKeyword(search.keyword ?? "");
-    setLocation(search.location ?? "");
+    setLocations(splitLocationSearchParam(search.location));
     setCurrentPage(1);
   }, [search.keyword, search.location]);
 
-  const handleSearch = useCallback((newKeyword: string, newLocation: string = "") => {
+  const handleSearch = useCallback((newKeyword: string, nextLocations: string[] = []) => {
     setKeyword(newKeyword);
-    setLocation(newLocation);
+    setLocations(nextLocations);
     setCurrentPage(1);
   }, []);
 
@@ -111,7 +116,7 @@ function JobsPage() {
     ...job,
     isSaved: savedIds.has(job.id),
   }));
-  const activeFilterCount = [keyword, searchLocation, filters.workType].filter(Boolean).length;
+  const activeFilterCount = [keyword].filter(Boolean).length + locations.length;
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
@@ -131,26 +136,12 @@ function JobsPage() {
           <SearchBar
             onSearch={handleSearch}
             initialKeyword={search.keyword ?? ""}
-            initialLocation={search.location ?? ""}
+            initialLocations={splitLocationSearchParam(search.location)}
           />
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-[96rem] gap-6 px-4 py-8 lg:grid-cols-[280px_1fr]">
-        <aside className="w-full shrink-0">
-          <JobFilters
-            filters={filters}
-            setFilters={(newFilters) => {
-              if (typeof newFilters === "function") {
-                setFilters(newFilters);
-              } else {
-                setFilters(newFilters);
-              }
-              setCurrentPage(1);
-            }}
-          />
-        </aside>
-
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8">
         <main ref={resultsTopRef} className="flex flex-1 scroll-mt-28 flex-col gap-6">
           <div className="flex flex-col gap-3 rounded-xl border bg-primary p-4 text-primary-foreground shadow-md shadow-primary/10 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">
@@ -228,8 +219,7 @@ function JobsPage() {
                   className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
                   onClick={() => {
                     setKeyword("");
-                    setLocation("");
-                    setFilters({ location: "", workType: "" });
+                    setLocations([]);
                     setCurrentPage(1);
                   }}
                 >
