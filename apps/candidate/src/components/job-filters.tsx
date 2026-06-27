@@ -19,7 +19,7 @@ export function JobFilters({ filters, setFilters }: JobFiltersProps) {
   };
 
   return (
-    <Card className="w-full lg:sticky lg:top-20">
+    <Card className="w-full bg-surface-wash/70 lg:sticky lg:top-20">
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>Bộ lọc</CardTitle>
         {(filters.location || filters.workType) && (
@@ -62,7 +62,11 @@ export function JobFilters({ filters, setFilters }: JobFiltersProps) {
                 }
                 variant={filters.workType === type ? "default" : "outline"}
                 size="sm"
-                className="rounded-full"
+                className={
+                  filters.workType === type
+                    ? "rounded-full bg-primary text-primary-foreground"
+                    : "rounded-full"
+                }
               >
                 {type}
               </Button>

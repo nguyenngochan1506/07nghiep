@@ -42,7 +42,7 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
   const handleClearLocation = () => setLocation("");
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl gap-2 rounded-xl border bg-card p-2 shadow-sm md:grid-cols-[1fr_0.7fr_auto]">
+    <div className="mx-auto grid w-full max-w-5xl gap-2 rounded-xl border bg-card p-2 shadow-md shadow-primary/5 md:grid-cols-[1fr_0.7fr_auto]">
       <div className="relative flex h-11 w-full items-center">
         <Search className="absolute left-3 size-4 shrink-0 text-muted-foreground" />
         <Input
@@ -85,7 +85,10 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
         )}
       </div>
 
-      <Button className="h-11 w-full px-8 md:w-auto" onClick={() => onSearch(keyword, location)}>
+      <Button
+        className="h-11 w-full bg-brand-orange px-8 text-brand-orange-foreground shadow-sm hover:bg-brand-orange/90 md:w-auto"
+        onClick={() => onSearch(keyword, location)}
+      >
         <Search data-icon="inline-start" />
         Tìm việc
       </Button>

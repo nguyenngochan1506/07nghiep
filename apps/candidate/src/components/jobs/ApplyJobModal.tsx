@@ -149,7 +149,11 @@ export default function ApplyJobModal({
 
   return (
     <>
-      <Button disabled={triggerState.disabled} onClick={() => setOpen(true)}>
+      <Button
+        disabled={triggerState.disabled}
+        onClick={() => setOpen(true)}
+        className="w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+      >
         {triggerState.label}
       </Button>
 
@@ -237,7 +241,11 @@ export default function ApplyJobModal({
               >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isPending || uploadResumeMutation.isPending}>
+              <Button
+                type="submit"
+                disabled={isPending || uploadResumeMutation.isPending}
+                className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+              >
                 {isPending || uploadResumeMutation.isPending ? "Đang nộp..." : "Nộp đơn đăng ký"}
               </Button>
             </div>

@@ -302,7 +302,7 @@ function ProfilePage() {
               {hasResume ? (
                 <Button
                   asChild
-                  className="rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                  className="rounded-full bg-brand-orange text-brand-orange-foreground shadow-sm hover:bg-brand-orange/90"
                 >
                   <a href={profile.resumeUrl || "#"} download>
                     <ArrowDownToLine data-icon="inline-start" />
@@ -328,14 +328,14 @@ function ProfilePage() {
                       <Badge
                         key={skill}
                         variant="secondary"
-                        className="rounded-full border border-primary/10 bg-primary/10 px-3 py-1 text-primary"
+                        className="rounded-full border border-brand-orange/20 bg-accent px-3 py-1 text-accent-foreground"
                       >
                         {skill}
                       </Badge>
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-xl border border-dashed border-border/70 bg-secondary/20 px-4 py-3 text-sm text-muted-foreground">
+                  <p className="rounded-xl border border-dashed border-border/70 bg-surface-wash px-4 py-3 text-sm text-muted-foreground">
                     Thông tin chưa được cập nhật
                   </p>
                 )}
@@ -391,7 +391,7 @@ function ProfilePage() {
                   ) : null}
                 </>
               ) : (
-                <p className="rounded-xl border border-dashed border-border/70 bg-secondary/20 px-4 py-3 text-sm text-muted-foreground">
+                <p className="rounded-xl border border-dashed border-border/70 bg-surface-wash px-4 py-3 text-sm text-muted-foreground">
                   Thông tin chưa được cập nhật
                 </p>
               )}
@@ -420,7 +420,7 @@ function ProfilePage() {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-border/70 bg-secondary/20 px-4 py-3 text-sm text-muted-foreground">
+    <div className="rounded-xl border border-dashed border-border/70 bg-surface-wash px-4 py-3 text-sm text-muted-foreground">
       {message}
     </div>
   );
@@ -460,7 +460,7 @@ function TimelineCard({
                 return (
                   <div key={`${title}-${index}`} className="relative">
                     <span className="absolute -left-[1.15rem] top-1.5 size-3 rounded-full border-2 border-background bg-primary" />
-                    <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-secondary/20 p-4">
+                    <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-surface-wash p-4">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <h3 className="text-sm font-semibold text-foreground">

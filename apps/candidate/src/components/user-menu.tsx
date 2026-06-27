@@ -25,7 +25,9 @@ export default function UserMenu() {
   if (!session) {
     return (
       <Link to="/login">
-        <Button variant="outline">Đăng nhập</Button>
+        <Button className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90">
+          Đăng nhập
+        </Button>
       </Link>
     );
   }

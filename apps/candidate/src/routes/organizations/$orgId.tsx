@@ -108,7 +108,7 @@ function OrganizationDetailPage() {
                   className="size-20 shrink-0 rounded-xl border object-cover"
                 />
               ) : (
-                <div className="flex size-20 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <div className="flex size-20 shrink-0 items-center justify-center rounded-xl bg-accent">
                   <span className="text-2xl font-bold text-primary">{initials}</span>
                 </div>
               )}

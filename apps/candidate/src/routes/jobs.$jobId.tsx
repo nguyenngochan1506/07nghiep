@@ -192,7 +192,7 @@ function JobDetailPage() {
         </Link>
 
         <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <Card>
+          <Card className="shadow-md shadow-primary/5">
             <CardHeader className="gap-5 p-6 md:p-8">
               <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
                 <div className="flex items-start gap-4">
@@ -208,7 +208,7 @@ function JobDetailPage() {
                     </div>
                   )}
                   <div className="min-w-0">
-                    <Badge variant="secondary" className="mb-3">
+                    <Badge className="mb-3 bg-accent text-accent-foreground">
                       {job.status || "OPEN"}
                     </Badge>
                     <CardTitle className="text-2xl font-semibold tracking-tight md:text-3xl">
@@ -224,7 +224,11 @@ function JobDetailPage() {
                     onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
                     disabled={!isLoggedIn || toggleSavedJob.isPending}
                     variant={isSaved ? "default" : "outline"}
-                    className="flex-1 md:flex-none"
+                    className={
+                      isSaved
+                        ? "flex-1 bg-primary text-primary-foreground md:flex-none"
+                        : "flex-1 md:flex-none"
+                    }
                   >
                     <Heart data-icon="inline-start" />
                     {isSaved ? "Đã lưu" : "Lưu"}
@@ -236,8 +240,8 @@ function JobDetailPage() {
             <CardContent className="flex flex-col gap-8 px-6 pb-8 md:px-8">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {jobFacts.map((fact) => (
-                  <div key={fact.label} className="rounded-xl border bg-secondary/40 p-4">
-                    <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-card text-primary">
+                  <div key={fact.label} className="rounded-xl border bg-surface-wash p-4">
+                    <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-card text-brand-orange">
                       <fact.icon className="size-4" />
                     </div>
                     <p className="text-xs font-medium uppercase text-muted-foreground">
@@ -272,10 +276,10 @@ function JobDetailPage() {
           </Card>
 
           <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
-            <Card>
+            <Card className="border-primary/15 bg-primary text-primary-foreground shadow-md shadow-primary/10">
               <CardHeader>
                 <CardTitle className="text-base">Ứng tuyển vị trí này</CardTitle>
-                <CardDescription>
+                <CardDescription className="text-primary-foreground/75">
                   Kiểm tra hồ sơ trước khi gửi để nhà tuyển dụng có đủ thông tin đánh giá.
                 </CardDescription>
               </CardHeader>
@@ -284,14 +288,14 @@ function JobDetailPage() {
                   <img
                     src={job.companyLogo}
                     alt={job.companyName}
-                    className="size-12 shrink-0 rounded-xl border object-cover"
+                    className="size-12 shrink-0 rounded-xl border border-primary-foreground/20 object-cover"
                   />
                 ) : (
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border bg-muted">
-                    <Building2 className="size-5 text-muted-foreground" />
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-primary-foreground/20 bg-primary-foreground/10">
+                    <Building2 className="size-5 text-primary-foreground/75" />
                   </div>
                 )}
-                <div className="rounded-xl border bg-secondary/30 p-3 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-primary-foreground/15 bg-primary-foreground/10 p-3 text-sm text-primary-foreground/80">
                   {hasApplied
                     ? `Bạn đã ứng tuyển vị trí này${applicationStatus ? ` (${applicationStatus})` : ""}.`
                     : isLoggedIn
@@ -311,7 +315,10 @@ function JobDetailPage() {
                     applicationStatus={applicationStatus}
                   />
                 ) : (
-                  <Button asChild className="w-full">
+                  <Button
+                    asChild
+                    className="w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+                  >
                     <Link to="/login">Đăng nhập để ứng tuyển</Link>
                   </Button>
                 )}

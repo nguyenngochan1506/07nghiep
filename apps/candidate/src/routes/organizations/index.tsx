@@ -46,7 +46,7 @@ function OrganizationsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <div className="border-b bg-secondary/30 px-4 py-12 md:px-8">
+      <div className="border-b bg-surface-wash px-4 py-12 md:px-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-6">
           <div className="mx-auto flex max-w-3xl flex-col gap-3 text-center">
             <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
@@ -100,7 +100,7 @@ function OrganizationsPage() {
                             className="size-12 shrink-0 rounded-lg border object-cover"
                           />
                         ) : (
-                          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-accent">
                             <span className="text-sm font-bold text-primary">{initials}</span>
                           </div>
                         )}

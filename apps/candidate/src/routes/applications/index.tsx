@@ -118,11 +118,11 @@ function ApplicationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="border-b border-border bg-secondary/20">
+      <section className="border-b border-border bg-surface-wash">
         <div className="container mx-auto max-w-7xl px-4 py-10 md:px-6">
           <div className="flex flex-col gap-4">
             <div className="space-y-2">
-              <p className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+              <p className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
                 <BriefcaseBusiness className="h-4 w-4" />
                 Hồ sơ ứng tuyển
               </p>
@@ -216,7 +216,7 @@ function ApplicationsPage() {
           <div className="flex min-h-96 items-center justify-center">
             <Card className="w-full max-w-xl border-dashed bg-card/70 p-0 text-center">
               <CardContent className="flex flex-col items-center gap-4 px-8 py-16">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-foreground">
                   <BriefcaseBusiness className="h-8 w-8" />
                 </div>
                 <div className="space-y-2">
@@ -254,7 +254,7 @@ function ApplicationsPage() {
             <div className="flex min-h-96 items-center justify-center">
               <Card className="w-full max-w-xl border-dashed bg-card/70 p-0 text-center">
                 <CardContent className="flex flex-col items-center gap-4 px-8 py-16">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-foreground">
                     <SearchX className="h-8 w-8" />
                   </div>
                   <div className="space-y-2">
@@ -282,7 +282,7 @@ function ApplicationsPage() {
             <div className="flex min-h-96 items-center justify-center">
               <Card className="w-full max-w-xl border-dashed bg-card/70 p-0 text-center">
                 <CardContent className="flex flex-col items-center gap-4 px-8 py-16">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-foreground">
                     <BriefcaseBusiness className="h-8 w-8" />
                   </div>
                   <div className="space-y-2">
@@ -293,7 +293,7 @@ function ApplicationsPage() {
                   </div>
                   <Link
                     to="/jobs"
-                    className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    className="inline-flex items-center gap-2 rounded-md bg-brand-orange px-4 py-2 text-sm font-medium text-brand-orange-foreground transition-colors hover:bg-brand-orange/90"
                   >
                     Tìm việc ngay
                     <ArrowRight className="h-4 w-4" />

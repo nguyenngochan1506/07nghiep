@@ -65,29 +65,36 @@ function RouteComponent() {
 
   return (
     <main className="min-h-[100dvh] bg-background text-foreground">
-      <section className="border-b bg-secondary/20 px-4 py-10">
+      <section className="border-b bg-primary px-4 py-10 text-primary-foreground">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="flex max-w-3xl flex-col gap-3">
-            <Badge variant="secondary" className="w-fit">
-              Candidate workspace
+            <Badge className="w-fit bg-brand-orange text-brand-orange-foreground">
+              Today workspace
             </Badge>
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
               Chào {candidateName}, tiếp tục tìm việc hiệu quả hơn.
             </h1>
-            <p className="text-base leading-7 text-muted-foreground">
+            <p className="text-base leading-7 text-primary-foreground/75">
               Theo dõi việc đã lưu, đơn ứng tuyển, tin nhắn và lịch phỏng vấn trong một màn hình gọn
               để không bỏ lỡ bước tiếp theo.
             </p>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-            <Button asChild>
+            <Button
+              asChild
+              className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+            >
               <Link to="/jobs">
                 <Search data-icon="inline-start" />
                 Tìm việc mới
               </Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button
+              asChild
+              variant="outline"
+              className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/15"
+            >
               <Link to="/profile">
                 Cập nhật hồ sơ
                 <ArrowRight data-icon="inline-end" />
@@ -120,7 +127,7 @@ function RouteComponent() {
             />
           </div>
 
-          <Card>
+          <Card className="shadow-md shadow-primary/5">
             <CardHeader>
               <CardTitle className="text-base">Việc nên xem tiếp</CardTitle>
               <CardDescription>
@@ -138,7 +145,7 @@ function RouteComponent() {
                     key={job.id}
                     to="/jobs/$jobId"
                     params={{ jobId: job.id }}
-                    className="grid gap-3 rounded-xl border p-4 transition-colors hover:border-primary/40 md:grid-cols-[1fr_auto] md:items-center"
+                    className="grid gap-3 rounded-xl border bg-surface-wash/60 p-4 transition-all hover:-translate-y-0.5 hover:border-brand-orange/50 hover:shadow-sm md:grid-cols-[1fr_auto] md:items-center"
                   >
                     <div className="min-w-0">
                       <h2 className="truncate text-sm font-semibold">{job.title}</h2>
@@ -148,7 +155,9 @@ function RouteComponent() {
                     </div>
                     <div className="flex flex-wrap gap-2 md:justify-end">
                       <Badge variant="secondary">{job.workType || "Đang cập nhật"}</Badge>
-                      <Badge variant="outline">{job.salaryRange}</Badge>
+                      <Badge variant="outline" className="border-brand-orange/30 text-primary">
+                        {job.salaryRange}
+                      </Badge>
                     </div>
                   </Link>
                 ))
@@ -159,7 +168,10 @@ function RouteComponent() {
               )}
             </CardContent>
             <CardFooter>
-              <Button asChild variant="outline" className="w-full">
+              <Button
+                asChild
+                className="w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+              >
                 <Link to="/jobs">
                   Xem tất cả việc làm
                   <ArrowRight data-icon="inline-end" />
@@ -170,7 +182,7 @@ function RouteComponent() {
         </section>
 
         <aside className="flex flex-col gap-4">
-          <Card>
+          <Card className="bg-surface-wash/70">
             <CardHeader>
               <CardTitle className="text-base">Trạng thái tài khoản</CardTitle>
               <CardDescription>
@@ -186,7 +198,7 @@ function RouteComponent() {
             </CardContent>
           </Card>
 
-          <Card className="bg-primary text-primary-foreground">
+          <Card className="bg-primary text-primary-foreground shadow-md shadow-primary/10">
             <CardHeader>
               <CardTitle className="text-base">Hồ sơ càng rõ, ứng tuyển càng nhanh</CardTitle>
               <CardDescription className="text-primary-foreground/80">
@@ -194,7 +206,10 @@ function RouteComponent() {
               </CardDescription>
             </CardHeader>
             <CardFooter>
-              <Button asChild variant="secondary" className="w-full">
+              <Button
+                asChild
+                className="w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+              >
                 <Link to="/profile/edit">Hoàn thiện hồ sơ</Link>
               </Button>
             </CardFooter>
@@ -217,11 +232,11 @@ function MetricCard({
   href: "/saved-jobs" | "/applications" | "/messages";
 }) {
   return (
-    <Card>
+    <Card className="bg-card shadow-sm shadow-primary/5">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <CardTitle>{label}</CardTitle>
-          <div className="flex size-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
             <Icon className="size-4" />
           </div>
         </div>
@@ -230,7 +245,7 @@ function MetricCard({
         <div className="text-3xl font-semibold tracking-tight">{value}</div>
       </CardContent>
       <CardFooter>
-        <Button asChild variant="ghost" size="sm" className="w-full justify-between">
+        <Button asChild variant="ghost" size="sm" className="w-full justify-between text-primary">
           <Link to={href}>
             Mở
             <ArrowRight data-icon="inline-end" />
@@ -251,8 +266,8 @@ function StatusItem({
   text: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border p-3">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+    <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0">

@@ -106,25 +106,26 @@ function HomeComponent() {
 
   return (
     <main className="min-h-[100dvh] bg-background text-foreground">
-      <section className="px-4 pb-16 pt-10 md:pb-20 md:pt-16">
+      <section className="px-4 pb-14 pt-10 md:pb-18 md:pt-14">
         <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[1.02fr_0.98fr]">
           <div className="flex flex-col gap-7">
-            <div className="flex w-fit items-center gap-2 rounded-full border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+            <div className="flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
               <Sparkles className="size-3.5" />
-              Việc làm đã sẵn sàng để ứng tuyển
+              Career Navy + Momentum Orange
             </div>
 
             <div className="flex max-w-3xl flex-col gap-5">
               <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl md:leading-[1.02]">
-                Tìm việc phù hợp nhanh hơn.
+                Tìm việc rõ hơn, ứng tuyển chắc hơn.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                07nghiep gom việc mới, công ty và trạng thái ứng tuyển vào một nơi dễ kiểm soát.
+                Một workspace để tìm việc, so sánh công ty, lưu cơ hội tốt và theo dõi ứng tuyển
+                trong cùng một luồng.
               </p>
             </div>
 
             <form
-              className="grid gap-3 rounded-2xl border bg-card p-3 shadow-sm md:grid-cols-[1fr_0.7fr_auto]"
+              className="grid gap-3 rounded-2xl border bg-card p-3 shadow-md shadow-primary/5 md:grid-cols-[1fr_0.7fr_auto]"
               onSubmit={handleSearchSubmit}
             >
               <div className="flex flex-col gap-2">
@@ -156,7 +157,11 @@ function HomeComponent() {
               </div>
 
               <div className="flex items-end">
-                <Button type="submit" size="lg" className="h-11 w-full md:w-auto">
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="h-11 w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90 md:w-auto"
+                >
                   <Search data-icon="inline-start" />
                   Tìm việc
                 </Button>
@@ -181,7 +186,7 @@ function HomeComponent() {
 
           <div className="grid gap-4 md:grid-cols-[0.78fr_1fr]">
             <div className="order-2 flex flex-col gap-4 md:order-1 md:pt-20">
-              <Card>
+              <Card className="bg-surface-wash/80">
                 <CardHeader>
                   <CardTitle>{openJobsLabel}</CardTitle>
                   <CardDescription>Cập nhật từ hệ thống tuyển dụng hiện tại.</CardDescription>
@@ -195,7 +200,7 @@ function HomeComponent() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-primary text-primary-foreground">
+              <Card className="bg-primary text-primary-foreground shadow-md shadow-primary/10">
                 <CardHeader>
                   <CardTitle>{companyLabel}</CardTitle>
                   <CardDescription className="text-primary-foreground/80">
@@ -205,7 +210,7 @@ function HomeComponent() {
               </Card>
             </div>
 
-            <div className="order-1 overflow-hidden rounded-2xl border bg-card shadow-sm md:order-2">
+            <div className="order-1 overflow-hidden rounded-2xl border bg-card shadow-lg shadow-primary/10 md:order-2">
               <img
                 src="/images/candidate-home/hero.webp"
                 alt="Ứng viên đang xem cơ hội việc làm trên máy tính"
@@ -277,12 +282,12 @@ function HomeComponent() {
         </div>
       </section>
 
-      <section className="px-4 py-14">
+      <section className="px-4 py-12">
         <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-4 md:grid-rows-2">
-          <Card className="md:col-span-2 md:row-span-2">
+          <Card className="bg-primary text-primary-foreground md:col-span-2 md:row-span-2">
             <CardHeader>
               <CardTitle className="text-2xl md:text-3xl">Một luồng tìm việc gọn hơn</CardTitle>
-              <CardDescription>
+              <CardDescription className="text-primary-foreground/75">
                 Từ lúc tìm tin đến lúc theo dõi phỏng vấn, candidate không phải nhảy qua nhiều nơi.
               </CardDescription>
             </CardHeader>
@@ -290,7 +295,7 @@ function HomeComponent() {
               <img
                 src="/images/candidate-home/career-planning.webp"
                 alt="Ứng viên ghi chú kế hoạch ứng tuyển"
-                className="aspect-[16/10] w-full rounded-xl object-cover"
+                className="aspect-[16/10] w-full rounded-xl border border-primary-foreground/15 object-cover"
                 loading="lazy"
                 width={900}
                 height={620}
@@ -301,10 +306,16 @@ function HomeComponent() {
           {JOURNEY_STEPS.map((item, index) => (
             <Card
               key={item.title}
-              className={index === 1 ? "bg-secondary" : index === 3 ? "bg-accent" : undefined}
+              className={
+                index === 1
+                  ? "bg-surface-wash"
+                  : index === 3
+                    ? "border-brand-orange/30 bg-accent"
+                    : undefined
+              }
             >
               <CardHeader>
-                <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-brand-orange/15 text-primary">
                   <item.icon className="size-5" />
                 </div>
                 <CardTitle>{item.title}</CardTitle>
@@ -316,7 +327,7 @@ function HomeComponent() {
       </section>
 
       <section className="px-4 py-14">
-        <div className="mx-auto grid max-w-7xl gap-8 rounded-2xl border bg-secondary/40 p-5 md:grid-cols-[0.9fr_1.1fr] md:p-8">
+        <div className="mx-auto grid max-w-7xl gap-8 rounded-2xl border bg-surface-wash p-5 shadow-sm md:grid-cols-[0.9fr_1.1fr] md:p-8">
           <div className="overflow-hidden rounded-xl border bg-card">
             <img
               src="/images/candidate-home/company-research.webp"
@@ -375,20 +386,29 @@ function HomeComponent() {
       </section>
 
       <section className="px-4 pb-20 pt-10">
-        <div className="mx-auto grid max-w-7xl gap-6 rounded-2xl border bg-card p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-center md:p-8">
+        <div className="mx-auto grid max-w-7xl gap-6 rounded-2xl border bg-primary p-6 text-primary-foreground shadow-md shadow-primary/10 md:grid-cols-[1fr_auto] md:items-center md:p-8">
           <div className="flex max-w-2xl flex-col gap-3">
             <h2 className="text-3xl font-semibold tracking-tight">
               Bắt đầu với danh sách việc mới
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-primary-foreground/75">
               Tìm theo kỹ năng hoặc mở toàn bộ việc làm để lưu lại những vị trí phù hợp.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
-            <Button asChild size="lg">
+            <Button
+              asChild
+              size="lg"
+              className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+            >
               <Link to="/jobs">Tìm việc</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/15"
+            >
               <Link to="/organizations">Xem công ty</Link>
             </Button>
           </div>
@@ -436,7 +456,7 @@ function FeaturedJobCard({ job, featured = false }: { job: JobType; featured?: b
           </span>
         </div>
 
-        <div className="text-base font-semibold text-primary">{job.salaryRange}</div>
+        <div className="text-base font-semibold text-brand-orange">{job.salaryRange}</div>
 
         <div className="flex flex-wrap gap-2">
           {job.skills.slice(0, featured ? 5 : 3).map((skill) => (
@@ -447,7 +467,15 @@ function FeaturedJobCard({ job, featured = false }: { job: JobType; featured?: b
         </div>
       </CardContent>
       <CardFooter>
-        <Button asChild variant="outline" className="w-full">
+        <Button
+          asChild
+          variant={featured ? "default" : "outline"}
+          className={
+            featured
+              ? "w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+              : "w-full"
+          }
+        >
           <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
             Xem chi tiết
             <ArrowRight data-icon="inline-end" />
@@ -469,7 +497,7 @@ function InsightItem({
 }) {
   return (
     <div className="flex gap-3 rounded-xl border bg-card p-4">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
         <Icon className="size-4" />
       </div>
       <div className="flex flex-col gap-1">

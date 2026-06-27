@@ -71,10 +71,10 @@ function SavedJobsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <section className="border-b border-border bg-secondary/20">
+      <section className="border-b border-border bg-surface-wash">
         <div className="container mx-auto max-w-7xl px-4 py-10 md:px-6">
           <div className="flex flex-col gap-2">
-            <p className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+            <p className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
               <Heart className="size-4" />
               Danh sách quan tâm
             </p>
@@ -148,7 +148,7 @@ function SavedJobsEmptyState({
   return (
     <Card className="mx-auto w-full max-w-3xl border-dashed bg-card/80">
       <CardContent className="flex flex-col items-center gap-6 px-6 py-12 text-center md:px-12 md:py-14">
-        <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="flex size-16 items-center justify-center rounded-full bg-accent text-accent-foreground">
           <Heart className="size-7" />
         </div>
         <div className="flex max-w-xl flex-col gap-2">
@@ -156,7 +156,10 @@ function SavedJobsEmptyState({
           <p className="text-sm leading-6 text-muted-foreground md:text-base">{description}</p>
         </div>
         <div className="flex flex-col items-center gap-3 sm:flex-row">
-          <Button asChild>
+          <Button
+            asChild
+            className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+          >
             <Link to={actionTo}>
               {actionLabel}
               <ArrowRight data-icon="inline-end" />

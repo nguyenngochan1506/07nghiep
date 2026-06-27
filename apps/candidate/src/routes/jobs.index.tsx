@@ -105,12 +105,10 @@ function JobsPage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
-      <div className="border-b bg-secondary/20 px-4 py-10 md:px-8">
+      <div className="border-b bg-surface-wash px-4 py-10 md:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-7">
           <div className="flex max-w-3xl flex-col gap-3">
-            <Badge variant="secondary" className="w-fit">
-              Candidate search
-            </Badge>
+            <Badge className="w-fit bg-accent text-accent-foreground">Job discovery</Badge>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
               Tìm việc đúng với bạn
             </h1>
@@ -144,19 +142,19 @@ function JobsPage() {
         </aside>
 
         <main className="flex flex-1 flex-col gap-6">
-          <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-xl border bg-primary p-4 text-primary-foreground shadow-md shadow-primary/10 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold text-foreground">
-                Tìm thấy {filteredJobs.length} công việc
-              </h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg font-semibold">Tìm thấy {filteredJobs.length} công việc</h2>
+              <p className="text-sm text-primary-foreground/75">
                 {isLoading
                   ? "Đang cập nhật danh sách mới nhất."
                   : "Sắp xếp theo dữ liệu tuyển dụng mới nhất trong hệ thống."}
               </p>
             </div>
             {activeFilterCount > 0 ? (
-              <Badge variant="secondary">{activeFilterCount} bộ lọc đang dùng</Badge>
+              <Badge className="bg-brand-orange text-brand-orange-foreground">
+                {activeFilterCount} bộ lọc đang dùng
+              </Badge>
             ) : null}
           </div>
 
@@ -206,7 +204,7 @@ function JobsPage() {
           ) : (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-                <div className="flex size-14 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                <div className="flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground">
                   0
                 </div>
                 <div className="flex max-w-md flex-col gap-2">
@@ -217,7 +215,7 @@ function JobsPage() {
                 </div>
                 <Button
                   type="button"
-                  variant="outline"
+                  className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
                   onClick={() => {
                     setKeyword("");
                     setLocation("");

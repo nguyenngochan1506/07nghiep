@@ -39,7 +39,7 @@ const STATUS_META: Record<
   },
   VIEWED: {
     label: "Đã xem",
-    className: "bg-primary/10 text-primary border-primary/20",
+    className: "bg-brand-cyan/10 text-primary border-brand-cyan/30",
   },
   SHORTLISTED: {
     label: "Vào shortlist",
