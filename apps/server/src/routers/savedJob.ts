@@ -3,6 +3,9 @@ import { z } from "zod";
 import { candidateProcedure, router } from "../lib/api";
 
 const jobIdSchema = z.object({ jobId: z.string().min(1) });
+const syncLocalSchema = z.object({
+  jobIds: z.array(z.string().min(1)).max(200),
+});
 
 function getSessionUserId(ctx: { session: { user: { id: string } } | null }): string {
   if (!ctx.session) {
@@ -51,6 +54,52 @@ export const savedJobRouter = router({
     });
 
     return { saved: true };
+  }),
+
+  syncLocal: candidateProcedure.input(syncLocalSchema).mutation(async ({ ctx, input }) => {
+    const userId = getSessionUserId(ctx);
+    const requestedJobIds = Array.from(
+      new Set(input.jobIds.map((id) => id.trim()).filter(Boolean)),
+    );
+
+    if (requestedJobIds.length === 0) {
+      return { syncedJobIds: [], skippedJobIds: [] };
+    }
+
+    const openJobs = await ctx.prisma.job.findMany({
+      where: {
+        id: { in: requestedJobIds },
+        status: "OPEN",
+      },
+      select: { id: true },
+    });
+    const openJobIds = openJobs.map((job) => job.id);
+
+    if (openJobIds.length === 0) {
+      return { syncedJobIds: [], skippedJobIds: requestedJobIds };
+    }
+
+    const existingSavedJobs = await ctx.prisma.savedJob.findMany({
+      where: {
+        userId,
+        jobId: { in: openJobIds },
+      },
+      select: { jobId: true },
+    });
+    const existingSavedIds = new Set(existingSavedJobs.map((item) => item.jobId));
+    const missingJobIds = openJobIds.filter((jobId) => !existingSavedIds.has(jobId));
+
+    if (missingJobIds.length > 0) {
+      await ctx.prisma.savedJob.createMany({
+        data: missingJobIds.map((jobId) => ({ userId, jobId })),
+        skipDuplicates: true,
+      });
+    }
+
+    return {
+      syncedJobIds: missingJobIds,
+      skippedJobIds: requestedJobIds.filter((jobId) => !openJobIds.includes(jobId)),
+    };
   }),
 
   isSaved: candidateProcedure.input(jobIdSchema).query(async ({ ctx, input }) => {

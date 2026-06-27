@@ -16,6 +16,7 @@ import { JobCardItem } from "@/components/job-card";
 import { PageHero } from "@/components/page-hero";
 import { SearchBar } from "@/components/search-bar";
 import { authClient } from "@/lib/auth-client";
+import { useLocalSavedJobs } from "@/lib/saved-jobs";
 import { mapJob } from "@/routes/__root";
 import { queryClient, trpc } from "@/utils/trpc";
 
@@ -65,6 +66,7 @@ function JobsPage() {
     { enabled: isLoggedIn },
   );
   const savedJobsQuery = useQuery(savedJobsOptions);
+  const localSavedJobs = useLocalSavedJobs();
   const toggleSavedJob = useMutation(
     trpc.savedJob.toggle.mutationOptions({
       onSuccess: () => {
@@ -146,10 +148,11 @@ function JobsPage() {
     shouldScrollResultsRef.current = false;
     resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [jobsQuery.isFetching]);
-  const savedIds = useMemo(
+  const dbSavedIds = useMemo(
     () => new Set((savedJobsQuery.data?.jobs ?? []).map((job) => job.id)),
     [savedJobsQuery.data?.jobs],
   );
+  const savedIds = isLoggedIn ? dbSavedIds : localSavedJobs.savedIds;
   const paginatedJobs: JobCardItemProps["job"][] = jobs.map((job) => ({
     ...job,
     isSaved: savedIds.has(job.id),
@@ -208,7 +211,15 @@ function JobsPage() {
                   <JobCardItem
                     key={job.id}
                     job={job}
-                    onSave={isLoggedIn ? (jobId) => toggleSavedJob.mutate({ jobId }) : undefined}
+                    onSave={(jobId) => {
+                      if (isLoggedIn) {
+                        toggleSavedJob.mutate({ jobId });
+                        return;
+                      }
+
+                      const targetJob = paginatedJobs.find((item) => item.id === jobId);
+                      if (targetJob) localSavedJobs.toggleSavedJob(targetJob);
+                    }}
                   />
                 ))}
               </div>

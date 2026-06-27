@@ -5,10 +5,12 @@ function createCtx() {
   const prisma = {
     job: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     savedJob: {
       findUnique: vi.fn(),
       create: vi.fn(),
+      createMany: vi.fn(),
       delete: vi.fn(),
       findMany: vi.fn(),
       count: vi.fn(),
@@ -59,5 +61,36 @@ describe("savedJobRouter", () => {
 
     expect(result).toEqual({ saved: false });
     expect(prisma.savedJob.delete).toHaveBeenCalledWith({ where: { id: "saved-1" } });
+  });
+
+  it("syncs only open local saved jobs that are missing in the database", async () => {
+    const { ctx, prisma } = createCtx();
+    prisma.job.findMany.mockResolvedValue([{ id: "job-1" }, { id: "job-2" }]);
+    prisma.savedJob.findMany.mockResolvedValue([{ jobId: "job-1" }]);
+    prisma.savedJob.createMany.mockResolvedValue({ count: 1 });
+
+    const result = await savedJobRouter
+      .createCaller(ctx)
+      .syncLocal({ jobIds: ["job-1", "job-2", "job-2", "closed-job"] });
+
+    expect(prisma.job.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["job-1", "job-2", "closed-job"] },
+        status: "OPEN",
+      },
+      select: { id: true },
+    });
+    expect(prisma.savedJob.findMany).toHaveBeenCalledWith({
+      where: {
+        userId: "candidate-1",
+        jobId: { in: ["job-1", "job-2"] },
+      },
+      select: { jobId: true },
+    });
+    expect(prisma.savedJob.createMany).toHaveBeenCalledWith({
+      data: [{ userId: "candidate-1", jobId: "job-2" }],
+      skipDuplicates: true,
+    });
+    expect(result).toEqual({ syncedJobIds: ["job-2"], skippedJobIds: ["closed-job"] });
   });
 });

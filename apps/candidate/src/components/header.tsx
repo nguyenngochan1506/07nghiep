@@ -35,10 +35,10 @@ export default function Header() {
     { to: "/home", label: "Trang chủ" },
     { to: "/jobs/", label: "Việc làm" },
     { to: "/organizations", label: "Công ty" },
+    { to: "/saved-jobs", label: "Đã lưu" },
   ];
 
   const protectedLinks: NavLink[] = [
-    { to: "/saved-jobs", label: "Đã lưu" },
     { to: "/applications", label: "Đơn ứng tuyển" },
     { to: "/messages", label: "Tin nhắn", hasMessageBadge: true },
     { to: "/interviews", label: "Lịch PV" },

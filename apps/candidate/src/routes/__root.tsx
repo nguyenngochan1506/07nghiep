@@ -4,6 +4,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, HeadContent, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Header from "@/components/header";
+import { authClient } from "@/lib/auth-client";
+import { useSyncLocalSavedJobs } from "@/lib/saved-jobs";
 import { NotFoundComponent } from "@/components/not-found";
 import { ThemeProvider } from "@/components/theme-provider";
 import { formatSalaryRangeVnd } from "@/lib/salary";
@@ -131,6 +133,7 @@ function RootComponent() {
         storageKey="vite-ui-theme"
       >
         <div className="grid min-h-svh grid-rows-[auto_1fr] bg-background text-foreground">
+          <SavedJobsSyncGate />
           <Header />
           <JobsContext.Provider value={{ jobs, isLoading, isError }}>
             <Outlet />
@@ -142,4 +145,12 @@ function RootComponent() {
       <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
     </>
   );
+}
+
+function SavedJobsSyncGate() {
+  const { data: session } = authClient.useSession();
+
+  useSyncLocalSavedJobs(Boolean(session?.user?.id));
+
+  return null;
 }

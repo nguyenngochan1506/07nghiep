@@ -6,6 +6,7 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
 import { RichTextBlock } from "@/lib/rich-text";
 import { formatSalaryRangeVnd } from "@/lib/salary";
+import { useLocalSavedJobs, type LocalSavedJob } from "@/lib/saved-jobs";
 import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -146,6 +147,7 @@ function JobDetailPage() {
   const { jobs } = useJobs();
   const { data: session } = authClient.useSession();
   const isLoggedIn = !!session;
+  const localSavedJobs = useLocalSavedJobs();
 
   const contextJob = jobs.find((j) => j.id === jobId);
 
@@ -171,6 +173,26 @@ function JobDetailPage() {
 
   const job: JobDetailView | null =
     (apiJob ? mapJob(apiJob as unknown as PublicJobDetail) : null) ?? contextJobView;
+  const localSavedJob = useMemo<LocalSavedJob | null>(() => {
+    if (!job) return null;
+
+    return {
+      id: job.id,
+      title: job.title,
+      companyName: job.companyName,
+      companyLogo: job.companyLogo,
+      isVerified: contextJob?.isVerified ?? false,
+      location: job.location,
+      workType: job.workType,
+      jobType: job.jobType,
+      salaryRange: job.salaryRange,
+      skills: job.skills,
+      postedDate:
+        contextJob?.postedDate ?? (job.publishedAt ? formatDate(job.publishedAt) : "Hôm nay"),
+      expiresAt: job.expiresAt,
+      isSaved: true,
+    };
+  }, [contextJob?.isVerified, contextJob?.postedDate, job]);
 
   const hasAppliedQuery = useQuery(
     trpc.applications.list.queryOptions({ search: undefined }, { enabled: isLoggedIn }),
@@ -234,7 +256,9 @@ function JobDetailPage() {
     );
   }
 
-  const isSaved = savedJobQuery.data?.saved ?? false;
+  const isSaved = isLoggedIn
+    ? (savedJobQuery.data?.saved ?? false)
+    : localSavedJobs.savedIds.has(job.id);
 
   const jobFacts = [
     { label: "Mức lương", value: job.salaryRange, icon: DollarSign },
@@ -290,8 +314,15 @@ function JobDetailPage() {
                 <div className="flex w-full items-center gap-3 md:w-auto">
                   <Button
                     type="button"
-                    onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
-                    disabled={!isLoggedIn || toggleSavedJob.isPending}
+                    onClick={() => {
+                      if (isLoggedIn) {
+                        toggleSavedJob.mutate({ jobId: job.id });
+                        return;
+                      }
+
+                      if (localSavedJob) localSavedJobs.toggleSavedJob(localSavedJob);
+                    }}
+                    disabled={isLoggedIn && toggleSavedJob.isPending}
                     variant={isSaved ? "default" : "outline"}
                     className={
                       isSaved
@@ -414,7 +445,7 @@ function JobDetailPage() {
                     ? `Bạn đã ứng tuyển vị trí này${applicationStatus ? ` (${applicationStatus})` : ""}.`
                     : isLoggedIn
                       ? "Bạn có thể gửi hồ sơ ngay khi CV và tóm tắt cá nhân đã sẵn sàng."
-                      : "Đăng nhập để lưu việc và gửi hồ sơ ứng tuyển."}
+                      : "Bạn có thể lưu việc để quay lại sau; đăng nhập khi sẵn sàng ứng tuyển."}
                 </div>
               </CardContent>
               <CardFooter className="bg-card">

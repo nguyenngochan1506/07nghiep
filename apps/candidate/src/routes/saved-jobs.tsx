@@ -7,6 +7,7 @@ import { ArrowRight, Heart, Search } from "lucide-react";
 import { JobCardItem } from "@/components/job-card";
 import { PageHero } from "@/components/page-hero";
 import { formatSalaryRangeVnd } from "@/lib/salary";
+import { useLocalSavedJobs } from "@/lib/saved-jobs";
 import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@07nghiep/ui/components/button";
@@ -55,6 +56,7 @@ function mapSavedJob(raw: SavedJob): JobCardItemProps["job"] {
 function SavedJobsPage() {
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const isLoggedIn = Boolean(session?.user?.id);
+  const localSavedJobs = useLocalSavedJobs();
   const savedJobsOptions = trpc.savedJob.list.queryOptions(
     { page: 1, pageSize: 20 },
     { enabled: isLoggedIn },
@@ -67,7 +69,9 @@ function SavedJobsPage() {
       },
     }),
   );
-  const savedJobs = (savedJobsQuery.data?.jobs ?? []).map(mapSavedJob);
+  const savedJobs = isLoggedIn
+    ? (savedJobsQuery.data?.jobs ?? []).map(mapSavedJob)
+    : localSavedJobs.savedJobs;
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -86,13 +90,6 @@ function SavedJobsPage() {
       <main className="container mx-auto max-w-7xl px-4 py-8 md:px-6">
         {sessionPending ? (
           <SavedJobsSkeleton />
-        ) : !isLoggedIn ? (
-          <SavedJobsEmptyState
-            title="Đăng nhập để xem việc đã lưu"
-            description="Danh sách việc làm đã lưu được gắn với tài khoản ứng viên của bạn."
-            actionLabel="Đăng nhập"
-            actionTo="/login"
-          />
         ) : savedJobsQuery.isLoading ? (
           <SavedJobsSkeleton />
         ) : savedJobs.length > 0 ? (
@@ -101,14 +98,26 @@ function SavedJobsPage() {
               <JobCardItem
                 key={job.id}
                 job={job}
-                onSave={(jobId) => toggleSavedJob.mutate({ jobId })}
+                onSave={(jobId) => {
+                  if (isLoggedIn) {
+                    toggleSavedJob.mutate({ jobId });
+                    return;
+                  }
+
+                  const targetJob = savedJobs.find((item) => item.id === jobId);
+                  if (targetJob) localSavedJobs.toggleSavedJob(targetJob);
+                }}
               />
             ))}
           </div>
         ) : (
           <SavedJobsEmptyState
             title="Chưa có công việc nào được lưu"
-            description="Khi thấy một vị trí đáng cân nhắc, nhấn biểu tượng trái tim để giữ lại tại đây."
+            description={
+              isLoggedIn
+                ? "Khi thấy một vị trí đáng cân nhắc, nhấn biểu tượng trái tim để giữ lại tại đây."
+                : "Bạn có thể lưu việc trên thiết bị này trước, sau đó đăng nhập để đồng bộ vào tài khoản."
+            }
             actionLabel="Khám phá việc làm"
             actionTo="/jobs"
           />
