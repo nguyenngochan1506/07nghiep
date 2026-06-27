@@ -6,6 +6,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Header from "@/components/header";
 import { NotFoundComponent } from "@/components/not-found";
 import { ThemeProvider } from "@/components/theme-provider";
+import { formatSalaryRangeVnd } from "@/lib/salary";
 import { trpc } from "@/utils/trpc";
 
 import "../index.css";
@@ -54,10 +55,7 @@ type PublicJob = RouterOutputs["job"]["getPublicList"]["jobs"][number];
 const PUBLIC_JOBS_PREVIEW_LIMIT = 15;
 
 export function mapJob(raw: PublicJob): JobType {
-  const salaryRange =
-    raw.salaryMin && raw.salaryMax
-      ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
-      : "Thỏa thuận";
+  const salaryRange = formatSalaryRangeVnd(raw.salaryMin, raw.salaryMax);
 
   const postedAt = new Date(raw.createdAt);
   const now = new Date();

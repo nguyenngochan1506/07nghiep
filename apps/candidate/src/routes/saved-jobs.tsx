@@ -5,6 +5,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type React from "react";
 import { ArrowRight, Heart, Search } from "lucide-react";
 import { JobCardItem } from "@/components/job-card";
+import { formatSalaryRangeVnd } from "@/lib/salary";
 import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@07nghiep/ui/components/button";
@@ -20,10 +21,7 @@ type SavedJob = RouterOutputs["savedJob"]["list"]["jobs"][number];
 type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
 function mapSavedJob(raw: SavedJob): JobCardItemProps["job"] {
-  const salaryRange =
-    raw.salaryMin && raw.salaryMax
-      ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
-      : "Thỏa thuận";
+  const salaryRange = formatSalaryRangeVnd(raw.salaryMin, raw.salaryMax);
 
   const postedAt = new Date(raw.createdAt);
   const diffDays = Math.floor((Date.now() - postedAt.getTime()) / (1000 * 60 * 60 * 24));

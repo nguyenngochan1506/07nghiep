@@ -30,7 +30,7 @@ export const mockJobs: Job[] = [
     workType: "Hybrid",
     jobType: "Full-time",
     experience: "Senior",
-    salaryRange: "$2,000 - $3,500", // <-- Cập nhật data
+    salaryRange: "20 - 35 triệu VND",
     skills: ["React", "TypeScript", "Tailwind CSS"],
     postedDate: "2 giờ trước", // <-- Cập nhật data
     viewCount: 150,
@@ -45,7 +45,7 @@ export const mockJobs: Job[] = [
     workType: "Remote",
     jobType: "Contract",
     experience: "Mid",
-    salaryRange: "$1,500 - $2,500",
+    salaryRange: "15 - 25 triệu VND",
     skills: ["Node.js", "Hono", "PostgreSQL", "Prisma"],
     postedDate: "3 ngày trước",
     viewCount: 89,
@@ -60,7 +60,7 @@ export const mockJobs: Job[] = [
     workType: "Onsite",
     jobType: "Full-time",
     experience: "Junior",
-    salaryRange: "$800 - $1,200",
+    salaryRange: "8 - 12 triệu VND",
     skills: ["Figma", "UI/UX", "Prototyping"],
     postedDate: "10 ngày trước",
     viewCount: 320,

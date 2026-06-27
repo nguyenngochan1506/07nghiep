@@ -8,6 +8,7 @@ import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent } from "@07nghiep/ui/components/card";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { formatSalaryRangeVnd } from "@/lib/salary";
 
 const COMPANY_SIZE_LABELS: Record<string, string> = {
   STARTUP: "Startup (1-10)",
@@ -21,13 +22,7 @@ type RouterOutputs = inferRouterOutputs<AppRouter>;
 type OrganizationJob = RouterOutputs["organization"]["getJobs"]["jobs"][number];
 
 function formatSalary(raw: OrganizationJob): string {
-  if (raw.salaryNegotiable) return "Thỏa thuận";
-  const min = raw.salaryMin ? Number(raw.salaryMin).toLocaleString() : null;
-  const max = raw.salaryMax ? Number(raw.salaryMax).toLocaleString() : null;
-  if (min && max) return `$${min} - $${max}`;
-  if (min) return `Từ $${min}`;
-  if (max) return `Đến $${max}`;
-  return "Thỏa thuận";
+  return formatSalaryRangeVnd(raw.salaryMin, raw.salaryMax, raw.salaryNegotiable);
 }
 
 export const Route = createFileRoute("/organizations/$orgId")({

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
+import { formatSalaryRangeVnd } from "@/lib/salary";
 import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -61,10 +62,7 @@ type PublicJobDetail = {
 };
 
 function mapJob(raw: PublicJobDetail): JobDetailView {
-  const salaryRange =
-    raw.salaryMin && raw.salaryMax
-      ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
-      : "Thỏa thuận";
+  const salaryRange = formatSalaryRangeVnd(raw.salaryMin, raw.salaryMax);
 
   return {
     id: raw.id,
