@@ -1,20 +1,19 @@
-import { NotFoundComponent } from "@/components/not-found";
 import { Toaster } from "@07nghiep/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-
 import Header from "@/components/header";
+import { NotFoundComponent } from "@/components/not-found";
 import { ThemeProvider } from "@/components/theme-provider";
 import { trpc } from "@/utils/trpc";
 
 import "../index.css";
 
-import { createContext, useContext, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import type { AppRouter } from "@07nghiep/server/routers/index";
+import { useQuery } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
+import { createContext, useContext, useMemo } from "react";
 
 export type JobType = {
   id: string;
@@ -52,8 +51,9 @@ export interface RouterAppContext {
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 type PublicJob = RouterOutputs["job"]["getPublicList"]["jobs"][number];
+const PUBLIC_JOBS_PREVIEW_LIMIT = 15;
 
-function mapJob(raw: PublicJob): JobType {
+export function mapJob(raw: PublicJob): JobType {
   const salaryRange =
     raw.salaryMin && raw.salaryMax
       ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
@@ -112,7 +112,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
-  const { data, isLoading, isError } = useQuery(trpc.job.getPublicList.queryOptions({ limit: 50 }));
+  const { data, isLoading, isError } = useQuery(
+    trpc.job.getPublicList.queryOptions({ limit: PUBLIC_JOBS_PREVIEW_LIMIT }),
+  );
 
   const jobs: JobType[] = useMemo(() => {
     if (!data?.jobs) return [];

@@ -1,14 +1,13 @@
 import { Bell } from "lucide-react";
-
-import { Button } from "./button";
 import { cn } from "../lib/utils";
+import { Badge } from "./badge";
+import { Button, buttonVariants } from "./button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-import { Badge } from "./badge";
 
 export type NotificationType =
   | "APPLICATION_RECEIVED"
@@ -59,7 +58,7 @@ export function NotificationBell({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button type="button" variant="ghost" size="icon" className="relative" />}
+        className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}
       >
         <Bell />
         {unreadCount > 0 && (

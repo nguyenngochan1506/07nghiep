@@ -1,13 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type React from "react";
-import { JobCardItem } from "@/components/job-card";
-import { SearchBar } from "@/components/search-bar";
-import { JobFilters } from "@/components/job-filters";
-import { authClient } from "@/lib/auth-client";
-import { useJobs } from "@/routes/__root";
-import { queryClient, trpc } from "@/utils/trpc";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 import {
@@ -18,6 +8,16 @@ import {
   CardTitle,
 } from "@07nghiep/ui/components/card";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { JobCardItem } from "@/components/job-card";
+import { JobFilters } from "@/components/job-filters";
+import { SearchBar } from "@/components/search-bar";
+import { authClient } from "@/lib/auth-client";
+import { mapJob } from "@/routes/__root";
+import { queryClient, trpc } from "@/utils/trpc";
 
 export const Route = createFileRoute("/jobs/")({
   validateSearch: (
@@ -32,12 +32,11 @@ export const Route = createFileRoute("/jobs/")({
   component: JobsPage,
 });
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 15;
 type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
 function JobsPage() {
   const search = Route.useSearch();
-  const { jobs, isLoading, isError } = useJobs();
   const { data: session } = authClient.useSession();
   const isLoggedIn = !!session;
   const savedJobsOptions = trpc.savedJob.list.queryOptions(
@@ -58,6 +57,18 @@ function JobsPage() {
 
   const [filters, setFilters] = useState({ location: "", workType: "" });
   const [currentPage, setCurrentPage] = useState(1);
+  const resultsTopRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollResultsRef = useRef(false);
+  const searchLocation = location || filters.location;
+  const jobsQuery = useQuery(
+    trpc.job.getPublicList.queryOptions({
+      keyword: keyword || undefined,
+      location: searchLocation || undefined,
+      workType: filters.workType || undefined,
+      limit: ITEMS_PER_PAGE,
+      offset: (currentPage - 1) * ITEMS_PER_PAGE,
+    }),
+  );
 
   useEffect(() => {
     setKeyword(search.keyword ?? "");
@@ -71,37 +82,36 @@ function JobsPage() {
     setCurrentPage(1);
   }, []);
 
-  const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
-      const matchKeyword =
-        keyword === "" ||
-        job.title.toLowerCase().includes(keyword.toLowerCase()) ||
-        job.companyName.toLowerCase().includes(keyword.toLowerCase());
+  const jobs = useMemo(
+    () => jobsQuery.data?.jobs.map((job) => mapJob(job)) ?? [],
+    [jobsQuery.data],
+  );
+  const totalJobs = jobsQuery.data?.total ?? 0;
+  const totalPages = Math.ceil(totalJobs / ITEMS_PER_PAGE);
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      const safePage = Math.min(Math.max(1, nextPage), Math.max(1, totalPages));
+      shouldScrollResultsRef.current = true;
+      setCurrentPage(safePage);
+    },
+    [totalPages],
+  );
 
-      const searchLocation = location || filters.location;
-      const matchLocation =
-        searchLocation === "" || job.location.toLowerCase().includes(searchLocation.toLowerCase());
+  useEffect(() => {
+    if (!shouldScrollResultsRef.current || jobsQuery.isFetching) return;
 
-      const matchWorkType = filters.workType === "" || job.workType === filters.workType;
-      return matchKeyword && matchLocation && matchWorkType;
-    });
-  }, [keyword, location, filters, jobs]);
-
-  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    shouldScrollResultsRef.current = false;
+    resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [jobsQuery.isFetching]);
   const savedIds = useMemo(
     () => new Set((savedJobsQuery.data?.jobs ?? []).map((job) => job.id)),
     [savedJobsQuery.data?.jobs],
   );
-  const paginatedJobs: JobCardItemProps["job"][] = filteredJobs
-    .slice(startIndex, startIndex + ITEMS_PER_PAGE)
-    .map((job) => ({
-      ...job,
-      isSaved: savedIds.has(job.id),
-    }));
-  const activeFilterCount = [keyword, location || filters.location, filters.workType].filter(
-    Boolean,
-  ).length;
+  const paginatedJobs: JobCardItemProps["job"][] = jobs.map((job) => ({
+    ...job,
+    isSaved: savedIds.has(job.id),
+  }));
+  const activeFilterCount = [keyword, searchLocation, filters.workType].filter(Boolean).length;
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
@@ -126,7 +136,7 @@ function JobsPage() {
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[280px_1fr]">
+      <div className="mx-auto grid w-full max-w-[96rem] gap-6 px-4 py-8 lg:grid-cols-[280px_1fr]">
         <aside className="w-full shrink-0">
           <JobFilters
             filters={filters}
@@ -141,14 +151,14 @@ function JobsPage() {
           />
         </aside>
 
-        <main className="flex flex-1 flex-col gap-6">
+        <main ref={resultsTopRef} className="flex flex-1 scroll-mt-28 flex-col gap-6">
           <div className="flex flex-col gap-3 rounded-xl border bg-primary p-4 text-primary-foreground shadow-md shadow-primary/10 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">Tìm thấy {filteredJobs.length} công việc</h2>
+              <h2 className="text-lg font-semibold">Tìm thấy {totalJobs} công việc</h2>
               <p className="text-sm text-primary-foreground/75">
-                {isLoading
+                {jobsQuery.isLoading
                   ? "Đang cập nhật danh sách mới nhất."
-                  : "Sắp xếp theo dữ liệu tuyển dụng mới nhất trong hệ thống."}
+                  : `Hiển thị ${paginatedJobs.length} việc trong trang ${currentPage}.`}
               </p>
             </div>
             {activeFilterCount > 0 ? (
@@ -158,9 +168,9 @@ function JobsPage() {
             ) : null}
           </div>
 
-          {isLoading ? (
+          {jobsQuery.isLoading ? (
             <JobsLoadingState />
-          ) : isError ? (
+          ) : jobsQuery.isError ? (
             <Card className="border-destructive/30">
               <CardHeader>
                 <CardTitle>Không tải được danh sách việc</CardTitle>
@@ -169,7 +179,7 @@ function JobsPage() {
             </Card>
           ) : paginatedJobs.length > 0 ? (
             <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
                 {paginatedJobs.map((job) => (
                   <JobCardItem
                     key={job.id}
@@ -182,7 +192,7 @@ function JobsPage() {
               {totalPages > 1 && (
                 <div className="mt-2 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     variant="outline"
                   >
@@ -192,7 +202,7 @@ function JobsPage() {
                     Trang {currentPage} / {totalPages}
                   </span>
                   <Button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     variant="outline"
                   >
@@ -220,6 +230,7 @@ function JobsPage() {
                     setKeyword("");
                     setLocation("");
                     setFilters({ location: "", workType: "" });
+                    setCurrentPage(1);
                   }}
                 >
                   Xóa điều kiện tìm kiếm

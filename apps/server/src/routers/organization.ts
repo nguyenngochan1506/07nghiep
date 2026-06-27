@@ -10,6 +10,8 @@ import {
   router,
 } from "../lib/api";
 
+const PUBLIC_ORGANIZATIONS_LIMIT_MAX = 100;
+
 export const organizationRouter = router({
   getMyOrganization: employerOrAdminProcedure.query(async ({ ctx }) => {
     if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
@@ -80,7 +82,7 @@ export const organizationRouter = router({
       z.object({
         keyword: z.string().optional(),
         industry: z.string().optional(),
-        limit: z.number().min(1).max(50).default(20),
+        limit: z.number().int().min(1).max(PUBLIC_ORGANIZATIONS_LIMIT_MAX).default(20),
         offset: z.number().min(0).default(0),
       }),
     )

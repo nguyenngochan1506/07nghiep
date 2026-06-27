@@ -12,6 +12,7 @@ import {
 } from "../lib/api";
 
 const WORK_TYPES = Object.values(WorkType);
+const PUBLIC_JOBS_LIMIT_MAX = 100;
 
 function isWorkType(value: string): value is WorkType {
   return WORK_TYPES.includes(value as WorkType);
@@ -367,7 +368,7 @@ export const jobRouter = router({
         keyword: z.string().optional(),
         location: z.string().optional(),
         workType: z.string().optional(),
-        limit: z.number().min(1).max(50).default(20),
+        limit: z.number().int().min(1).max(PUBLIC_JOBS_LIMIT_MAX).default(20),
         offset: z.number().min(0).default(0),
       }),
     )
