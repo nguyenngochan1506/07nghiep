@@ -13,8 +13,10 @@ import {
 } from "@07nghiep/ui/components/dialog";
 import { trpc } from "../../utils/trpc";
 import { JobModerationActions } from "./job-moderation-actions";
-import type { RouterOutputs } from "@07nghiep/server/routers/index";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 
+type RouterOutputs = inferRouterOutputs<AppRouter>;
 type JobForReview = RouterOutputs["admin"]["moderation"]["getJobForReview"];
 
 interface JobReviewPanelProps {
