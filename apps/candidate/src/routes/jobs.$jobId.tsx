@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
+import { ReportSubmitButton } from "@/components/jobs/report-submit-button";
 import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -325,6 +326,15 @@ function JobDetailPage() {
               </CardFooter>
             </Card>
           </aside>
+
+          {isLoggedIn && job?.status === "PUBLISHED" && (
+            <div className="mt-4">
+              <ReportSubmitButton
+                contentType="JOB"
+                contentId={job.id}
+              />
+            </div>
+          )}
         </section>
       </div>
     </div>

@@ -24,6 +24,7 @@ export interface NotificationItem {
   body: string;
   read: boolean;
   createdAt: string;
+  data?: unknown;
 }
 
 interface NotificationBellProps {
@@ -31,6 +32,7 @@ interface NotificationBellProps {
   notifications: NotificationItem[];
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
+  onNotificationClick?: (notification: NotificationItem) => void;
 }
 
 function getRelativeTime(dateString: string) {
@@ -54,6 +56,7 @@ export function NotificationBell({
   notifications,
   onMarkAsRead,
   onMarkAllAsRead,
+  onNotificationClick,
 }: NotificationBellProps) {
   return (
     <DropdownMenu>
@@ -99,7 +102,10 @@ export function NotificationBell({
                   "flex cursor-pointer flex-col gap-1 border-b px-4 py-3 text-left transition-colors last:border-0 hover:bg-muted/50",
                   !n.read && "bg-primary/5",
                 )}
-                onClick={() => !n.read && onMarkAsRead(n.id)}
+                onClick={() => {
+                  if (!n.read) onMarkAsRead(n.id);
+                  onNotificationClick?.(n);
+                }}
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-sm font-medium leading-tight">{n.title}</span>

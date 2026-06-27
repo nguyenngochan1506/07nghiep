@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { adminProcedure, router } from "../../lib/api";
+import { OrganizationVerificationStatus } from "@07nghiep/db";
 
 const verificationStatusSchema = z.enum(["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"]);
 
@@ -16,7 +17,7 @@ export const adminOrganizationRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const skip = (input.page - 1) * input.pageSize;
-      const where = input.status ? { verificationStatus: input.status } : {};
+      const where = input.status ? { verificationStatus: input.status as OrganizationVerificationStatus } : undefined;
 
       const [organizations, total] = await Promise.all([
         ctx.prisma.organization.findMany({
@@ -39,7 +40,7 @@ export const adminOrganizationRouter = router({
             },
           },
         }),
-        ctx.prisma.organization.count({ where }),
+        ctx.prisma.organization.count({ where: where ?? {} }),
       ]);
 
       return {
@@ -72,7 +73,7 @@ export const adminOrganizationRouter = router({
         where: { id: input.id },
         data: {
           verified: true,
-          verificationStatus: "VERIFIED",
+          verificationStatus: OrganizationVerificationStatus.VERIFIED,
           verificationNote: null,
         },
       });
@@ -94,7 +95,7 @@ export const adminOrganizationRouter = router({
         where: { id: input.id },
         data: {
           verified: false,
-          verificationStatus: "REJECTED",
+          verificationStatus: OrganizationVerificationStatus.REJECTED,
           verificationNote: input.note,
         },
       });

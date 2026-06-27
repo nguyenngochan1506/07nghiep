@@ -36,7 +36,7 @@ function NotificationsPage() {
   const { data, isLoading } = useQuery(
     trpc.notification.list.queryOptions({ limit: 50 }, { enabled: isLoggedIn }),
   );
-  const notifications = data?.items || [];
+  const notifications: any[] = (data as any)?.items || []; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const markAsRead = useMutation(
     trpc.notification.markAsRead.mutationOptions({

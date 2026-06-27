@@ -1,4 +1,5 @@
 import type { Prisma } from "@07nghiep/db";
+import { OrganizationVerificationStatus } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -214,7 +215,7 @@ export const organizationRouter = router({
       where: { userId: ctx.user.id },
       data: {
         verified: false,
-        verificationStatus: "PENDING",
+        verificationStatus: OrganizationVerificationStatus.PENDING,
         verificationNote: null,
       },
     });

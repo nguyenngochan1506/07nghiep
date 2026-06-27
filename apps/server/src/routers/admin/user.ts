@@ -260,7 +260,7 @@ export const adminUserRouter = router({
 
     // fetch role change history
     const roleChangesRaw = await ctx.prisma.notification.findMany({
-      where: { userId: id, type: "SYSTEM", title: "Thay đổi vai trò" },
+      where: { userId: id, type: "SYSTEM", title: "ROLE_CHANGE" },
       orderBy: { createdAt: "desc" },
       take: 50,
     });

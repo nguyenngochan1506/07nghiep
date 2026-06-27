@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
-import type { ComponentProps } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { NotificationBell } from "@07nghiep/ui/components/notification-bell";
+import type { NotificationItem } from "@07nghiep/ui/components/notification-bell";
 import { trpc } from "../utils/trpc";
 import { env } from "@07nghiep/env/employer";
 
-type NotificationBellNotifications = ComponentProps<typeof NotificationBell>["notifications"];
 
 function createSSEConnection(
   url: string,
@@ -53,15 +53,16 @@ function createSSEConnection(
 
 export function NotificationBellContainer() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const abortRef = useRef<AbortController | null>(null);
 
   const { data: unreadCount = 0 } = useQuery(trpc.notification.getUnreadCount.queryOptions());
   const { data: notificationsData } = useQuery(trpc.notification.list.queryOptions({ limit: 10 }));
-  const notifications: NotificationBellNotifications =
-    notificationsData?.items.map((notification) => ({
-      ...notification,
-      createdAt: notification.createdAt,
-    })) || [];
+  // biome-ignore lint/suspicious/noExplicitAny: tRPC type instantiation is excessively deep
+  const notifications: NotificationItem[] = ((notificationsData as any)?.items ?? []).map((n: any) => ({
+    ...n,
+    createdAt: String(n.createdAt),
+  }));
 
   const markAsRead = useMutation(
     trpc.notification.markAsRead.mutationOptions({
@@ -101,12 +102,43 @@ export function NotificationBellContainer() {
     };
   }, [queryClient]);
 
+  const handleNotificationClick = (notification: NotificationItem) => {
+    console.log("Notification clicked:", notification);
+    console.log("Notification data:", notification.data);
+    console.log("Notification data type:", typeof notification.data);
+    
+    // Parse notification data
+    // Prisma Json field might be returned as object or string
+    // biome-ignore lint/suspicious/noExplicitAny: Data is dynamic JSON
+    let data: any;
+    if (typeof notification.data === "string") {
+      try {
+        data = JSON.parse(notification.data);
+      } catch {
+        data = {};
+      }
+    } else {
+      data = notification.data || {};
+    }
+    
+    console.log("Parsed data:", data);
+    
+    if (data?.jobId) {
+      console.log("Navigating to job:", data.jobId);
+      // Navigate to job edit page
+      navigate({ to: `/my-jobs/$jobId/edit`, params: { jobId: data.jobId } });
+    } else {
+      console.log("No jobId found in notification data");
+    }
+  };
+
   return (
     <NotificationBell
       unreadCount={unreadCount}
       notifications={notifications}
       onMarkAsRead={(id) => markAsRead.mutate({ id })}
       onMarkAllAsRead={() => markAllAsRead.mutate()}
+      onNotificationClick={handleNotificationClick}
     />
   );
 }

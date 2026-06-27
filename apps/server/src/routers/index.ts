@@ -7,6 +7,7 @@ import { applicationsRouter } from "./applications";
 import { adminJobRouter } from "./admin/job";
 import { adminOrganizationRouter } from "./admin/organization";
 import { adminUserRouter } from "./admin/user";
+import { moderationRouter, reportRouter } from "./admin/moderation";
 import { organizationRouter } from "./organization";
 import { notificationRouter } from "./notification";
 import { profileRouter } from "./profile";
@@ -34,9 +35,11 @@ export const appRouter = router({
   applications: applicationsRouter,
   admin: router({
     users: adminUserRouter,
+    moderation: moderationRouter,
     organizations: adminOrganizationRouter,
     jobs: adminJobRouter,
   }),
+  report: reportRouter,
   interview: interviewRouter,
   conversation: conversationRouter,
   message: messageRouter,

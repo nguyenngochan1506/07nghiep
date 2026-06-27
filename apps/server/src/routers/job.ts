@@ -156,7 +156,7 @@ export const jobRouter = router({
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
         where: { userId: ctx.user?.id },
-        select: { id: true },
+        select: { id: true, name: true },
       });
 
       if (!org) {
@@ -167,14 +167,15 @@ export const jobRouter = router({
       }
 
       const { skills, salaryMin, salaryMax, status, ...rest } = input;
-      const nextStatus = status === "DRAFT" ? "DRAFT" : "PENDING_APPROVAL";
+      const needsModeration = status === "OPEN" || status === "PENDING_APPROVAL";
+      const finalStatus = needsModeration ? "PENDING_APPROVAL" : status;
 
       const job = await ctx.prisma.job.create({
         data: {
           ...rest,
+          status: finalStatus,
           salaryMin: salaryMin !== undefined ? salaryMin : null,
           salaryMax: salaryMax !== undefined ? salaryMax : null,
-          status: nextStatus,
           organizationId: org.id,
           publishedAt: null,
           skills: {
@@ -183,6 +184,27 @@ export const jobRouter = router({
         },
         include: { skills: true },
       });
+
+      if (needsModeration) {
+        const admins = await ctx.prisma.user.findMany({
+          where: { role: "ADMIN" },
+          select: { id: true },
+        });
+
+        await Promise.all(
+          admins.map((admin) =>
+            ctx.prisma.notification.create({
+              data: {
+                userId: admin.id,
+                type: "SYSTEM",
+                title: "Tin tuyển dụng mới cần kiểm duyệt",
+                body: `Tin tuyển dụng "${job.title}" từ ${org.name} cần được kiểm duyệt.`,
+                data: { jobId: job.id, organizationId: org.id },
+              },
+            })
+          )
+        );
+      }
 
       return job;
     }),
@@ -235,8 +257,9 @@ export const jobRouter = router({
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
         where: { userId: ctx.user?.id },
-        select: { id: true },
+        select: { id: true, name: true },
       });
+
       if (!org) throw new TRPCError({ code: "NOT_FOUND", message: "Tổ chức không tồn tại" });
 
       const job = await ctx.prisma.job.findFirst({
@@ -252,10 +275,31 @@ export const jobRouter = router({
         });
       }
 
-      return ctx.prisma.job.update({
+      const updatedJob = await ctx.prisma.job.update({
         where: { id: input.id },
         data: { status: "PENDING_APPROVAL", publishedAt: null },
       });
+
+      const admins = await ctx.prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+
+      await Promise.all(
+        admins.map((admin) =>
+          ctx.prisma.notification.create({
+            data: {
+              userId: admin.id,
+              type: "SYSTEM",
+              title: "Tin tuyển dụng mới cần kiểm duyệt",
+              body: `Tin tuyển dụng "${job.title}" từ ${org.name} đã được gửi lại để kiểm duyệt.`,
+              data: { jobId: input.id, organizationId: org.id },
+            },
+          })
+        )
+      );
+
+      return updatedJob;
     }),
 
   // ── Employer: Close job ───────────────────────────────────────────────────
@@ -460,5 +504,45 @@ export const jobRouter = router({
         ...job,
         skills: job.skills.map((s) => s.skill),
       };
+    }),
+
+  // ── Employer: Get moderation feedback for a job ──────────────────────────
+  getModerationFeedback: employerOrAdminProcedure
+    .input(z.object({ jobId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const org = await ctx.prisma.organization.findUnique({
+        where: { userId: ctx.user?.id },
+        select: { id: true },
+      });
+
+      if (!org) {
+        return null;
+      }
+
+      // Verify job belongs to this employer
+      const job = await ctx.prisma.job.findFirst({
+        where: { id: input.jobId, organizationId: org.id },
+      });
+
+      if (!job) {
+        return null;
+      }
+
+      // Get latest moderation history for this job
+      const history = await ctx.prisma.moderationHistory.findFirst({
+        where: { jobId: input.jobId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          moderator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      return history;
     }),
 });
