@@ -10,6 +10,8 @@ import {
   Settings,
   Shield,
   Activity,
+  CreditCard,
+  ReceiptText,
 } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
@@ -20,10 +22,12 @@ const adminNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Users, label: "Người dùng", href: "/admin/users" },
   { icon: Building2, label: "Duyệt công ty", href: "/admin/organizations" },
+  { icon: Shield, label: "Yêu cầu doanh nghiệp", href: "/admin/business-applications" },
   { icon: Briefcase, label: "Duyệt việc làm", href: "/admin/jobs" },
+  { icon: CreditCard, label: "Gói thanh toán", href: "/admin/billing" },
+  { icon: ReceiptText, label: "Giao dịch", href: "/admin/billing/payments" },
   { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
   { icon: BarChart3, label: "Báo cáo", href: "/" },
-  { icon: Shield, label: "Bảo mật", href: "/" },
   { icon: Settings, label: "Cài đặt", href: "/" },
 ];
 

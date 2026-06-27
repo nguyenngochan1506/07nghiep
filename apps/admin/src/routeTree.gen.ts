@@ -16,7 +16,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminOrganizationsIndexRouteImport } from './routes/admin/organizations/index'
 import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
+import { Route as AdminBusinessApplicationsIndexRouteImport } from './routes/admin/business-applications/index'
+import { Route as AdminBillingIndexRouteImport } from './routes/admin/billing/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AdminBillingPaymentsRouteImport } from './routes/admin/billing/payments'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -53,9 +56,25 @@ const AdminJobsIndexRoute = AdminJobsIndexRouteImport.update({
   path: '/jobs/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBusinessApplicationsIndexRoute =
+  AdminBusinessApplicationsIndexRouteImport.update({
+    id: '/business-applications/',
+    path: '/business-applications/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminBillingIndexRoute = AdminBillingIndexRouteImport.update({
+  id: '/billing/',
+  path: '/billing/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBillingPaymentsRoute = AdminBillingPaymentsRouteImport.update({
+  id: '/billing/payments',
+  path: '/billing/payments',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -64,7 +83,10 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/billing/': typeof AdminBillingIndexRoute
+  '/admin/business-applications/': typeof AdminBusinessApplicationsIndexRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
   '/admin/organizations/': typeof AdminOrganizationsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
@@ -74,7 +96,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/billing': typeof AdminBillingIndexRoute
+  '/admin/business-applications': typeof AdminBusinessApplicationsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
   '/admin/organizations': typeof AdminOrganizationsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
@@ -85,7 +110,10 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/admin/billing/': typeof AdminBillingIndexRoute
+  '/admin/business-applications/': typeof AdminBusinessApplicationsIndexRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
   '/admin/organizations/': typeof AdminOrganizationsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
@@ -97,7 +125,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/login'
+    | '/admin/billing/payments'
     | '/admin/users/$userId'
+    | '/admin/billing/'
+    | '/admin/business-applications/'
     | '/admin/jobs/'
     | '/admin/organizations/'
     | '/admin/users/'
@@ -107,7 +138,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/login'
+    | '/admin/billing/payments'
     | '/admin/users/$userId'
+    | '/admin/billing'
+    | '/admin/business-applications'
     | '/admin/jobs'
     | '/admin/organizations'
     | '/admin/users'
@@ -117,7 +151,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/login'
+    | '/admin/billing/payments'
     | '/admin/users/$userId'
+    | '/admin/billing/'
+    | '/admin/business-applications/'
     | '/admin/jobs/'
     | '/admin/organizations/'
     | '/admin/users/'
@@ -181,6 +218,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminJobsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/business-applications/': {
+      id: '/admin/business-applications/'
+      path: '/business-applications'
+      fullPath: '/admin/business-applications/'
+      preLoaderRoute: typeof AdminBusinessApplicationsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/billing/': {
+      id: '/admin/billing/'
+      path: '/billing'
+      fullPath: '/admin/billing/'
+      preLoaderRoute: typeof AdminBillingIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users/$userId': {
       id: '/admin/users/$userId'
       path: '/users/$userId'
@@ -188,18 +239,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/billing/payments': {
+      id: '/admin/billing/payments'
+      path: '/billing/payments'
+      fullPath: '/admin/billing/payments'
+      preLoaderRoute: typeof AdminBillingPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminBillingPaymentsRoute: typeof AdminBillingPaymentsRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
+  AdminBillingIndexRoute: typeof AdminBillingIndexRoute
+  AdminBusinessApplicationsIndexRoute: typeof AdminBusinessApplicationsIndexRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
   AdminOrganizationsIndexRoute: typeof AdminOrganizationsIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBillingPaymentsRoute: AdminBillingPaymentsRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
+  AdminBillingIndexRoute: AdminBillingIndexRoute,
+  AdminBusinessApplicationsIndexRoute: AdminBusinessApplicationsIndexRoute,
   AdminJobsIndexRoute: AdminJobsIndexRoute,
   AdminOrganizationsIndexRoute: AdminOrganizationsIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
