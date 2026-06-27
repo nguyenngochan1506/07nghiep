@@ -10,7 +10,7 @@ export const Route = createFileRoute("/login")({
     const session = await authClient.getSession();
     if (session.data) {
       redirect({
-        to: "/home",
+        to: getLoginRedirectTarget(),
         throw: true,
       });
     }
@@ -20,10 +20,19 @@ export const Route = createFileRoute("/login")({
 
 function RouteComponent() {
   const [showSignIn, setShowSignIn] = useState(true);
+  const redirectTo = getLoginRedirectTarget();
 
   return showSignIn ? (
-    <SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
+    <SignInForm redirectTo={redirectTo} onSwitchToSignUp={() => setShowSignIn(false)} />
   ) : (
     <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
   );
+}
+
+function getLoginRedirectTarget(): "/home" | "/business-application" | "/billing" {
+  if (typeof window === "undefined") return "/home";
+
+  const redirectTo = new URLSearchParams(window.location.search).get("redirect");
+  if (redirectTo === "/billing") return "/billing";
+  return redirectTo === "/business-application" ? "/business-application" : "/home";
 }

@@ -68,6 +68,13 @@ export default function UserMenu() {
             Chỉnh sửa hồ sơ
           </DropdownMenuItem>
           <DropdownMenuItem
+            onClick={() => {
+              navigate({ to: "/billing" });
+            }}
+          >
+            Candidate Plus
+          </DropdownMenuItem>
+          <DropdownMenuItem
             variant="destructive"
             onClick={() => {
               authClient.signOut({

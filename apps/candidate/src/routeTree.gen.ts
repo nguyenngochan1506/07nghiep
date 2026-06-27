@@ -16,6 +16,8 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as InterviewsRouteImport } from './routes/interviews'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BusinessApplicationRouteImport } from './routes/business-application'
+import { Route as BillingRouteImport } from './routes/billing'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile/index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations/index'
@@ -26,6 +28,7 @@ import { Route as ProfileEditRouteImport } from './routes/profile/edit'
 import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$orgId'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages.$conversationId'
 import { Route as JobsJobIdRouteImport } from './routes/jobs.$jobId'
+import { Route as BillingReturnRouteImport } from './routes/billing.return'
 import { Route as ApplicationsApplicationIdRouteImport } from './routes/applications.$applicationId'
 
 const SavedJobsRoute = SavedJobsRouteImport.update({
@@ -61,6 +64,16 @@ const HomeRoute = HomeRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessApplicationRoute = BusinessApplicationRouteImport.update({
+  id: '/business-application',
+  path: '/business-application',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingRoute = BillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -113,6 +126,11 @@ const JobsJobIdRoute = JobsJobIdRouteImport.update({
   path: '/jobs/$jobId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BillingReturnRoute = BillingReturnRouteImport.update({
+  id: '/return',
+  path: '/return',
+  getParentRoute: () => BillingRoute,
+} as any)
 const ApplicationsApplicationIdRoute =
   ApplicationsApplicationIdRouteImport.update({
     id: '/applications/$applicationId',
@@ -122,6 +140,8 @@ const ApplicationsApplicationIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/billing': typeof BillingRouteWithChildren
+  '/business-application': typeof BusinessApplicationRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
@@ -130,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
+  '/billing/return': typeof BillingReturnRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRoute
@@ -142,6 +163,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/billing': typeof BillingRouteWithChildren
+  '/business-application': typeof BusinessApplicationRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
@@ -150,6 +173,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
+  '/billing/return': typeof BillingReturnRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRoute
@@ -163,6 +187,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/billing': typeof BillingRouteWithChildren
+  '/business-application': typeof BusinessApplicationRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
@@ -171,6 +197,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/saved-jobs': typeof SavedJobsRoute
   '/applications/$applicationId': typeof ApplicationsApplicationIdRoute
+  '/billing/return': typeof BillingReturnRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRoute
@@ -185,6 +212,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/billing'
+    | '/business-application'
     | '/dashboard'
     | '/home'
     | '/interviews'
@@ -193,6 +222,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
+    | '/billing/return'
     | '/jobs/$jobId'
     | '/messages/$conversationId'
     | '/organizations/$orgId'
@@ -205,6 +235,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/billing'
+    | '/business-application'
     | '/dashboard'
     | '/home'
     | '/interviews'
@@ -213,6 +245,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
+    | '/billing/return'
     | '/jobs/$jobId'
     | '/messages/$conversationId'
     | '/organizations/$orgId'
@@ -225,6 +258,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/billing'
+    | '/business-application'
     | '/dashboard'
     | '/home'
     | '/interviews'
@@ -233,6 +268,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/saved-jobs'
     | '/applications/$applicationId'
+    | '/billing/return'
     | '/jobs/$jobId'
     | '/messages/$conversationId'
     | '/organizations/$orgId'
@@ -246,6 +282,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BillingRoute: typeof BillingRouteWithChildren
+  BusinessApplicationRoute: typeof BusinessApplicationRoute
   DashboardRoute: typeof DashboardRoute
   HomeRoute: typeof HomeRoute
   InterviewsRoute: typeof InterviewsRoute
@@ -313,6 +351,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business-application': {
+      id: '/business-application'
+      path: '/business-application'
+      fullPath: '/business-application'
+      preLoaderRoute: typeof BusinessApplicationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing': {
+      id: '/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof BillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -385,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobsJobIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/billing/return': {
+      id: '/billing/return'
+      path: '/return'
+      fullPath: '/billing/return'
+      preLoaderRoute: typeof BillingReturnRouteImport
+      parentRoute: typeof BillingRoute
+    }
     '/applications/$applicationId': {
       id: '/applications/$applicationId'
       path: '/applications/$applicationId'
@@ -394,6 +453,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface BillingRouteChildren {
+  BillingReturnRoute: typeof BillingReturnRoute
+}
+
+const BillingRouteChildren: BillingRouteChildren = {
+  BillingReturnRoute: BillingReturnRoute,
+}
+
+const BillingRouteWithChildren =
+  BillingRoute._addFileChildren(BillingRouteChildren)
 
 interface MessagesRouteChildren {
   MessagesConversationIdRoute: typeof MessagesConversationIdRoute
@@ -409,6 +479,8 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BillingRoute: BillingRouteWithChildren,
+  BusinessApplicationRoute: BusinessApplicationRoute,
   DashboardRoute: DashboardRoute,
   HomeRoute: HomeRoute,
   InterviewsRoute: InterviewsRoute,

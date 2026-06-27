@@ -11,7 +11,13 @@ import { authClient } from "@/lib/auth-client";
 
 import Loader from "./loader";
 
-export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
+export default function SignInForm({
+  redirectTo = "/home",
+  onSwitchToSignUp,
+}: {
+  redirectTo?: "/home" | "/business-application" | "/billing";
+  onSwitchToSignUp: () => void;
+}) {
   const navigate = useNavigate({
     from: "/",
   });
@@ -31,7 +37,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
         {
           onSuccess: () => {
             navigate({
-              to: "/home",
+              to: redirectTo,
             });
             toast.success("Đăng nhập thành công");
           },

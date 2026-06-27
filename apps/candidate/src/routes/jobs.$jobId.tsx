@@ -53,6 +53,7 @@ type JobDetailView = {
   expiresAt: string | null;
   sourceSite: string;
   status: string;
+  applicationsCount: number;
 };
 
 type PublicJobDetail = {
@@ -76,6 +77,7 @@ type PublicJobDetail = {
   expiresAt: string | null;
   sourceSite: string | null;
   status: string;
+  applicationsCount: number;
   organization: {
     name: string | null;
     logoUrl: string | null;
@@ -106,6 +108,7 @@ function mapJob(raw: PublicJobDetail): JobDetailView {
     expiresAt: raw.expiresAt ?? null,
     sourceSite: raw.sourceSite ?? "",
     status: raw.status,
+    applicationsCount: raw.applicationsCount ?? 0,
   };
 }
 
@@ -169,6 +172,7 @@ function JobDetailPage() {
         expiresAt: null,
         sourceSite: "",
         status: "OPEN",
+        applicationsCount: 0,
       }
     : null;
 
@@ -203,6 +207,9 @@ function JobDetailPage() {
   );
   const savedJobOptions = trpc.savedJob.isSaved.queryOptions({ jobId }, { enabled: isLoggedIn });
   const savedJobQuery = useQuery(savedJobOptions);
+  const billingQuery = useQuery(
+    trpc.billing.me.queryOptions(undefined, { enabled: isLoggedIn }),
+  );
   const toggleSavedJob = useMutation(
     trpc.savedJob.toggle.mutationOptions({
       onSuccess: () => {
@@ -260,6 +267,7 @@ function JobDetailPage() {
   const isSaved = isLoggedIn
     ? (savedJobQuery.data?.saved ?? false)
     : localSavedJobs.savedIds.has(job.id);
+  const canSeeApplicantCount = billingQuery.data?.entitlements.candidatePlus ?? false;
 
   const jobFacts = [
     { label: "Mức lương", value: job.salaryRange, icon: DollarSign },
@@ -447,6 +455,14 @@ function JobDetailPage() {
                     : isLoggedIn
                       ? "Bạn có thể gửi hồ sơ ngay khi CV và tóm tắt cá nhân đã sẵn sàng."
                       : "Bạn có thể lưu việc để quay lại sau; đăng nhập khi sẵn sàng ứng tuyển."}
+                </div>
+                <div className="rounded-xl border bg-surface-wash p-3 text-sm">
+                  <p className="font-medium text-foreground">Số lượng ứng viên</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {canSeeApplicantCount
+                      ? `${job.applicationsCount.toLocaleString("vi-VN")} người đã apply`
+                      : "Nâng cấp Plus để xem số lượng ứng viên"}
+                  </p>
                 </div>
               </CardContent>
               <CardFooter className="bg-card">

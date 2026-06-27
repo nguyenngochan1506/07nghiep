@@ -36,6 +36,7 @@ export default function Header() {
     { to: "/jobs/", label: "Việc làm" },
     { to: "/organizations", label: "Công ty" },
     { to: "/saved-jobs", label: "Đã lưu" },
+    ...(!isLoggedIn ? [{ to: "/billing", label: "Plus" }] : []),
   ];
 
   const protectedLinks: NavLink[] = [
