@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer";
 import { env } from "@07nghiep/env/server";
+import { Resend } from "resend";
 
 export interface EmailOptions {
   to: string;
@@ -7,46 +7,29 @@ export interface EmailOptions {
   html: string;
 }
 
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter() {
-  if (!transporter) {
-    if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
-      transporter = nodemailer.createTransport({
-        host: env.SMTP_HOST,
-        port: env.SMTP_PORT ?? 587,
-        secure: env.SMTP_PORT === 465,
-        auth: {
-          user: env.SMTP_USER,
-          pass: env.SMTP_PASS,
-        },
-      });
-    } else {
-      // Fallback: just log emails in development
-      return null;
-    }
-  }
-  return transporter;
-}
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    const mailTransporter = getTransporter();
-
-    if (!mailTransporter) {
-      console.log("[Email] SMTP not configured, logging email instead:");
+    if (!resend) {
+      console.log("[Email] RESEND_API_KEY not configured, logging email instead:");
       console.log(`  To: ${options.to}`);
       console.log(`  Subject: ${options.subject}`);
       console.log(`  Body preview: ${options.html.substring(0, 200)}...`);
       return true;
     }
 
-    await mailTransporter.sendMail({
-      from: env.SMTP_FROM ?? "noreply@app.com",
+    const { error } = await resend.emails.send({
+      from: env.RESEND_FROM ?? "onboarding@resend.dev",
       to: options.to,
       subject: options.subject,
       html: options.html,
     });
+
+    if (error) {
+      console.error("[Email] Resend error:", error);
+      return false;
+    }
 
     console.log(`[Email] Sent to ${options.to}: ${options.subject}`);
     return true;

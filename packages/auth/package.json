@@ -16,12 +16,11 @@
     "@trpc/server": "catalog:",
     "better-auth": "^1.6.5",
     "dotenv": "catalog:",
-    "nodemailer": "catalog:",
+    "resend": "^6.12.3",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@07nghiep/config": "workspace:*",
-    "@types/nodemailer": "catalog:",
     "typescript": "^5"
   }
 }
