@@ -24,6 +24,16 @@ function normalizeLocations(location?: string, locations?: string[]) {
   );
 }
 
+function normalizeIndustries(industry?: string, industries?: string[]) {
+  return Array.from(
+    new Set([...(industries ?? []), industry].filter((item): item is string => !!item?.trim())),
+  );
+}
+
+function isUsableIndustry(industry: string | null) {
+  return !!industry?.trim() && /\p{L}/u.test(industry);
+}
+
 export const jobRouter = router({
   // ── Employer: Get my jobs ─────────────────────────────────────────────────
   getMyJobs: employerOrAdminProcedure.input(jobListQuerySchema).query(async ({ ctx, input }) => {
@@ -374,6 +384,8 @@ export const jobRouter = router({
         keyword: z.string().optional(),
         location: z.string().optional(),
         locations: z.array(z.string()).optional(),
+        industry: z.string().optional(),
+        industries: z.array(z.string()).optional(),
         workType: z.string().optional(),
         limit: z.number().int().min(1).max(PUBLIC_JOBS_LIMIT_MAX).default(20),
         offset: z.number().min(0).default(0),
@@ -382,6 +394,7 @@ export const jobRouter = router({
     .query(async ({ ctx, input }) => {
       const andConditions: Prisma.JobWhereInput[] = [];
       const locations = normalizeLocations(input.location, input.locations);
+      const industries = normalizeIndustries(input.industry, input.industries);
 
       if (input.keyword) {
         andConditions.push({
@@ -400,6 +413,21 @@ export const jobRouter = router({
         andConditions.push({
           OR: locations.map((location) => ({
             location: { contains: location, mode: "insensitive" },
+          })),
+        });
+      }
+
+      if (industries.length > 0) {
+        andConditions.push({
+          OR: industries.map((industry) => ({
+            OR: [
+              { industry: { contains: industry, mode: "insensitive" } },
+              {
+                organization: {
+                  industry: { contains: industry, mode: "insensitive" },
+                },
+              },
+            ],
           })),
         });
       }
@@ -442,6 +470,35 @@ export const jobRouter = router({
         total,
       };
     }),
+
+  getIndustries: publicProcedure.query(async ({ ctx }) => {
+    const [jobRows, organizationRows] = await Promise.all([
+      ctx.prisma.job.findMany({
+        where: {
+          status: "OPEN",
+          industry: { not: null },
+        },
+        distinct: ["industry"],
+        select: { industry: true },
+      }),
+      ctx.prisma.organization.findMany({
+        where: {
+          industry: { not: null },
+          jobs: { some: { status: "OPEN" } },
+        },
+        distinct: ["industry"],
+        select: { industry: true },
+      }),
+    ]);
+
+    return Array.from(
+      new Set(
+        [...jobRows, ...organizationRows]
+          .map((row) => row.industry)
+          .filter((industry): industry is string => isUsableIndustry(industry)),
+      ),
+    ).sort((a, b) => a.localeCompare(b, "vi"));
+  }),
 
   // ── Public: Get job details ───────────────────────────────────────────────
   getPublicById: publicProcedure

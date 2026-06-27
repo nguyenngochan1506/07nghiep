@@ -48,8 +48,8 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
   const expiryDate = formatExpiryDate(job.expiresAt);
 
   return (
-    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-orange/50 hover:shadow-md hover:shadow-primary/5">
-      <CardHeader>
+    <Card className="h-full gap-0 py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-orange/50 hover:shadow-md hover:shadow-primary/5">
+      <CardHeader className="min-h-[92px] px-4 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted">
@@ -95,7 +95,7 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="flex flex-1 flex-col gap-3 px-4 py-0">
         <div className="flex flex-col gap-2 text-xs text-muted-foreground">
           {job.location ? (
             <div className="flex items-start gap-1.5 rounded-md bg-secondary px-2 py-1 text-secondary-foreground">
@@ -119,7 +119,7 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex min-h-7 flex-wrap gap-2">
           {job.skills.map((skill) => (
             <Badge key={skill} variant="outline">
               {skill}
@@ -128,7 +128,7 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="mt-auto min-h-[76px] bg-card">
         <div className="flex w-full items-center justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
             <span>Đăng: {job.postedDate}</span>

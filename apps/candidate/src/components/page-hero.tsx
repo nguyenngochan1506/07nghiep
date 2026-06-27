@@ -33,7 +33,7 @@ export function PageHero({
   contentClassName,
 }: PageHeroProps) {
   return (
-    <section className={cn("relative overflow-hidden border-b bg-surface-wash", className)}>
+    <section className={cn("relative border-b bg-surface-wash", className)}>
       <div
         className={cn("absolute inset-0 bg-cover opacity-35 saturate-90", heroImageClass[image])}
       />

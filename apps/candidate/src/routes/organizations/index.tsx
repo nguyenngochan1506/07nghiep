@@ -5,9 +5,18 @@ import { Input } from "@07nghiep/ui/components/input";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, CheckCircle2, ChevronRight, MapPin, Search, Users } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  MapPin,
+  Search,
+  Users,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { IndustryMultiSelect } from "@/components/industry-multi-select";
 import { PageHero } from "@/components/page-hero";
 import { ProvinceMultiSelect } from "@/components/province-multi-select";
 import { trpc } from "@/utils/trpc";
@@ -34,20 +43,58 @@ type PublicOrganization = {
 };
 
 export const Route = createFileRoute("/organizations/")({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    keyword?: string;
+    location?: string;
+    industry?: string;
+    page?: number;
+  } => ({
+    keyword: typeof search.keyword === "string" && search.keyword ? search.keyword : undefined,
+    location: typeof search.location === "string" && search.location ? search.location : undefined,
+    industry: typeof search.industry === "string" && search.industry ? search.industry : undefined,
+    page: (() => {
+      const page = typeof search.page === "string" ? Number(search.page) : search.page;
+      return typeof page === "number" && Number.isInteger(page) && page > 0 ? page : undefined;
+    })(),
+  }),
   component: OrganizationsPage,
 });
 
+function splitMultiSearchParam(value?: string) {
+  if (!value) return [];
+
+  return value
+    .split("|")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function joinMultiSearchParam(value: string[]) {
+  return value.length > 0 ? value.join("|") : undefined;
+}
+
 function OrganizationsPage() {
-  const [keyword, setKeyword] = useState("");
-  const [locations, setLocations] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [keyword, setKeyword] = useState(search.keyword ?? "");
+  const [locations, setLocations] = useState<string[]>(() =>
+    splitMultiSearchParam(search.location),
+  );
+  const [industries, setIndustries] = useState<string[]>(() =>
+    splitMultiSearchParam(search.industry),
+  );
+  const [currentPage, setCurrentPage] = useState(search.page ?? 1);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollResultsRef = useRef(false);
+  const industriesQuery = useQuery(trpc.organization.getIndustries.queryOptions());
 
   const { data, isFetching, isLoading } = useQuery(
     trpc.organization.getPublicList.queryOptions({
       keyword: keyword || undefined,
       locations: locations.length > 0 ? locations : undefined,
+      industries: industries.length > 0 ? industries : undefined,
       limit: ITEMS_PER_PAGE,
       offset: (currentPage - 1) * ITEMS_PER_PAGE,
     }),
@@ -56,13 +103,37 @@ function OrganizationsPage() {
   const organizations = (data?.organizations ?? []) as unknown as PublicOrganization[];
   const totalOrganizations = data?.total ?? organizations.length;
   const totalPages = Math.ceil(totalOrganizations / ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setKeyword(search.keyword ?? "");
+    setLocations(splitMultiSearchParam(search.location));
+    setIndustries(splitMultiSearchParam(search.industry));
+    setCurrentPage(search.page ?? 1);
+  }, [search.keyword, search.location, search.industry, search.page]);
+
+  const updateSearchParams = useCallback(
+    (nextKeyword: string, nextLocations: string[], nextIndustries: string[], nextPage = 1) => {
+      navigate({
+        search: {
+          keyword: nextKeyword.trim() || undefined,
+          location: joinMultiSearchParam(nextLocations),
+          industry: joinMultiSearchParam(nextIndustries),
+          page: nextPage > 1 ? nextPage : undefined,
+        },
+        replace: nextPage === 1,
+      });
+    },
+    [navigate],
+  );
+
   const handlePageChange = useCallback(
     (nextPage: number) => {
       const safePage = Math.min(Math.max(1, nextPage), Math.max(1, totalPages));
       shouldScrollResultsRef.current = true;
       setCurrentPage(safePage);
+      updateSearchParams(keyword, locations, industries, safePage);
     },
-    [totalPages],
+    [industries, keyword, locations, totalPages, updateSearchParams],
   );
 
   useEffect(() => {
@@ -81,7 +152,7 @@ function OrganizationsPage() {
         align="center"
         contentClassName="max-w-6xl"
       >
-        <div className="mx-auto grid w-full max-w-3xl gap-2 rounded-xl border bg-card/95 p-2 shadow-md shadow-primary/5 backdrop-blur md:grid-cols-[1fr_0.8fr]">
+        <div className="mx-auto grid w-full max-w-5xl gap-2 rounded-xl border bg-card/95 p-2 shadow-md shadow-primary/5 backdrop-blur md:grid-cols-[1fr_0.75fr_0.75fr]">
           <div className="relative flex h-11 w-full items-center">
             <Search className="absolute left-3 size-4 text-muted-foreground" />
             <Input
@@ -89,8 +160,10 @@ function OrganizationsPage() {
               className="h-11 border-transparent bg-transparent pl-10 focus-visible:border-ring"
               value={keyword}
               onChange={(e) => {
-                setKeyword(e.target.value);
+                const nextKeyword = e.target.value;
+                setKeyword(nextKeyword);
                 setCurrentPage(1);
+                updateSearchParams(nextKeyword, locations, industries);
               }}
             />
           </div>
@@ -102,8 +175,25 @@ function OrganizationsPage() {
               onValueChange={(nextLocations) => {
                 setLocations(nextLocations);
                 setCurrentPage(1);
+                updateSearchParams(keyword, nextLocations, industries);
               }}
               placeholder="Tỉnh/thành phố"
+              triggerClassName="min-h-11 border-transparent bg-transparent pl-9 focus-visible:border-ring"
+            />
+          </div>
+
+          <div className="relative flex min-h-11 w-full items-center">
+            <BriefcaseBusiness className="pointer-events-none absolute left-3 z-10 size-4 shrink-0 text-muted-foreground" />
+            <IndustryMultiSelect
+              value={industries}
+              onValueChange={(nextIndustries) => {
+                setIndustries(nextIndustries);
+                setCurrentPage(1);
+                updateSearchParams(keyword, locations, nextIndustries);
+              }}
+              options={industriesQuery.data ?? []}
+              isLoading={industriesQuery.isLoading}
+              placeholder="Ngành nghề"
               triggerClassName="min-h-11 border-transparent bg-transparent pl-9 focus-visible:border-ring"
             />
           </div>

@@ -4,26 +4,28 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@07nghiep/ui/components/button";
 import { Input } from "@07nghiep/ui/components/input";
 import { cn } from "@07nghiep/ui/lib/utils";
-import { useVietnamProvinces } from "@/lib/vietnam-provinces";
 
-type ProvinceMultiSelectProps = {
+type IndustryMultiSelectProps = {
   id?: string;
   value: string[];
   onValueChange: (value: string[]) => void;
+  options: string[];
+  isLoading?: boolean;
   placeholder?: string;
   className?: string;
   triggerClassName?: string;
 };
 
-export function ProvinceMultiSelect({
+export function IndustryMultiSelect({
   id,
   value,
   onValueChange,
-  placeholder = "Tỉnh/thành phố",
+  options,
+  isLoading = false,
+  placeholder = "Ngành nghề",
   className,
   triggerClassName,
-}: ProvinceMultiSelectProps) {
-  const { provinces, isLoading } = useVietnamProvinces();
+}: IndustryMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,33 +42,32 @@ export function ProvinceMultiSelect({
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, []);
 
-  const filteredProvinces = useMemo(() => {
+  const filteredOptions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) return provinces;
-
-    return provinces.filter(
-      (province) =>
-        province.displayName.toLowerCase().includes(normalizedQuery) ||
-        province.name.toLowerCase().includes(normalizedQuery),
+    const uniqueOptions = Array.from(new Set(options.filter((option) => option.trim()))).sort(
+      (a, b) => a.localeCompare(b, "vi"),
     );
-  }, [provinces, query]);
 
-  const visibleProvinces = filteredProvinces.slice(0, 20);
+    if (!normalizedQuery) return uniqueOptions;
+
+    return uniqueOptions.filter((option) => option.toLowerCase().includes(normalizedQuery));
+  }, [options, query]);
+
+  const visibleOptions = filteredOptions.slice(0, 30);
   const displayValue =
     value.length === 0
       ? placeholder
       : value.length === 1
         ? value[0]
-        : `${value.length} tỉnh/thành đã chọn`;
+        : `${value.length} ngành đã chọn`;
 
-  const toggleProvince = (provinceName: string) => {
-    if (selectedSet.has(provinceName)) {
-      onValueChange(value.filter((item) => item !== provinceName));
+  const toggleOption = (option: string) => {
+    if (selectedSet.has(option)) {
+      onValueChange(value.filter((item) => item !== option));
       return;
     }
 
-    onValueChange([...value, provinceName]);
+    onValueChange([...value, option]);
   };
 
   return (
@@ -111,7 +112,7 @@ export function ProvinceMultiSelect({
         <div className="absolute z-50 mt-2 w-full rounded-xl border bg-popover p-2 text-popover-foreground shadow-xl shadow-primary/15">
           <Input
             value={query}
-            placeholder="Tìm tỉnh/thành..."
+            placeholder="Tìm ngành nghề..."
             className="mb-2 h-9"
             autoFocus
             onChange={(event) => setQuery(event.target.value)}
@@ -123,33 +124,30 @@ export function ProvinceMultiSelect({
           />
 
           <div className="max-h-72 overflow-auto">
-            {visibleProvinces.length > 0 ? (
-              visibleProvinces.map((province) => {
-                const isSelected = selectedSet.has(province.displayName);
+            {visibleOptions.length > 0 ? (
+              visibleOptions.map((option) => {
+                const isSelected = selectedSet.has(option);
 
                 return (
                   <button
                     type="button"
-                    key={province.code}
+                    key={option}
                     className={cn(
                       "flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground",
                       isSelected && "bg-secondary text-secondary-foreground",
                     )}
-                    onClick={() => toggleProvince(province.displayName)}
+                    onClick={() => toggleOption(option)}
                   >
                     <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border">
                       {isSelected ? <Check className="size-3" /> : null}
                     </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium">{province.displayName}</span>
-                      <span className="block text-xs text-muted-foreground">{province.name}</span>
-                    </span>
+                    <span className="min-w-0 text-sm font-medium">{option}</span>
                   </button>
                 );
               })
             ) : (
               <div className="px-3 py-4 text-sm text-muted-foreground">
-                Không tìm thấy tỉnh/thành phù hợp.
+                Không tìm thấy ngành nghề phù hợp.
               </div>
             )}
           </div>
@@ -157,7 +155,7 @@ export function ProvinceMultiSelect({
           {value.length > 0 ? (
             <div className="mt-2 border-t pt-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => onValueChange([])}>
-                Xóa tất cả địa điểm
+                Xóa tất cả ngành nghề
               </Button>
             </div>
           ) : null}

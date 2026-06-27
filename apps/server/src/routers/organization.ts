@@ -18,6 +18,16 @@ function normalizeLocations(location?: string, locations?: string[]) {
   );
 }
 
+function normalizeIndustries(industry?: string, industries?: string[]) {
+  return Array.from(
+    new Set([...(industries ?? []), industry].filter((item): item is string => !!item?.trim())),
+  );
+}
+
+function isUsableIndustry(industry: string | null) {
+  return !!industry?.trim() && /\p{L}/u.test(industry);
+}
+
 export const organizationRouter = router({
   getMyOrganization: employerOrAdminProcedure.query(async ({ ctx }) => {
     if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
@@ -88,6 +98,7 @@ export const organizationRouter = router({
       z.object({
         keyword: z.string().optional(),
         industry: z.string().optional(),
+        industries: z.array(z.string()).optional(),
         location: z.string().optional(),
         locations: z.array(z.string()).optional(),
         limit: z.number().int().min(1).max(PUBLIC_ORGANIZATIONS_LIMIT_MAX).default(20),
@@ -97,19 +108,31 @@ export const organizationRouter = router({
     .query(async ({ ctx, input }) => {
       const where: Prisma.OrganizationWhereInput = {};
       const locations = normalizeLocations(input.location, input.locations);
+      const industries = normalizeIndustries(input.industry, input.industries);
+      const andConditions: Prisma.OrganizationWhereInput[] = [];
 
       if (input.keyword) {
         where.name = { contains: input.keyword, mode: "insensitive" };
       }
 
-      if (input.industry) {
-        where.industry = { contains: input.industry, mode: "insensitive" };
+      if (industries.length > 0) {
+        andConditions.push({
+          OR: industries.map((industry) => ({
+            industry: { contains: industry, mode: "insensitive" },
+          })),
+        });
       }
 
       if (locations.length > 0) {
-        where.OR = locations.map((location) => ({
-          location: { contains: location, mode: "insensitive" },
-        }));
+        andConditions.push({
+          OR: locations.map((location) => ({
+            location: { contains: location, mode: "insensitive" },
+          })),
+        });
+      }
+
+      if (andConditions.length > 0) {
+        where.AND = andConditions;
       }
 
       const [orgs, total] = await Promise.all([
@@ -139,6 +162,21 @@ export const organizationRouter = router({
         total,
       };
     }),
+
+  getIndustries: publicProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.prisma.organization.findMany({
+      where: {
+        industry: { not: null },
+      },
+      distinct: ["industry"],
+      select: { industry: true },
+      orderBy: { industry: "asc" },
+    });
+
+    return rows
+      .map((row) => row.industry)
+      .filter((industry): industry is string => isUsableIndustry(industry));
+  }),
 
   getById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
     const org = await ctx.prisma.organization.findUnique({

@@ -25,9 +25,16 @@ export const Route = createFileRoute("/jobs/")({
   ): {
     keyword?: string;
     location?: string;
+    industry?: string;
+    page?: number;
   } => ({
     keyword: typeof search.keyword === "string" && search.keyword ? search.keyword : undefined,
     location: typeof search.location === "string" && search.location ? search.location : undefined,
+    industry: typeof search.industry === "string" && search.industry ? search.industry : undefined,
+    page: (() => {
+      const page = typeof search.page === "string" ? Number(search.page) : search.page;
+      return typeof page === "number" && Number.isInteger(page) && page > 0 ? page : undefined;
+    })(),
   }),
   component: JobsPage,
 });
@@ -35,17 +42,22 @@ export const Route = createFileRoute("/jobs/")({
 const ITEMS_PER_PAGE = 15;
 type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
-function splitLocationSearchParam(location?: string) {
-  if (!location) return [];
+function splitMultiSearchParam(value?: string) {
+  if (!value) return [];
 
-  return location
+  return value
     .split("|")
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
+function joinMultiSearchParam(value: string[]) {
+  return value.length > 0 ? value.join("|") : undefined;
+}
+
 function JobsPage() {
   const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const { data: session } = authClient.useSession();
   const isLoggedIn = !!session;
   const savedJobsOptions = trpc.savedJob.list.queryOptions(
@@ -62,15 +74,18 @@ function JobsPage() {
   );
 
   const [keyword, setKeyword] = useState(search.keyword ?? "");
-  const [locations, setLocations] = useState(() => splitLocationSearchParam(search.location));
+  const [locations, setLocations] = useState(() => splitMultiSearchParam(search.location));
+  const [industries, setIndustries] = useState(() => splitMultiSearchParam(search.industry));
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(search.page ?? 1);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollResultsRef = useRef(false);
+  const industriesQuery = useQuery(trpc.job.getIndustries.queryOptions());
   const jobsQuery = useQuery(
     trpc.job.getPublicList.queryOptions({
       keyword: keyword || undefined,
       locations: locations.length > 0 ? locations : undefined,
+      industries: industries.length > 0 ? industries : undefined,
       limit: ITEMS_PER_PAGE,
       offset: (currentPage - 1) * ITEMS_PER_PAGE,
     }),
@@ -78,15 +93,29 @@ function JobsPage() {
 
   useEffect(() => {
     setKeyword(search.keyword ?? "");
-    setLocations(splitLocationSearchParam(search.location));
-    setCurrentPage(1);
-  }, [search.keyword, search.location]);
+    setLocations(splitMultiSearchParam(search.location));
+    setIndustries(splitMultiSearchParam(search.industry));
+    setCurrentPage(search.page ?? 1);
+  }, [search.keyword, search.location, search.industry, search.page]);
 
-  const handleSearch = useCallback((newKeyword: string, nextLocations: string[] = []) => {
-    setKeyword(newKeyword);
-    setLocations(nextLocations);
-    setCurrentPage(1);
-  }, []);
+  const handleSearch = useCallback(
+    (newKeyword: string, nextLocations: string[] = [], nextIndustries: string[] = []) => {
+      setKeyword(newKeyword);
+      setLocations(nextLocations);
+      setIndustries(nextIndustries);
+      setCurrentPage(1);
+      navigate({
+        search: {
+          keyword: newKeyword.trim() || undefined,
+          location: joinMultiSearchParam(nextLocations),
+          industry: joinMultiSearchParam(nextIndustries),
+          page: undefined,
+        },
+        replace: true,
+      });
+    },
+    [navigate],
+  );
 
   const jobs = useMemo(
     () => jobsQuery.data?.jobs.map((job) => mapJob(job)) ?? [],
@@ -99,8 +128,16 @@ function JobsPage() {
       const safePage = Math.min(Math.max(1, nextPage), Math.max(1, totalPages));
       shouldScrollResultsRef.current = true;
       setCurrentPage(safePage);
+      navigate({
+        search: {
+          keyword: keyword.trim() || undefined,
+          location: joinMultiSearchParam(locations),
+          industry: joinMultiSearchParam(industries),
+          page: safePage > 1 ? safePage : undefined,
+        },
+      });
     },
-    [totalPages],
+    [industries, keyword, locations, navigate, totalPages],
   );
 
   useEffect(() => {
@@ -117,7 +154,7 @@ function JobsPage() {
     ...job,
     isSaved: savedIds.has(job.id),
   }));
-  const activeFilterCount = [keyword].filter(Boolean).length + locations.length;
+  const activeFilterCount = [keyword].filter(Boolean).length + locations.length + industries.length;
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
@@ -130,7 +167,10 @@ function JobsPage() {
         <SearchBar
           onSearch={handleSearch}
           initialKeyword={search.keyword ?? ""}
-          initialLocations={splitLocationSearchParam(search.location)}
+          initialLocations={splitMultiSearchParam(search.location)}
+          initialIndustries={splitMultiSearchParam(search.industry)}
+          industryOptions={industriesQuery.data ?? []}
+          isLoadingIndustries={industriesQuery.isLoading}
         />
       </PageHero>
 
@@ -213,7 +253,16 @@ function JobsPage() {
                   onClick={() => {
                     setKeyword("");
                     setLocations([]);
+                    setIndustries([]);
                     setCurrentPage(1);
+                    navigate({
+                      search: {
+                        keyword: undefined,
+                        location: undefined,
+                        industry: undefined,
+                        page: undefined,
+                      },
+                    });
                   }}
                 >
                   Xóa điều kiện tìm kiếm
