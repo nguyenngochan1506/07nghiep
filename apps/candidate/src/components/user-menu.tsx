@@ -55,6 +55,13 @@ export default function UserMenu() {
           <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
+              navigate({ to: "/dashboard" });
+            }}
+          >
+            Bảng điều khiển
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
               navigate({ to: "/profile" });
             }}
           >
