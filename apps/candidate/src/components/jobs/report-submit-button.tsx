@@ -47,8 +47,9 @@ export function ReportSubmitButton({
         setReportType("");
         setDescription("");
       },
-      onError: (error: Error) => {
-        toast.error(error.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+      // biome-ignore lint/suspicious/noExplicitAny: TRPCClientError does not extend Error
+      onError: (error: any) => {
+        toast.error(error?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
       },
     })
   );

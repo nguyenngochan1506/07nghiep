@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import type { ComponentProps } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { NotificationBell } from "@07nghiep/ui/components/notification-bell";
@@ -7,7 +6,6 @@ import type { NotificationItem } from "@07nghiep/ui/components/notification-bell
 import { trpc } from "../utils/trpc";
 import { env } from "@07nghiep/env/employer";
 
-type NotificationBellNotifications = ComponentProps<typeof NotificationBell>["notifications"];
 
 function createSSEConnection(
   url: string,
@@ -60,11 +58,11 @@ export function NotificationBellContainer() {
 
   const { data: unreadCount = 0 } = useQuery(trpc.notification.getUnreadCount.queryOptions());
   const { data: notificationsData } = useQuery(trpc.notification.list.queryOptions({ limit: 10 }));
-  const notifications: NotificationBellNotifications =
-    notificationsData?.items.map((notification) => ({
-      ...notification,
-      createdAt: notification.createdAt,
-    })) || [];
+  // biome-ignore lint/suspicious/noExplicitAny: tRPC type instantiation is excessively deep
+  const notifications: NotificationItem[] = ((notificationsData as any)?.items ?? []).map((n: any) => ({
+    ...n,
+    createdAt: String(n.createdAt),
+  }));
 
   const markAsRead = useMutation(
     trpc.notification.markAsRead.mutationOptions({

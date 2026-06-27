@@ -332,8 +332,6 @@ function JobDetailPage() {
               <ReportSubmitButton
                 contentType="JOB"
                 contentId={job.id}
-                currentUserId={session?.user.id}
-                ownerId={job.organization?.userId}
               />
             </div>
           )}

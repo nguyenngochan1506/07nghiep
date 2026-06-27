@@ -30,7 +30,8 @@ function getRelativeTime(dateString: string) {
 function NotificationsPage() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery(trpc.notification.list.queryOptions({ limit: 50 }));
-  const notifications = data?.items || [];
+  // biome-ignore lint/suspicious/noExplicitAny: tRPC type instantiation is excessively deep
+  const notifications: any[] = (data as any)?.items || [];
 
   const markAsRead = useMutation(
     trpc.notification.markAsRead.mutationOptions({
