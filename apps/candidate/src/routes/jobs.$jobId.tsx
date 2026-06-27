@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
+import { RichTextBlock } from "@/lib/rich-text";
 import { formatSalaryRangeVnd } from "@/lib/salary";
 import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
@@ -22,6 +23,7 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   Building2,
+  CalendarDays,
   Clock3,
   DollarSign,
   Heart,
@@ -40,6 +42,14 @@ type JobDetailView = {
   salaryRange: string;
   skills: string[];
   description: string;
+  requirements: string;
+  benefits: string;
+  experienceLevel: string;
+  experienceMonths: number | null;
+  industry: string;
+  publishedAt: string | null;
+  expiresAt: string | null;
+  sourceSite: string;
   status: string;
 };
 
@@ -52,8 +62,17 @@ type PublicJobDetail = {
   experience: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
+  salaryNegotiable: boolean | null;
   skills: string[];
   description: string | null;
+  requirements: string | null;
+  benefits: string | null;
+  experienceLevel: string | null;
+  experienceMonths: number | null;
+  industry: string | null;
+  publishedAt: string | null;
+  expiresAt: string | null;
+  sourceSite: string | null;
   status: string;
   organization: {
     name: string | null;
@@ -62,7 +81,7 @@ type PublicJobDetail = {
 };
 
 function mapJob(raw: PublicJobDetail): JobDetailView {
-  const salaryRange = formatSalaryRangeVnd(raw.salaryMin, raw.salaryMax);
+  const salaryRange = formatSalaryRangeVnd(raw.salaryMin, raw.salaryMax, raw.salaryNegotiable);
 
   return {
     id: raw.id,
@@ -76,8 +95,46 @@ function mapJob(raw: PublicJobDetail): JobDetailView {
     salaryRange,
     skills: raw.skills ?? [],
     description: raw.description ?? "",
+    requirements: raw.requirements ?? "",
+    benefits: raw.benefits ?? "",
+    experienceLevel: raw.experienceLevel ?? "",
+    experienceMonths: raw.experienceMonths ?? null,
+    industry: raw.industry ?? "",
+    publishedAt: raw.publishedAt ?? null,
+    expiresAt: raw.expiresAt ?? null,
+    sourceSite: raw.sourceSite ?? "",
     status: raw.status,
   };
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "Đang cập nhật";
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatExperience(level: string, months: number | null) {
+  const labels: Record<string, string> = {
+    ENTRY: "Mới đi làm",
+    JUNIOR: "Junior",
+    MIDDLE: "Middle",
+    SENIOR: "Senior",
+    LEAD: "Lead",
+    EXECUTIVE: "Executive",
+  };
+
+  const levelLabel = labels[level] ?? level;
+
+  if (!months) return levelLabel || "Đang cập nhật";
+
+  const years = months / 12;
+  const yearsLabel = Number.isInteger(years) ? `${years}` : years.toFixed(1).replace(".0", "");
+
+  return `${levelLabel} - ${yearsLabel} năm`;
 }
 
 export const Route = createFileRoute("/jobs/$jobId")({
@@ -93,19 +150,27 @@ function JobDetailPage() {
   const contextJob = jobs.find((j) => j.id === jobId);
 
   const { data: apiJob, isLoading: apiLoading } = useQuery(
-    trpc.job.getPublicById.queryOptions({ id: jobId }, { enabled: !contextJob }),
+    trpc.job.getPublicById.queryOptions({ id: jobId }),
   );
 
   const contextJobView: JobDetailView | null = contextJob
     ? {
         ...contextJob,
         description: "",
+        requirements: "",
+        benefits: "",
+        experienceLevel: contextJob.experience,
+        experienceMonths: null,
+        industry: "",
+        publishedAt: null,
+        expiresAt: null,
+        sourceSite: "",
         status: "OPEN",
       }
     : null;
 
   const job: JobDetailView | null =
-    contextJobView ?? (apiJob ? mapJob(apiJob as unknown as PublicJobDetail) : null);
+    (apiJob ? mapJob(apiJob as unknown as PublicJobDetail) : null) ?? contextJobView;
 
   const hasAppliedQuery = useQuery(
     trpc.applications.list.queryOptions({ search: undefined }, { enabled: isLoggedIn }),
@@ -172,10 +237,16 @@ function JobDetailPage() {
   const isSaved = savedJobQuery.data?.saved ?? false;
 
   const jobFacts = [
-    { label: "Địa điểm", value: job.location || "Linh hoạt", icon: MapPin },
     { label: "Mức lương", value: job.salaryRange, icon: DollarSign },
     { label: "Hình thức", value: job.workType || "Đang cập nhật", icon: BriefcaseBusiness },
     { label: "Loại công việc", value: job.jobType || "Đang cập nhật", icon: Clock3 },
+    {
+      label: "Kinh nghiệm",
+      value: formatExperience(job.experienceLevel, job.experienceMonths),
+      icon: Building2,
+    },
+    { label: "Hạn ứng tuyển", value: formatDate(job.expiresAt), icon: CalendarDays },
+    { label: "Ngành nghề", value: job.industry || "Đang cập nhật", icon: BriefcaseBusiness },
   ];
 
   return (
@@ -236,7 +307,23 @@ function JobDetailPage() {
             </CardHeader>
 
             <CardContent className="flex flex-col gap-8 px-6 pb-8 md:px-8">
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl border bg-surface-wash p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-card text-brand-orange">
+                    <MapPin className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      Địa điểm làm việc
+                    </p>
+                    <p className="mt-1 max-w-3xl font-semibold leading-6 text-foreground">
+                      {job.location || "Linh hoạt"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {jobFacts.map((fact) => (
                   <div key={fact.label} className="rounded-xl border bg-surface-wash p-4">
                     <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-card text-brand-orange">
@@ -254,8 +341,8 @@ function JobDetailPage() {
 
               <div className="flex flex-col gap-4">
                 <h2 className="text-xl font-semibold text-foreground">Mô tả công việc</h2>
-                <div className="flex flex-col gap-4 leading-7 text-muted-foreground">
-                  <p>{job.description || "Chưa có mô tả chi tiết."}</p>
+                <div className="flex flex-col gap-5">
+                  <RichTextBlock text={job.description} fallback="Chưa có mô tả chi tiết." />
                   {job.skills.length > 0 && (
                     <div className="flex flex-col gap-3">
                       <p className="font-semibold text-foreground">Yêu cầu kỹ năng</p>
@@ -270,30 +357,59 @@ function JobDetailPage() {
                   )}
                 </div>
               </div>
+
+              {job.requirements ? (
+                <>
+                  <Separator />
+                  <div className="flex flex-col gap-4">
+                    <h2 className="text-xl font-semibold text-foreground">Yêu cầu ứng viên</h2>
+                    <RichTextBlock text={job.requirements} fallback="Chưa có yêu cầu chi tiết." />
+                  </div>
+                </>
+              ) : null}
+
+              {job.benefits ? (
+                <>
+                  <Separator />
+                  <div className="flex flex-col gap-4">
+                    <h2 className="text-xl font-semibold text-foreground">Quyền lợi</h2>
+                    <RichTextBlock text={job.benefits} fallback="Chưa có quyền lợi chi tiết." />
+                  </div>
+                </>
+              ) : null}
             </CardContent>
           </Card>
 
           <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
-            <Card className="border-primary/15 bg-primary text-primary-foreground shadow-md shadow-primary/10">
-              <CardHeader>
-                <CardTitle className="text-base">Ứng tuyển vị trí này</CardTitle>
-                <CardDescription className="text-primary-foreground/75">
+            <Card className="gap-0 border-primary/15 bg-card py-0 shadow-md shadow-primary/5">
+              <CardHeader className="border-b bg-surface-wash px-5 py-4">
+                <CardTitle className="text-base text-foreground">Ứng tuyển vị trí này</CardTitle>
+                <CardDescription>
                   Kiểm tra hồ sơ trước khi gửi để nhà tuyển dụng có đủ thông tin đánh giá.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                {job.companyLogo ? (
-                  <img
-                    src={job.companyLogo}
-                    alt={job.companyName}
-                    className="size-12 shrink-0 rounded-xl border border-primary-foreground/20 object-cover"
-                  />
-                ) : (
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-primary-foreground/20 bg-primary-foreground/10">
-                    <Building2 className="size-5 text-primary-foreground/75" />
+              <CardContent className="flex flex-col gap-4 px-5 py-4">
+                <div className="flex items-start gap-3">
+                  {job.companyLogo ? (
+                    <img
+                      src={job.companyLogo}
+                      alt={job.companyName}
+                      className="size-12 shrink-0 rounded-xl border object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border bg-muted">
+                      <Building2 className="size-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="line-clamp-2 text-sm font-semibold text-foreground">
+                      {job.title}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">{job.companyName}</p>
                   </div>
-                )}
-                <div className="rounded-xl border border-primary-foreground/15 bg-primary-foreground/10 p-3 text-sm text-primary-foreground/80">
+                </div>
+
+                <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground">
                   {hasApplied
                     ? `Bạn đã ứng tuyển vị trí này${applicationStatus ? ` (${applicationStatus})` : ""}.`
                     : isLoggedIn
@@ -301,7 +417,7 @@ function JobDetailPage() {
                       : "Đăng nhập để lưu việc và gửi hồ sơ ứng tuyển."}
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="bg-card">
                 {isLoadingTrigger ? (
                   <Skeleton className="h-10 w-full rounded-md" />
                 ) : isLoggedIn ? (

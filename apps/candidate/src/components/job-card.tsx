@@ -25,6 +25,7 @@ export interface Job {
   salaryRange: string;
   skills: string[];
   postedDate: string;
+  expiresAt: string | null;
   isSaved?: boolean;
 }
 
@@ -33,7 +34,19 @@ interface JobCardProps {
   onSave?: (id: string) => void;
 }
 
+function formatExpiryDate(value: string | null) {
+  if (!value) return null;
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 export function JobCardItem({ job, onSave }: JobCardProps) {
+  const expiryDate = formatExpiryDate(job.expiresAt);
+
   return (
     <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-orange/50 hover:shadow-md hover:shadow-primary/5">
       <CardHeader>
@@ -117,7 +130,15 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
 
       <CardFooter>
         <div className="flex w-full items-center justify-between gap-3">
-          <div className="text-xs text-muted-foreground">Đăng: {job.postedDate}</div>
+          <div className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+            <span>Đăng: {job.postedDate}</span>
+            {expiryDate ? (
+              <span className="inline-flex items-center gap-1 text-primary">
+                <Clock3 className="size-3" />
+                Hạn ứng tuyển: {expiryDate}
+              </span>
+            ) : null}
+          </div>
           <Button
             asChild
             size="sm"

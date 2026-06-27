@@ -29,6 +29,7 @@ export type JobType = {
   salaryRange: string;
   skills: string[];
   postedDate: string;
+  expiresAt: string | null;
   viewCount: number;
   isSaved?: boolean;
 };
@@ -83,6 +84,7 @@ export function mapJob(raw: PublicJob): JobType {
     salaryRange,
     skills: raw.skills ?? [],
     postedDate,
+    expiresAt: raw.expiresAt ?? null,
     viewCount: raw.views ?? 0,
   };
 }

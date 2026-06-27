@@ -46,6 +46,7 @@ function mapSavedJob(raw: SavedJob): JobCardItemProps["job"] {
     salaryRange,
     skills: raw.skills ?? [],
     postedDate,
+    expiresAt: raw.expiresAt ?? null,
     isSaved: true,
   };
 }
