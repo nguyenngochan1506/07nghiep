@@ -7,6 +7,8 @@ import { sendEmail, generateOTPEmail, type OTPType } from "./plugins/email-templ
 
 export function createAuth() {
   const prisma = createPrismaClient();
+  const googleClientId = env.GOOGLE_CLIENT_ID;
+  const googleClientSecret = env.GOOGLE_CLIENT_SECRET;
 
   return betterAuth({
     database: prismaAdapter(prisma, {
@@ -20,6 +22,15 @@ export function createAuth() {
     emailAndPassword: {
       enabled: true,
     },
+    socialProviders:
+      googleClientId && googleClientSecret
+        ? {
+            google: {
+              clientId: googleClientId,
+              clientSecret: googleClientSecret,
+            },
+          }
+        : undefined,
     user: {
       additionalFields: {
         role: {

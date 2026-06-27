@@ -9,6 +9,8 @@ export const env = createEnv({
     DATABASE_URL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.string().min(1),
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     CORS_ORIGIN: urlList,
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     SERVER_PORT: z.coerce.number().int().min(1).max(65535).default(3000),

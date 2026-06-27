@@ -1,5 +1,6 @@
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
+import { GoogleIcon } from "@07nghiep/ui/components/google-icon";
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
 import { useForm } from "@tanstack/react-form";
@@ -22,6 +23,20 @@ export default function SignInForm({
     from: "/",
   });
   const { isPending } = authClient.useSession();
+
+  const signInWithGoogle = async () => {
+    await authClient.signIn.social(
+      {
+        provider: "google",
+        callbackURL: new URL(redirectTo, window.location.origin).toString(),
+      },
+      {
+        onError: (error) => {
+          toast.error(error.error.message || error.error.statusText);
+        },
+      },
+    );
+  };
 
   const form = useForm({
     defaultValues: {
@@ -133,6 +148,17 @@ export default function SignInForm({
             )}
           </form.Subscribe>
         </form>
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">hoặc</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <Button type="button" variant="outline" className="w-full" onClick={signInWithGoogle}>
+          <GoogleIcon data-icon="inline-start" />
+          Đăng nhập với Google
+        </Button>
 
         <div className="mt-6 text-center text-sm">
           <span className="text-muted-foreground">Chưa có tài khoản? </span>
