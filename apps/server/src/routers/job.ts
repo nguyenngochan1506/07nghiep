@@ -511,7 +511,7 @@ export const jobRouter = router({
     .input(z.object({ jobId: z.string() }))
     .query(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
+        where: { userId: ctx.user?.id },
         select: { id: true },
       });
 

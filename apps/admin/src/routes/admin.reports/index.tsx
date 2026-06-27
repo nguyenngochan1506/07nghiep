@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { FileWarning, AlertTriangle, Ban, CheckCircle2 } from "lucide-react";
+import { FileWarning, } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -52,8 +52,11 @@ function ReportsListPage() {
     trpc.admin.moderation.listReports.queryOptions({
       page,
       limit: 20,
+      // biome-ignore lint/suspicious/noExplicitAny: generic filter state to trpc query param
       status: statusFilter !== "all" ? (statusFilter as any) : undefined,
+      // biome-ignore lint/suspicious/noExplicitAny: generic filter state to trpc query param
       type: typeFilter !== "all" ? (typeFilter as any) : undefined,
+      // biome-ignore lint/suspicious/noExplicitAny: generic filter state to trpc query param
       contentType: contentTypeFilter !== "all" ? (contentTypeFilter as any) : undefined,
     })
   );
@@ -94,7 +97,7 @@ function ReportsListPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Trạng thái</label>
+              <div className="text-sm font-medium mb-2 block">Trạng thái</div>
               <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val ?? "all")}>
                 <SelectTrigger>
                   <SelectValue />
@@ -109,7 +112,7 @@ function ReportsListPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Loại nội dung</label>
+              <div className="text-sm font-medium mb-2 block">Loại nội dung</div>
               <Select value={contentTypeFilter} onValueChange={(val) => setContentTypeFilter(val ?? "all")}>
                 <SelectTrigger>
                   <SelectValue />
@@ -124,7 +127,7 @@ function ReportsListPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Loại vi phạm</label>
+              <div className="text-sm font-medium mb-2 block">Loại vi phạm</div>
               <Select value={typeFilter} onValueChange={(val) => setTypeFilter(val ?? "all")}>
                 <SelectTrigger>
                   <SelectValue />
@@ -153,6 +156,7 @@ function ReportsListPage() {
         </Card>
       ) : (
         <div className="space-y-4">
+          {/* biome-ignore lint/suspicious/noExplicitAny: report comes from tRPC output */}
           {reports.map((report: any) => (
             <Card key={report.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">

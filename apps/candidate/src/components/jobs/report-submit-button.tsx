@@ -47,7 +47,7 @@ export function ReportSubmitButton({
         setReportType("");
         setDescription("");
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast.error(error.message || "Có lỗi xảy ra. Vui lòng thử lại.");
       },
     })
@@ -70,6 +70,7 @@ export function ReportSubmitButton({
     createReportMutation.mutate({
       contentType,
       contentId,
+      // biome-ignore lint/suspicious/noExplicitAny: string to enum coercion
       reportType: reportType as any,
       description: description || undefined,
     });

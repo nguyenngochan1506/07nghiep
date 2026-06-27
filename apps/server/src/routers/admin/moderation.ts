@@ -329,6 +329,7 @@ export const moderationRouter = router({
       await ctx.prisma.moderationHistory.create({
         data: {
           jobId,
+          // biome-ignore lint/style/noNonNullAssertion: Guaranteed by adminProcedure
           moderatorId: ctx.session!.user.id,
           action: ModerationAction.APPROVE,
         },
@@ -376,6 +377,7 @@ export const moderationRouter = router({
       await ctx.prisma.moderationHistory.create({
         data: {
           jobId,
+          // biome-ignore lint/style/noNonNullAssertion: Guaranteed by adminProcedure
           moderatorId: ctx.session!.user.id,
           action: ModerationAction.REJECT,
           reason,
@@ -424,6 +426,7 @@ export const moderationRouter = router({
       await ctx.prisma.moderationHistory.create({
         data: {
           jobId,
+          // biome-ignore lint/style/noNonNullAssertion: Guaranteed by adminProcedure
           moderatorId: ctx.session!.user.id,
           action: ModerationAction.REQUEST_CHANGES,
           feedback,
@@ -623,6 +626,7 @@ export const moderationRouter = router({
               ? ReportStatus.DISMISSED
               : ReportStatus.RESOLVED,
           resolvedAt: new Date(),
+          // biome-ignore lint/style/noNonNullAssertion: Guaranteed by adminProcedure
           resolvedBy: ctx.session!.user.id,
           resolution: notes || `Action taken: ${action}`,
         },

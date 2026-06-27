@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, Trash2, AlertOctagon } from "lucide-react";
+import { ArrowLeft, AlertTriangle, XCircle, Trash2, AlertOctagon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -65,7 +65,7 @@ function ReportDetailPage() {
         setActionDialog(null);
         setNotes("");
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast.error(error.message || "Có lỗi xảy ra");
       },
     })
@@ -99,6 +99,7 @@ function ReportDetailPage() {
   const handleAction = (action: string) => {
     resolveReportMutation.mutate({
       id: reportId,
+      // biome-ignore lint/suspicious/noExplicitAny: action comes from string state
       action: action as any,
       notes: notes || undefined,
     });
@@ -107,8 +108,11 @@ function ReportDetailPage() {
   const isPending = report.status === "PENDING";
 
   // Cast content to specific types based on contentType to avoid union type TS errors
+  // biome-ignore lint/suspicious/noExplicitAny: complex conditional union
   const jobContent = report.contentType === "JOB" ? (report.content as any) : null;
+  // biome-ignore lint/suspicious/noExplicitAny: complex conditional union
   const userContent = report.contentType === "USER" ? (report.content as any) : null;
+  // biome-ignore lint/suspicious/noExplicitAny: complex conditional union
   const messageContent = report.contentType === "MESSAGE" ? (report.content as any) : null;
 
   return (

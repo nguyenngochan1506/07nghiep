@@ -111,6 +111,7 @@ export function NotificationBellContainer() {
     
     // Parse notification data
     // Prisma Json field might be returned as object or string
+    // biome-ignore lint/suspicious/noExplicitAny: Data is dynamic JSON
     let data: any;
     if (typeof notification.data === "string") {
       try {

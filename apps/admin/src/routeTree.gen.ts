@@ -14,9 +14,13 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
+import { Route as AdminReportsIndexRouteImport } from './routes/admin.reports/index'
 import { Route as AdminOrganizationsIndexRouteImport } from './routes/admin/organizations/index'
 import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AdminReportsReportIdRouteImport } from './routes/admin.reports/$reportId'
+import { Route as AdminJobsPendingRouteImport } from './routes/admin.jobs/pending'
+import { Route as AdminJobsHistoryRouteImport } from './routes/admin.jobs/history'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -43,6 +47,11 @@ const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOrganizationsIndexRoute = AdminOrganizationsIndexRouteImport.update({
   id: '/organizations/',
   path: '/organizations/',
@@ -58,15 +67,34 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminReportsReportIdRoute = AdminReportsReportIdRouteImport.update({
+  id: '/reports/$reportId',
+  path: '/reports/$reportId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJobsPendingRoute = AdminJobsPendingRouteImport.update({
+  id: '/jobs/pending',
+  path: '/jobs/pending',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJobsHistoryRoute = AdminJobsHistoryRouteImport.update({
+  id: '/jobs/history',
+  path: '/jobs/history',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/admin/jobs/history': typeof AdminJobsHistoryRoute
+  '/admin/jobs/pending': typeof AdminJobsPendingRoute
+  '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
   '/admin/organizations/': typeof AdminOrganizationsIndexRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -74,9 +102,13 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/admin/jobs/history': typeof AdminJobsHistoryRoute
+  '/admin/jobs/pending': typeof AdminJobsPendingRoute
+  '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
   '/admin/organizations': typeof AdminOrganizationsIndexRoute
+  '/admin/reports': typeof AdminReportsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -85,9 +117,13 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/admin/jobs/history': typeof AdminJobsHistoryRoute
+  '/admin/jobs/pending': typeof AdminJobsPendingRoute
+  '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
   '/admin/organizations/': typeof AdminOrganizationsIndexRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -97,9 +133,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/login'
+    | '/admin/jobs/history'
+    | '/admin/jobs/pending'
+    | '/admin/reports/$reportId'
     | '/admin/users/$userId'
     | '/admin/jobs/'
     | '/admin/organizations/'
+    | '/admin/reports/'
     | '/admin/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,9 +147,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/login'
+    | '/admin/jobs/history'
+    | '/admin/jobs/pending'
+    | '/admin/reports/$reportId'
     | '/admin/users/$userId'
     | '/admin/jobs'
     | '/admin/organizations'
+    | '/admin/reports'
     | '/admin/users'
   id:
     | '__root__'
@@ -117,9 +161,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/login'
+    | '/admin/jobs/history'
+    | '/admin/jobs/pending'
+    | '/admin/reports/$reportId'
     | '/admin/users/$userId'
     | '/admin/jobs/'
     | '/admin/organizations/'
+    | '/admin/reports/'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
 }
@@ -167,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/reports/': {
+      id: '/admin/reports/'
+      path: '/reports'
+      fullPath: '/admin/reports/'
+      preLoaderRoute: typeof AdminReportsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/organizations/': {
       id: '/admin/organizations/'
       path: '/organizations'
@@ -188,20 +243,49 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/reports/$reportId': {
+      id: '/admin/reports/$reportId'
+      path: '/reports/$reportId'
+      fullPath: '/admin/reports/$reportId'
+      preLoaderRoute: typeof AdminReportsReportIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/jobs/pending': {
+      id: '/admin/jobs/pending'
+      path: '/jobs/pending'
+      fullPath: '/admin/jobs/pending'
+      preLoaderRoute: typeof AdminJobsPendingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/jobs/history': {
+      id: '/admin/jobs/history'
+      path: '/jobs/history'
+      fullPath: '/admin/jobs/history'
+      preLoaderRoute: typeof AdminJobsHistoryRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminJobsHistoryRoute: typeof AdminJobsHistoryRoute
+  AdminJobsPendingRoute: typeof AdminJobsPendingRoute
+  AdminReportsReportIdRoute: typeof AdminReportsReportIdRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
   AdminOrganizationsIndexRoute: typeof AdminOrganizationsIndexRoute
+  AdminReportsIndexRoute: typeof AdminReportsIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminJobsHistoryRoute: AdminJobsHistoryRoute,
+  AdminJobsPendingRoute: AdminJobsPendingRoute,
+  AdminReportsReportIdRoute: AdminReportsReportIdRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
   AdminJobsIndexRoute: AdminJobsIndexRoute,
   AdminOrganizationsIndexRoute: AdminOrganizationsIndexRoute,
+  AdminReportsIndexRoute: AdminReportsIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
 }
 
