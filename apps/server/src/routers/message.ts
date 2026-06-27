@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../lib/api";
+import { protectedProcedure, requireActiveEmployerSubscription, router } from "../lib/api";
 
 const senderSelect = {
   select: {
@@ -39,6 +39,10 @@ export const messageRouter = router({
           code: "FORBIDDEN",
           message: "You do not have access to this conversation",
         });
+      }
+
+      if (conversation.employerId === userId) {
+        await requireActiveEmployerSubscription(ctx);
       }
 
       const message = await ctx.prisma.message.create({

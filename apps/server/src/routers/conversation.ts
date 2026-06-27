@@ -1,7 +1,7 @@
 import type { Prisma } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { type Context, protectedProcedure, router } from "../lib/api";
+import { type Context, protectedProcedure, requireActiveEmployerSubscription, router } from "../lib/api";
 
 const userSelect = {
   select: {
@@ -230,6 +230,7 @@ export const conversationRouter = router({
       let candidateId: string;
 
       if (role === "EMPLOYER" || role === "ADMIN") {
+        await requireActiveEmployerSubscription(ctx);
         employerId = userId;
         candidateId = input.candidateId;
       } else {

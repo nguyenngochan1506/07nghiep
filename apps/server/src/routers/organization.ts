@@ -6,6 +6,7 @@ import {
   employerOrAdminProcedure,
   organizationCreateSchema,
   organizationUpdateSchema,
+  paidEmployerProcedure,
   publicProcedure,
   router,
 } from "../lib/api";
@@ -46,7 +47,7 @@ export const organizationRouter = router({
     return org;
   }),
 
-  create: employerOrAdminProcedure
+  create: paidEmployerProcedure
     .input(organizationCreateSchema)
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
@@ -70,7 +71,7 @@ export const organizationRouter = router({
       });
     }),
 
-  update: employerOrAdminProcedure
+  update: paidEmployerProcedure
     .input(organizationUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
@@ -260,7 +261,7 @@ export const organizationRouter = router({
       };
     }),
 
-  requestVerification: employerOrAdminProcedure.mutation(async ({ ctx }) => {
+  requestVerification: paidEmployerProcedure.mutation(async ({ ctx }) => {
     if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
     return ctx.prisma.organization.update({

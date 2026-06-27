@@ -1,7 +1,7 @@
 import type { Prisma } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../lib/api";
+import { paidEmployerProcedure, protectedProcedure, router } from "../lib/api";
 
 export const interviewRouter = router({
   // ── Get all interviews for current user ─────────────────────────────────────
@@ -70,7 +70,7 @@ export const interviewRouter = router({
     }),
 
   // ── Schedule a new interview ───────────────────────────────────────────────
-  create: protectedProcedure
+  create: paidEmployerProcedure
     .input(
       z.object({
         applicationId: z.string().min(1),
@@ -142,7 +142,7 @@ export const interviewRouter = router({
     }),
 
   // ── Update an interview ─────────────────────────────────────────────────────
-  update: protectedProcedure
+  update: paidEmployerProcedure
     .input(
       z.object({
         id: z.string().min(1),
@@ -279,7 +279,7 @@ export const interviewRouter = router({
     }),
 
   // ── Delete / Cancel interview ───────────────────────────────────────────────
-  delete: protectedProcedure
+  delete: paidEmployerProcedure
     .input(z.object({ id: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       const interview = await ctx.prisma.interview.findUnique({

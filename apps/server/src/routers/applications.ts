@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { candidateProcedure, employerOrAdminProcedure, router } from "../lib/api";
+import { candidateProcedure, paidEmployerProcedure, router } from "../lib/api";
 
 const applySchema = z.object({
   jobId: z.string().min(1),
@@ -133,7 +133,7 @@ export const applicationsRouter = router({
   }),
 
   // ── Employer: Update application status ───────────────────────────────────
-  employerUpdateStatus: employerOrAdminProcedure
+  employerUpdateStatus: paidEmployerProcedure
     .input(
       z.object({
         id: z.string().min(1),

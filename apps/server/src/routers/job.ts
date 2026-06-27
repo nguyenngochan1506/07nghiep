@@ -7,6 +7,7 @@ import {
   jobCreateSchema,
   jobListQuerySchema,
   jobUpdateSchema,
+  paidEmployerProcedure,
   publicProcedure,
   router,
 } from "../lib/api";
@@ -163,7 +164,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Create job ──────────────────────────────────────────────────
-  create: employerOrAdminProcedure
+  create: paidEmployerProcedure
     .input(
       jobCreateSchema.extend({
         status: z.enum(["DRAFT", "OPEN", "PENDING_APPROVAL"]).default("DRAFT"),
@@ -204,7 +205,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Update job ──────────────────────────────────────────────────
-  update: employerOrAdminProcedure.input(jobUpdateSchema).mutation(async ({ ctx, input }) => {
+  update: paidEmployerProcedure.input(jobUpdateSchema).mutation(async ({ ctx, input }) => {
     const org = await ctx.prisma.organization.findUnique({
       where: { userId: ctx.user?.id },
       select: { id: true },
@@ -246,7 +247,7 @@ export const jobRouter = router({
   }),
 
   // ── Employer: Publish job ─────────────────────────────────────────────────
-  publish: employerOrAdminProcedure
+  publish: paidEmployerProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -275,7 +276,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Close job ───────────────────────────────────────────────────
-  close: employerOrAdminProcedure
+  close: paidEmployerProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -297,7 +298,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Delete (Archive) job ───────────────────────────────────────
-  delete: employerOrAdminProcedure
+  delete: paidEmployerProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
@@ -319,7 +320,7 @@ export const jobRouter = router({
     }),
 
   // ── Employer: Clone job ───────────────────────────────────────────────────
-  clone: employerOrAdminProcedure
+  clone: paidEmployerProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({

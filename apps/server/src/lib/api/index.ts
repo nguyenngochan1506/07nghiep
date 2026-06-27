@@ -85,3 +85,51 @@ export const adminProcedure = protectedProcedure.use(createRoleGuard(["ADMIN"]))
 export const employerOrAdminProcedure = protectedProcedure.use(
   createRoleGuard(["EMPLOYER", "ADMIN"]),
 );
+
+export async function hasActiveEmployerSubscription(ctx: Context) {
+  if (!ctx.session?.user?.id) return false;
+
+  const subscription = await ctx.prisma.subscription.findFirst({
+    where: {
+      userId: ctx.session.user.id,
+      status: "ACTIVE",
+      currentPeriodStart: { lte: new Date() },
+      currentPeriodEnd: { gt: new Date() },
+      plan: { code: "EMPLOYER_MONTHLY" },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(subscription);
+}
+
+export async function requireActiveEmployerSubscription(ctx: Context) {
+  if (ctx.role === "ADMIN") return;
+
+  if (!(await hasActiveEmployerSubscription(ctx))) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Gói nhà tuyển dụng đã hết hạn hoặc chưa được kích hoạt.",
+    });
+  }
+}
+
+export const paidEmployerProcedure = employerProcedure.use(async ({ ctx, next }) => {
+  if (!ctx.session) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Authentication required",
+    });
+  }
+
+  await requireActiveEmployerSubscription(ctx);
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: ctx.session,
+      user: ctx.session.user,
+      role: ctx.role,
+    },
+  });
+});

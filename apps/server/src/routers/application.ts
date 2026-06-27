@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../lib/api";
+import { paidEmployerProcedure, protectedProcedure, router } from "../lib/api";
 import {
   applicationBulkUpdateStatusSchema,
   applicationListSchema,
@@ -118,7 +118,7 @@ export const applicationRouter = router({
     return application;
   }),
 
-  updateStatus: protectedProcedure
+  updateStatus: paidEmployerProcedure
     .input(applicationUpdateStatusSchema)
     .mutation(async ({ ctx, input }) => {
       // First verify access
@@ -199,7 +199,7 @@ export const applicationRouter = router({
       return updated;
     }),
 
-  updateNotes: protectedProcedure
+  updateNotes: paidEmployerProcedure
     .input(applicationUpdateNotesSchema)
     .mutation(async ({ ctx, input }) => {
       const application = await ctx.prisma.application.findUnique({
@@ -235,7 +235,7 @@ export const applicationRouter = router({
       return updated;
     }),
 
-  bulkUpdateStatus: protectedProcedure
+  bulkUpdateStatus: paidEmployerProcedure
     .input(applicationBulkUpdateStatusSchema)
     .mutation(async ({ ctx, input }) => {
       const organization = await ctx.prisma.organization.findUnique({
