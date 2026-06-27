@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { LocationMap } from "@/components/location-map";
 import { RichTextBlock } from "@/lib/rich-text";
 import { formatSalaryRangeVnd } from "@/lib/salary";
 import { trpc } from "@/utils/trpc";
@@ -245,20 +246,28 @@ function OrganizationDetailPage() {
             </div>
 
             {org.location ? (
-              <div className="rounded-xl border bg-surface-wash p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-card text-brand-orange">
-                    <MapPin className="size-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium uppercase text-muted-foreground">
-                      Địa chỉ công ty
-                    </p>
-                    <p className="mt-1 max-w-4xl font-semibold leading-6 text-foreground">
-                      {org.location}
-                    </p>
+              <div className="grid items-start gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+                <div className="rounded-xl border bg-surface-wash p-4 lg:min-h-0">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-card text-brand-orange">
+                      <MapPin className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">
+                        Địa chỉ công ty
+                      </p>
+                      <p className="mt-1 max-w-4xl font-semibold leading-6 text-foreground">
+                        {org.location}
+                      </p>
+                    </div>
                   </div>
                 </div>
+                <LocationMap
+                  address={org.location}
+                  title="Bản đồ công ty"
+                  className="gap-0 py-0"
+                  mapClassName="h-48"
+                />
               </div>
             ) : null}
 

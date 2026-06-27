@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
+import { LocationMap } from "@/components/location-map";
 import { RichTextBlock } from "@/lib/rich-text";
 import { formatSalaryRangeVnd } from "@/lib/salary";
 import { useLocalSavedJobs, type LocalSavedJob } from "@/lib/saved-jobs";
@@ -469,6 +470,8 @@ function JobDetailPage() {
                 )}
               </CardFooter>
             </Card>
+
+            <LocationMap address={job.location} title="Bản đồ nơi làm việc" />
           </aside>
         </section>
       </div>
