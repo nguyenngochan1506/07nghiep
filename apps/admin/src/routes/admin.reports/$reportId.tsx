@@ -65,7 +65,6 @@ function ReportDetailPage() {
         setActionDialog(null);
         setNotes("");
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onError: (error: any) => {
         toast.error(error.message || "Có lỗi xảy ra");
       },

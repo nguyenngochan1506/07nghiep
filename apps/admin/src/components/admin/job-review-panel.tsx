@@ -11,10 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@07nghiep/ui/components/dialog";
-import { trpc, trpcClient } from "../../utils/trpc";
+import { trpc } from "../../utils/trpc";
 import { JobModerationActions } from "./job-moderation-actions";
+import type { RouterOutputs } from "@07nghiep/server/routers/index";
 
-type JobForReview = Awaited<ReturnType<typeof trpcClient.admin.moderation.getJobForReview.query>>;
+type JobForReview = RouterOutputs["admin"]["moderation"]["getJobForReview"];
 
 interface JobReviewPanelProps {
   jobId: string;
