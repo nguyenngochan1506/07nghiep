@@ -5,6 +5,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type React from "react";
 import { ArrowRight, Heart, Search } from "lucide-react";
 import { JobCardItem } from "@/components/job-card";
+import { PageHero } from "@/components/page-hero";
 import { formatSalaryRangeVnd } from "@/lib/salary";
 import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
@@ -70,20 +71,17 @@ function SavedJobsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <section className="border-b border-border bg-surface-wash">
-        <div className="container mx-auto max-w-7xl px-4 py-10 md:px-6">
-          <div className="flex flex-col gap-2">
-            <p className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
-              <Heart className="size-4" />
-              Danh sách quan tâm
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Việc làm đã lưu</h1>
-            <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-              Lưu lại những vị trí phù hợp để so sánh, quay lại đọc kỹ và ứng tuyển khi sẵn sàng.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        image="saved"
+        eyebrow={
+          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
+            <Heart className="size-4" />
+            Danh sách quan tâm
+          </p>
+        }
+        title="Việc làm đã lưu"
+        description="Lưu lại những vị trí phù hợp để so sánh, quay lại đọc kỹ và ứng tuyển khi sẵn sàng."
+      />
 
       <main className="container mx-auto max-w-7xl px-4 py-8 md:px-6">
         {sessionPending ? (

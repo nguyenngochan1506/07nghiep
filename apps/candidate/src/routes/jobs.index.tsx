@@ -13,6 +13,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JobCardItem } from "@/components/job-card";
+import { PageHero } from "@/components/page-hero";
 import { SearchBar } from "@/components/search-bar";
 import { authClient } from "@/lib/auth-client";
 import { mapJob } from "@/routes/__root";
@@ -120,26 +121,18 @@ function JobsPage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
-      <div className="border-b bg-surface-wash px-4 py-10 md:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-7">
-          <div className="flex max-w-3xl flex-col gap-3">
-            <Badge className="w-fit bg-accent text-accent-foreground">Job discovery</Badge>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-              Tìm việc đúng với bạn
-            </h1>
-            <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-              Khám phá hàng ngàn cơ hội việc làm phù hợp với kỹ năng, vị trí và mức độ kinh nghiệm
-              của bạn.
-            </p>
-          </div>
-
-          <SearchBar
-            onSearch={handleSearch}
-            initialKeyword={search.keyword ?? ""}
-            initialLocations={splitLocationSearchParam(search.location)}
-          />
-        </div>
-      </div>
+      <PageHero
+        image="jobs"
+        eyebrow={<Badge className="w-fit bg-accent text-accent-foreground">Job discovery</Badge>}
+        title="Tìm việc đúng với bạn"
+        description="Khám phá hàng ngàn cơ hội việc làm phù hợp với kỹ năng, vị trí và mức độ kinh nghiệm của bạn."
+      >
+        <SearchBar
+          onSearch={handleSearch}
+          initialKeyword={search.keyword ?? ""}
+          initialLocations={splitLocationSearchParam(search.location)}
+        />
+      </PageHero>
 
       <div className="mx-auto w-full max-w-[96rem] px-4 py-8">
         <main ref={resultsTopRef} className="flex flex-1 scroll-mt-28 flex-col gap-6">

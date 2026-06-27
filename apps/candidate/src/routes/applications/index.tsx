@@ -24,6 +24,7 @@ import {
 
 import { trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
+import { PageHero } from "@/components/page-hero";
 import {
   ApplicationCard,
   type ApplicationCardProps,
@@ -118,30 +119,23 @@ function ApplicationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="border-b border-border bg-surface-wash">
-        <div className="container mx-auto max-w-7xl px-4 py-10 md:px-6">
-          <div className="flex flex-col gap-4">
-            <div className="space-y-2">
-              <p className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
-                <BriefcaseBusiness className="h-4 w-4" />
-                Hồ sơ ứng tuyển
-              </p>
-              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-                Danh sách đơn ứng tuyển
-              </h1>
-              <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-                Theo dõi toàn bộ đơn bạn đã gửi, xem trạng thái xử lý và mở chi tiết khi cần chỉnh
-                sửa.
-              </p>
-            </div>
-
-            <div className="flex flex-1 items-center gap-2 text-sm text-muted-foreground">
-              {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              <span>{applications.length} đơn ứng tuyển</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        image="applications"
+        eyebrow={
+          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
+            <BriefcaseBusiness className="h-4 w-4" />
+            Hồ sơ ứng tuyển
+          </p>
+        }
+        title="Danh sách đơn ứng tuyển"
+        description="Theo dõi toàn bộ đơn bạn đã gửi, xem trạng thái xử lý và mở chi tiết khi cần chỉnh sửa."
+        meta={
+          <span className="inline-flex items-center gap-2">
+            {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {applications.length} đơn ứng tuyển
+          </span>
+        }
+      />
 
       <main className="container mx-auto max-w-7xl px-4 py-8 md:px-6">
         {/* Search, Filter, Sort Bar */}

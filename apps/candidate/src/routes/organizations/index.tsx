@@ -8,6 +8,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, CheckCircle2, ChevronRight, MapPin, Search, Users } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { PageHero } from "@/components/page-hero";
 import { ProvinceMultiSelect } from "@/components/province-multi-select";
 import { trpc } from "@/utils/trpc";
 
@@ -73,46 +74,41 @@ function OrganizationsPage() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <div className="border-b bg-surface-wash px-4 py-12 md:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
-          <div className="mx-auto flex max-w-3xl flex-col gap-3 text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              Công ty
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Khám phá các công ty hàng đầu và cơ hội việc làm từ họ
-            </p>
+      <PageHero
+        image="organizations"
+        title="Công ty"
+        description="Khám phá các công ty hàng đầu và cơ hội việc làm từ họ"
+        align="center"
+        contentClassName="max-w-6xl"
+      >
+        <div className="mx-auto grid w-full max-w-3xl gap-2 rounded-xl border bg-card/95 p-2 shadow-md shadow-primary/5 backdrop-blur md:grid-cols-[1fr_0.8fr]">
+          <div className="relative flex h-11 w-full items-center">
+            <Search className="absolute left-3 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm công ty theo tên..."
+              className="h-11 border-transparent bg-transparent pl-10 focus-visible:border-ring"
+              value={keyword}
+              onChange={(e) => {
+                setKeyword(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
           </div>
 
-          <div className="mx-auto grid w-full max-w-3xl gap-2 rounded-xl border bg-card p-2 shadow-md shadow-primary/5 md:grid-cols-[1fr_0.8fr]">
-            <div className="relative flex h-11 w-full items-center">
-              <Search className="absolute left-3 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm công ty theo tên..."
-                className="h-11 border-transparent bg-transparent pl-10 focus-visible:border-ring"
-                value={keyword}
-                onChange={(e) => {
-                  setKeyword(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
-
-            <div className="relative flex min-h-11 w-full items-center">
-              <MapPin className="pointer-events-none absolute left-3 z-10 size-4 shrink-0 text-muted-foreground" />
-              <ProvinceMultiSelect
-                value={locations}
-                onValueChange={(nextLocations) => {
-                  setLocations(nextLocations);
-                  setCurrentPage(1);
-                }}
-                placeholder="Tỉnh/thành phố"
-                triggerClassName="min-h-11 border-transparent bg-transparent pl-9 focus-visible:border-ring"
-              />
-            </div>
+          <div className="relative flex min-h-11 w-full items-center">
+            <MapPin className="pointer-events-none absolute left-3 z-10 size-4 shrink-0 text-muted-foreground" />
+            <ProvinceMultiSelect
+              value={locations}
+              onValueChange={(nextLocations) => {
+                setLocations(nextLocations);
+                setCurrentPage(1);
+              }}
+              placeholder="Tỉnh/thành phố"
+              triggerClassName="min-h-11 border-transparent bg-transparent pl-9 focus-visible:border-ring"
+            />
           </div>
         </div>
-      </div>
+      </PageHero>
 
       <div ref={resultsTopRef} className="mx-auto max-w-6xl scroll-mt-28 px-4 py-8">
         {!isLoading && organizations.length > 0 ? (
