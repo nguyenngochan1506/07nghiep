@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -29,6 +30,7 @@ import { Label } from "@07nghiep/ui/components/label";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { ProvinceCombobox } from "@/components/province-combobox";
 import { type JobType, useJobs } from "@/routes/__root";
+import { trpc } from "@/utils/trpc";
 
 export const Route = createFileRoute("/home")({
   component: HomeComponent,
@@ -61,15 +63,21 @@ const JOURNEY_STEPS = [
 
 const WORK_MODES = ["Remote", "Hybrid", "Onsite"];
 
+function formatStatCount(value: number | undefined) {
+  if (!value) return "Đang cập nhật";
+
+  return `${new Intl.NumberFormat("vi-VN").format(value)}+`;
+}
+
 function HomeComponent() {
   const navigate = useNavigate({ from: "/home" });
   const { jobs, isLoading, isError } = useJobs();
+  const jobStatsQuery = useQuery(trpc.job.getPublicList.queryOptions({ limit: 1 }));
+  const organizationStatsQuery = useQuery(
+    trpc.organization.getPublicList.queryOptions({ limit: 1 }),
+  );
 
   const featuredJobs = useMemo(() => jobs.slice(0, 4), [jobs]);
-  const companyCount = useMemo(
-    () => new Set(jobs.map((job) => job.companyName).filter(Boolean)).size,
-    [jobs],
-  );
   const visibleSkills = useMemo(
     () => Array.from(new Set(jobs.flatMap((job) => job.skills))).slice(0, 8),
     [jobs],
@@ -77,12 +85,14 @@ function HomeComponent() {
 
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
-  const openJobsLabel = isLoading
-    ? "Đang tải"
-    : jobs.length > 0
-      ? `${jobs.length} việc đang mở`
-      : "Đang cập nhật việc";
-  const companyLabel = companyCount > 0 ? `${companyCount} công ty` : "Hồ sơ công ty";
+  const totalJobs = jobStatsQuery.data?.total;
+  const totalOrganizations = organizationStatsQuery.data?.total;
+  const openJobsLabel = `${formatStatCount(totalJobs)} việc đang mở`;
+  const companyLabel = `${formatStatCount(totalOrganizations)} công ty`;
+  const proofText =
+    totalJobs && totalOrganizations
+      ? `Có hơn ${new Intl.NumberFormat("vi-VN").format(totalJobs)} công việc từ hơn ${new Intl.NumberFormat("vi-VN").format(totalOrganizations)} công ty trong và ngoài nước.`
+      : "Có hàng nghìn cơ hội việc làm từ nhiều công ty trong và ngoài nước.";
 
   const handleSearchSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -123,6 +133,10 @@ function HomeComponent() {
                 Một workspace để tìm việc, so sánh công ty, lưu cơ hội tốt và theo dõi ứng tuyển
                 trong cùng một luồng.
               </p>
+            </div>
+
+            <div className="max-w-2xl rounded-xl border border-primary/15 bg-card/80 px-4 py-3 text-sm font-medium text-primary shadow-sm shadow-primary/5">
+              {proofText}
             </div>
 
             <form
@@ -252,13 +266,10 @@ function HomeComponent() {
               </CardFooter>
             </Card>
           ) : featuredJobs.length > 0 ? (
-            <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-              <FeaturedJobCard job={featuredJobs[0]} featured />
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                {featuredJobs.slice(1).map((job) => (
-                  <FeaturedJobCard key={job.id} job={job} />
-                ))}
-              </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {featuredJobs.map((job, index) => (
+                <FeaturedJobCard key={job.id} job={job} highlighted={index === 0} />
+              ))}
             </div>
           ) : (
             <Card>
@@ -418,10 +429,16 @@ function HomeComponent() {
   );
 }
 
-function FeaturedJobCard({ job, featured = false }: { job: JobType; featured?: boolean }) {
+function FeaturedJobCard({ job, highlighted = false }: { job: JobType; highlighted?: boolean }) {
   return (
-    <Card className={featured ? "min-h-full" : undefined}>
-      <CardHeader>
+    <Card
+      className={
+        highlighted
+          ? "h-full gap-0 overflow-hidden border-brand-orange/35 py-0 shadow-md shadow-primary/5"
+          : "h-full gap-0 overflow-hidden py-0"
+      }
+    >
+      <CardHeader className="min-h-[96px] px-4 py-4">
         <div className="flex items-start gap-3">
           <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted">
             {job.companyLogo ? (
@@ -436,19 +453,26 @@ function FeaturedJobCard({ job, featured = false }: { job: JobType; featured?: b
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <CardTitle className={featured ? "text-xl md:text-2xl" : undefined}>
-              {job.title}
+            <CardTitle className="line-clamp-2 text-base leading-snug">
+              <Link to="/jobs/$jobId" params={{ jobId: job.id }} className="hover:text-primary">
+                {job.title}
+              </Link>
             </CardTitle>
-            <CardDescription>{job.companyName}</CardDescription>
+            <CardDescription className="mt-1 line-clamp-1">{job.companyName}</CardDescription>
           </div>
-          {job.isVerified ? <Badge variant="secondary">Xác thực</Badge> : null}
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-          <span className="flex items-center gap-2">
-            <MapPin className="size-4" />
-            {job.location || "Linh hoạt"}
+      <CardContent className="flex flex-1 flex-col gap-3 px-4 py-0">
+        {job.isVerified ? (
+          <Badge variant="secondary" className="w-fit">
+            Xác thực
+          </Badge>
+        ) : null}
+
+        <div className="flex min-h-[72px] flex-col gap-2 text-sm text-muted-foreground">
+          <span className="flex items-start gap-2">
+            <MapPin className="mt-0.5 size-4 shrink-0" />
+            <span className="line-clamp-2">{job.location || "Linh hoạt"}</span>
           </span>
           <span className="flex items-center gap-2">
             <Clock3 className="size-4" />
@@ -458,24 +482,16 @@ function FeaturedJobCard({ job, featured = false }: { job: JobType; featured?: b
 
         <div className="text-base font-semibold text-brand-orange">{job.salaryRange}</div>
 
-        <div className="flex flex-wrap gap-2">
-          {job.skills.slice(0, featured ? 5 : 3).map((skill) => (
+        <div className="flex min-h-7 flex-wrap gap-2">
+          {job.skills.slice(0, 3).map((skill) => (
             <Badge key={skill} variant="outline">
               {skill}
             </Badge>
           ))}
         </div>
       </CardContent>
-      <CardFooter>
-        <Button
-          asChild
-          variant={featured ? "default" : "outline"}
-          className={
-            featured
-              ? "w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
-              : "w-full"
-          }
-        >
+      <CardFooter className="mt-auto border-t bg-card px-4 py-3">
+        <Button asChild variant="outline" className="w-full">
           <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
             Xem chi tiết
             <ArrowRight data-icon="inline-end" />
@@ -510,35 +526,23 @@ function InsightItem({
 
 function JobSkeletonGrid() {
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-7 w-2/3" />
-          <Skeleton className="h-4 w-1/3" />
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <Skeleton className="h-5 w-40" />
-          <div className="flex gap-2">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {[0, 1, 2, 3].map((item) => (
+        <Card key={item} className="h-full gap-0 py-0">
+          <CardHeader className="px-4 py-4">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 px-4 py-0">
             <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-5 w-16" />
-          </div>
-        </CardContent>
-      </Card>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-        {[0, 1, 2].map((item) => (
-          <Card key={item}>
-            <CardHeader>
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent className="flex gap-2">
-              <Skeleton className="h-5 w-16" />
-              <Skeleton className="h-5 w-20" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-5 w-32" />
+          </CardContent>
+          <CardFooter className="mt-4 border-t px-4 py-3">
+            <Skeleton className="h-9 w-full rounded-md" />
+          </CardFooter>
+        </Card>
+      ))}
     </div>
   );
 }
