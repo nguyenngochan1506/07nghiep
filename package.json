@@ -32,6 +32,7 @@
   "dependencies": {
     "@07nghiep/env": "workspace:*",
     "dotenv": "catalog:",
+    "resend": "^6.12.3",
     "zod": "catalog:"
   },
   "devDependencies": {
