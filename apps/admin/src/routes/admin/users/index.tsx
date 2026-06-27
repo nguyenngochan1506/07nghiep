@@ -1,11 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  useLocation,
-  useNavigate,
-  Link,
-} from "@tanstack/react-router";
+import { createFileRoute, useLocation, useNavigate, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -73,16 +68,14 @@ function UsersRoute() {
     return () => clearTimeout(id);
   }, [searchInput]);
 
-  const suggestionsQuery = useQuery(
-    {
-      ...trpc.admin.users.suggestions.queryOptions({ q: debouncedInput }),
-      enabled: debouncedInput.length >= 2 && showSuggestions,
-    },
-  );
+  const suggestionsQuery = useQuery({
+    ...trpc.admin.users.suggestions.queryOptions({ q: debouncedInput }),
+    enabled: debouncedInput.length >= 2 && showSuggestions,
+  });
 
   const query = useQuery(
     trpc.admin.users.list.queryOptions({
-    // trpc.admin.user.getUsers.queryOptions({
+      // trpc.admin.user.getUsers.queryOptions({
       page: searchParams.page,
       limit: searchParams.limit,
       search: searchParams.search || undefined,
@@ -90,18 +83,13 @@ function UsersRoute() {
         searchParams.role === "ALL"
           ? undefined
           : (searchParams.role as "ADMIN" | "EMPLOYER" | "CANDIDATE"),
-      status:
-        searchParams.status === "ALL"
-          ? undefined
-          : (searchParams.status as UserStatus),
+      status: searchParams.status === "ALL" ? undefined : (searchParams.status as UserStatus),
       sortBy: (searchParams.sortBy as "createdAt" | "name" | "email") ?? "createdAt",
       order: (searchParams.order as "asc" | "desc") ?? "desc",
     }),
   );
 
-  const updateStatusMutation = useMutation(
-    trpc.admin.users.updateStatus.mutationOptions(),
-  );
+  const updateStatusMutation = useMutation(trpc.admin.users.updateStatus.mutationOptions());
 
   const rows = (query.data?.data ?? []) as UserRow[];
   const selectedIds = Object.keys(selected).filter((id) => selected[id]);
@@ -120,12 +108,7 @@ function UsersRoute() {
     const s = new URLSearchParams(location.search);
 
     for (const [key, value] of Object.entries(next)) {
-      if (
-        value === undefined ||
-        value === null ||
-        value === "" ||
-        value === "ALL"
-      ) {
+      if (value === undefined || value === null || value === "" || value === "ALL") {
         s.delete(key);
       } else {
         s.set(key, String(value));
@@ -142,25 +125,17 @@ function UsersRoute() {
         userIds: [row.id],
         action: row.status === "ACTIVE" ? "suspend" : "activate",
       });
-      toast.success(
-        row.status === "ACTIVE"
-          ? "Đã khóa tài khoản"
-          : "Đã kích hoạt tài khoản",
-      );
+      toast.success(row.status === "ACTIVE" ? "Đã khóa tài khoản" : "Đã kích hoạt tài khoản");
       await queryClient.invalidateQueries({
         queryKey: trpc.admin.users.list.queryOptions({
-        // queryKey: trpc.admin.user.getUsers.queryOptions({
+          // queryKey: trpc.admin.user.getUsers.queryOptions({
           page: searchParams.page,
           limit: searchParams.limit,
         }).queryKey,
       });
       query.refetch();
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Không thể cập nhật trạng thái",
-      );
+      toast.error(error instanceof Error ? error.message : "Không thể cập nhật trạng thái");
     }
   }
 
@@ -179,7 +154,7 @@ function UsersRoute() {
       setSelected({});
       await queryClient.invalidateQueries({
         queryKey: trpc.admin.users.list.queryOptions({
-        // queryKey: trpc.admin.user.getUsers.queryOptions({
+          // queryKey: trpc.admin.user.getUsers.queryOptions({
           page: searchParams.page,
           limit: searchParams.limit,
         }).queryKey,
@@ -187,9 +162,7 @@ function UsersRoute() {
       query.refetch();
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Không thể thực hiện thao tác hàng loạt",
+        error instanceof Error ? error.message : "Không thể thực hiện thao tác hàng loạt",
       );
     }
   }
@@ -200,8 +173,7 @@ function UsersRoute() {
       return;
     }
 
-    const csvHeader =
-      ["id", "name", "email", "role", "status", "joined"].join(",") + "\n";
+    const csvHeader = `${["id", "name", "email", "role", "status", "joined"].join(",")}\n`;
     const csvRows = rows
       .map((row) =>
         [
@@ -234,9 +206,7 @@ function UsersRoute() {
         <Card>
           <CardHeader>
             <CardTitle>Quản lý Người dùng</CardTitle>
-            <CardDescription>
-              Quản lý tài khoản, vai trò và trạng thái truy cập
-            </CardDescription>
+            <CardDescription>Quản lý tài khoản, vai trò và trạng thái truy cập</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -254,7 +224,11 @@ function UsersRoute() {
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        if (activeIndex >= 0 && suggestionsQuery.data && suggestionsQuery.data[activeIndex]) {
+                        if (
+                          activeIndex >= 0 &&
+                          suggestionsQuery.data &&
+                          suggestionsQuery.data[activeIndex]
+                        ) {
                           const s = suggestionsQuery.data[activeIndex];
                           setSearchInput(s.label);
                           pushSearch({ search: s.label, page: 1 });
@@ -283,8 +257,9 @@ function UsersRoute() {
                     <div className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-auto rounded-md border bg-background shadow-md">
                       {suggestionsQuery.data.map((s, idx) => (
                         <button
+                          type="button"
                           key={s.id}
-                          className={`block w-full px-3 py-2 text-left hover:bg-muted/30 ${idx === activeIndex ? 'bg-muted/30' : ''}`}
+                          className={`block w-full px-3 py-2 text-left hover:bg-muted/30 ${idx === activeIndex ? "bg-muted/30" : ""}`}
                           onMouseEnter={() => setActiveIndex(idx)}
                           onMouseLeave={() => setActiveIndex(-1)}
                           onClick={() => {
@@ -303,9 +278,7 @@ function UsersRoute() {
 
                 <Select
                   value={searchParams.role}
-                  onValueChange={(value) =>
-                    pushSearch({ role: value ?? "ALL", page: 1 })
-                  }
+                  onValueChange={(value) => pushSearch({ role: value ?? "ALL", page: 1 })}
                 >
                   <SelectTrigger className="w-full md:w-48">
                     <SelectValue placeholder="Lọc vai trò" />
@@ -320,9 +293,7 @@ function UsersRoute() {
 
                 <Select
                   value={searchParams.status}
-                  onValueChange={(value) =>
-                    pushSearch({ status: value ?? "ALL", page: 1 })
-                  }
+                  onValueChange={(value) => pushSearch({ status: value ?? "ALL", page: 1 })}
                 >
                   <SelectTrigger className="w-full md:w-48">
                     <SelectValue placeholder="Lọc trạng thái" />
@@ -371,17 +342,10 @@ function UsersRoute() {
               <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm">
                 <span>{selectedIds.length} người dùng đã chọn</span>
                 <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleBulkStatus("suspend")}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatus("suspend")}>
                     Khóa hàng loạt
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleBulkStatus("activate")}
-                  >
+                  <Button size="sm" onClick={() => handleBulkStatus("activate")}>
                     Kích hoạt hàng loạt
                   </Button>
                 </div>
@@ -446,9 +410,7 @@ function UsersRoute() {
                         </td>
                         <td className="p-3 align-top">
                           <div className="font-medium">{row.name}</div>
-                          <div className="text-muted-foreground">
-                            {row.email}
-                          </div>
+                          <div className="text-muted-foreground">{row.email}</div>
                         </td>
                         <td className="p-3 align-top">
                           <Badge
@@ -464,11 +426,7 @@ function UsersRoute() {
                           </Badge>
                         </td>
                         <td className="p-3 align-top">
-                          <Badge
-                            variant={
-                              row.status === "ACTIVE" ? "default" : "outline"
-                            }
-                          >
+                          <Badge variant={row.status === "ACTIVE" ? "default" : "outline"}>
                             {row.status}
                           </Badge>
                         </td>
@@ -508,9 +466,7 @@ function UsersRoute() {
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    pushSearch({ page: Math.max(1, searchParams.page - 1) })
-                  }
+                  onClick={() => pushSearch({ page: Math.max(1, searchParams.page - 1) })}
                   disabled={searchParams.page <= 1}
                 >
                   Trước

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApplicationStatus } from "@/types/application";
-import { trpc, queryClient } from "../../utils/trpc";
+import { trpc, trpcClient, queryClient } from "../../utils/trpc";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -15,24 +15,119 @@ import {
   SelectValue,
 } from "@07nghiep/ui/components/select";
 import { Textarea } from "@07nghiep/ui/components/textarea";
-import { Calendar, Download, ExternalLink, Mail, MapPin, Phone, User, Plus, Clock, MapPin as MapPinIcon, Link as LinkIcon, X, Check } from "lucide-react";
+import {
+  Calendar,
+  Download,
+  ExternalLink,
+  Mail,
+  MapPin,
+  Phone,
+  User,
+  Plus,
+  Clock,
+  MapPin as MapPinIcon,
+  Link as LinkIcon,
+  X,
+} from "lucide-react";
 import { format } from "date-fns";
 import { getStatusColor, getStatusLabel } from "../../components/applications/application-card";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@07nghiep/ui/components/dialog";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@07nghiep/ui/components/dialog";
 
 export const Route = createFileRoute("/applications/$applicationId")({
   component: ApplicationDetailPage,
 });
 
+type CandidateProfile = {
+  avatarUrl: string | null;
+  summary: string | null;
+  skills: string[] | null;
+  experience: unknown;
+  education: unknown;
+  phone: string | null;
+  location: string | null;
+  resumeUrl: string | null;
+  portfolioUrl: string | null;
+};
+type ApplicationDetail = {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: Date | string;
+  resumeUrl: string | null;
+  coverLetter: string | null;
+  answers: unknown;
+  notes: string | null;
+  candidate: {
+    name: string | null;
+    email: string;
+    image: string | null;
+    profile: CandidateProfile | null;
+  };
+  job: {
+    title: string;
+  };
+};
+type InterviewItem = {
+  id: string;
+  status: string;
+  scheduledAt: Date | string;
+  durationMinutes: number;
+  location: string | null;
+  meetingLink: string | null;
+  notes: string | null;
+};
+type ProfileExperience = {
+  title?: string;
+  company?: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+};
+type ProfileEducation = {
+  degree?: string;
+  school?: string;
+  location?: string;
+  startYear?: string | number;
+  endYear?: string | number;
+  gpa?: string | number;
+};
+type UpdateStatusInput = {
+  id: string;
+  status: ApplicationStatus;
+};
+type UpdateNotesInput = {
+  id: string;
+  notes: string;
+};
+
+function isApplicationStatus(value: string): value is ApplicationStatus {
+  return Object.values(ApplicationStatus).includes(value as ApplicationStatus);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readProfileEntries<T extends object>(value: unknown): T[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRecord) as T[];
+}
+
 function ApplicationDetailPage() {
   const { applicationId } = Route.useParams();
-  const { data: application, isLoading } = useQuery(
-    trpc.application.get.queryOptions({ id: applicationId })
+  const { data: rawApplication, isLoading } = useQuery(
+    trpc.application.get.queryOptions({ id: applicationId }),
   );
 
   const [notes, setNotes] = useState("");
@@ -47,7 +142,7 @@ function ApplicationDetailPage() {
   const [interviewNotes, setInterviewNotes] = useState("");
 
   const { data: interviews, isLoading: interviewsLoading } = useQuery(
-    trpc.interview.list.queryOptions({ applicationId })
+    trpc.interview.list.queryOptions({ applicationId }),
   );
 
   const createInterview = useMutation(
@@ -58,8 +153,8 @@ function ApplicationDetailPage() {
         setScheduleOpen(false);
         resetInterviewForm();
       },
-      onError: (err: any) => toast.error(err.message || "Không thể lên lịch"),
-    })
+      onError: (err) => toast.error(err.message || "Không thể lên lịch"),
+    }),
   );
 
   const cancelInterview = useMutation(
@@ -68,8 +163,8 @@ function ApplicationDetailPage() {
         queryClient.invalidateQueries();
         toast.success("Đã hủy lịch phỏng vấn");
       },
-      onError: (err: any) => toast.error(err.message || "Không thể hủy lịch"),
-    })
+      onError: (err) => toast.error(err.message || "Không thể hủy lịch"),
+    }),
   );
 
   const resetInterviewForm = () => {
@@ -97,34 +192,32 @@ function ApplicationDetailPage() {
   };
 
   useEffect(() => {
-    if (application?.notes) {
-      setNotes(application.notes);
+    if (rawApplication?.notes) {
+      setNotes(rawApplication.notes);
     }
-  }, [application?.notes]);
+  }, [rawApplication?.notes]);
 
-  const updateStatusMutation = useMutation(
-    trpc.application.updateStatus.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries();
-        toast.success("Application status updated");
-      },
-      onError: (err: any) => {
-        toast.error(err.message || "Failed to update status");
-      },
-    })
-  );
+  const updateStatusMutation = useMutation({
+    mutationFn: (input: UpdateStatusInput) => trpcClient.application.updateStatus.mutate(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast.success("Application status updated");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to update status");
+    },
+  });
 
-  const updateNotesMutation = useMutation(
-    trpc.application.updateNotes.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries();
-        toast.success("Notes saved successfully");
-      },
-      onError: (err: any) => {
-        toast.error(err.message || "Failed to save notes");
-      },
-    })
-  );
+  const updateNotesMutation = useMutation({
+    mutationFn: (input: UpdateNotesInput) => trpcClient.application.updateNotes.mutate(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast.success("Notes saved successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to save notes");
+    },
+  });
 
   const handleStatusChange = (status: ApplicationStatus) => {
     updateStatusMutation.mutate({
@@ -144,11 +237,16 @@ function ApplicationDetailPage() {
     return <div className="p-8 text-center text-muted-foreground">Loading application...</div>;
   }
 
-  if (!application) {
+  if (!rawApplication) {
     return <div className="p-8 text-center text-muted-foreground">Application not found</div>;
   }
 
-  const profile = application.candidate.profile as any;
+  const application = rawApplication as unknown as ApplicationDetail;
+  const profile: CandidateProfile | null = application.candidate.profile;
+  const profileExperience = readProfileEntries<ProfileExperience>(profile?.experience);
+  const profileEducation = readProfileEntries<ProfileEducation>(profile?.education);
+  const answers = application.answers;
+  const interviewItems = (interviews ?? []) as unknown as InterviewItem[];
 
   return (
     <div className="flex flex-col gap-6 p-8 max-w-[1200px] mx-auto w-full">
@@ -186,7 +284,12 @@ function ApplicationDetailPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          <Select value={application.status as any} onValueChange={(val) => handleStatusChange(val as any)}>
+          <Select
+            value={application.status}
+            onValueChange={(value) => {
+              if (value && isApplicationStatus(value)) handleStatusChange(value);
+            }}
+          >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Update Status" />
             </SelectTrigger>
@@ -198,7 +301,7 @@ function ApplicationDetailPage() {
               ))}
             </SelectContent>
           </Select>
-          
+
           <div className="flex gap-2 w-full sm:w-auto">
             <Button variant="outline" className="flex-1 sm:flex-none">
               <Mail className="h-4 w-4 mr-2" />
@@ -218,27 +321,38 @@ function ApplicationDetailPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Left Column - Details */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="w-full justify-start border-b rounded-none h-12 bg-transparent p-0">
-              <TabsTrigger value="profile" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6">
+              <TabsTrigger
+                value="profile"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
+              >
                 Candidate Profile
               </TabsTrigger>
-              <TabsTrigger value="cover-letter" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6">
+              <TabsTrigger
+                value="cover-letter"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
+              >
                 Cover Letter
               </TabsTrigger>
-              {!!(application as any).answers && (
-                <TabsTrigger value="questions" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6">
+              {!!answers && (
+                <TabsTrigger
+                  value="questions"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
+                >
                   Screening Questions
                 </TabsTrigger>
               )}
-              <TabsTrigger value="interviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6">
+              <TabsTrigger
+                value="interviews"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
+              >
                 Phỏng vấn
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="profile" className="pt-6 outline-none">
               {!profile ? (
                 <Card>
@@ -249,91 +363,98 @@ function ApplicationDetailPage() {
                 </Card>
               ) : (
                 <div className="space-y-6">
-                   {/* Summary */}
-                   {profile.summary && (
-                     <Card>
-                       <CardHeader>
-                         <CardTitle className="text-lg">About</CardTitle>
-                       </CardHeader>
-                       <CardContent>
-                         <p className="text-muted-foreground whitespace-pre-wrap">{profile.summary}</p>
-                       </CardContent>
-                     </Card>
-                   )}
+                  {/* Summary */}
+                  {profile.summary && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">About</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground whitespace-pre-wrap">
+                          {profile.summary}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
 
-                   {/* Skills */}
-                   {Array.isArray(profile.skills) && profile.skills.length > 0 && (
-                     <Card>
-                       <CardHeader>
-                         <CardTitle className="text-lg">Skills</CardTitle>
-                       </CardHeader>
-                       <CardContent>
-                         <div className="flex flex-wrap gap-2">
-                           {profile.skills.map((skill: string) => (
-                             <Badge key={skill} variant="secondary" className="rounded-full">
-                               {skill}
-                             </Badge>
-                           ))}
-                         </div>
-                       </CardContent>
-                     </Card>
-                   )}
-                  
-                   {/* Experience */}
-                   {Array.isArray(profile.experience) && profile.experience.length > 0 && (
-                     <Card>
-                       <CardHeader>
-                         <CardTitle className="text-lg">Experience</CardTitle>
-                       </CardHeader>
-                       <CardContent>
-                         <div className="space-y-4">
-                           {profile.experience.map((exp: any, i: number) => (
-                             <div key={i} className="border-l-2 border-muted pl-4">
-                               <h4 className="font-semibold">{exp.title || "Untitled"}</h4>
-                               <p className="text-sm text-muted-foreground">
-                                 {exp.company}{exp.location ? ` · ${exp.location}` : ""}
-                               </p>
-                               <p className="text-xs text-muted-foreground">
-                                 {exp.startDate || "?"} — {exp.endDate || exp.current ? "Present" : "?"}
-                               </p>
-                               {exp.description && (
-                                 <p className="text-sm text-muted-foreground mt-1">{exp.description}</p>
-                               )}
-                             </div>
-                           ))}
-                         </div>
-                       </CardContent>
-                     </Card>
-                   )}
-                   
-                   {/* Education */}
-                   {Array.isArray(profile.education) && profile.education.length > 0 && (
-                     <Card>
-                       <CardHeader>
-                         <CardTitle className="text-lg">Education</CardTitle>
-                       </CardHeader>
-                       <CardContent>
-                         <div className="space-y-4">
-                           {profile.education.map((edu: any, i: number) => (
-                             <div key={i} className="border-l-2 border-muted pl-4">
-                               <h4 className="font-semibold">{edu.degree || "Untitled"}</h4>
-                               <p className="text-sm text-muted-foreground">
-                                 {edu.school}{edu.location ? ` · ${edu.location}` : ""}
-                               </p>
-                               <p className="text-xs text-muted-foreground">
-                                 {edu.startYear || "?"} — {edu.endYear || "Present"}
-                                 {edu.gpa ? ` · GPA: ${edu.gpa}` : ""}
-                               </p>
-                             </div>
-                           ))}
-                         </div>
-                       </CardContent>
-                     </Card>
-                   )}
+                  {/* Skills */}
+                  {Array.isArray(profile.skills) && profile.skills.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Skills</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                          {profile.skills.map((skill: string) => (
+                            <Badge key={skill} variant="secondary" className="rounded-full">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Experience */}
+                  {profileExperience.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Experience</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {profileExperience.map((exp, i) => (
+                            <div key={i} className="border-l-2 border-muted pl-4">
+                              <h4 className="font-semibold">{exp.title || "Untitled"}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {exp.company}
+                                {exp.location ? ` · ${exp.location}` : ""}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {exp.startDate || "?"} —{" "}
+                                {exp.endDate || exp.current ? "Present" : "?"}
+                              </p>
+                              {exp.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {exp.description}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Education */}
+                  {profileEducation.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Education</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {profileEducation.map((edu, i) => (
+                            <div key={i} className="border-l-2 border-muted pl-4">
+                              <h4 className="font-semibold">{edu.degree || "Untitled"}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {edu.school}
+                                {edu.location ? ` · ${edu.location}` : ""}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {edu.startYear || "?"} — {edu.endYear || "Present"}
+                                {edu.gpa ? ` · GPA: ${edu.gpa}` : ""}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
             </TabsContent>
-            
+
             <TabsContent value="cover-letter" className="pt-6 outline-none">
               <Card>
                 <CardContent className="p-8">
@@ -349,13 +470,13 @@ function ApplicationDetailPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-            
-            {!!(application as any).answers && (
+
+            {!!answers && (
               <TabsContent value="questions" className="pt-6 outline-none">
                 <Card>
                   <CardContent className="p-6">
                     <pre className="text-sm bg-muted p-4 rounded-lg overflow-auto">
-                      {JSON.stringify((application as any).answers, null, 2)}
+                      {JSON.stringify(answers, null, 2)}
                     </pre>
                   </CardContent>
                 </Card>
@@ -379,30 +500,62 @@ function ApplicationDetailPage() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
                             <Label>Ngày</Label>
-                            <Input type="date" value={interviewDate} onChange={(e) => setInterviewDate(e.target.value)} />
+                            <Input
+                              type="date"
+                              value={interviewDate}
+                              onChange={(e) => setInterviewDate(e.target.value)}
+                            />
                           </div>
                           <div className="flex flex-col gap-2">
                             <Label>Giờ</Label>
-                            <Input type="time" value={interviewTime} onChange={(e) => setInterviewTime(e.target.value)} />
+                            <Input
+                              type="time"
+                              value={interviewTime}
+                              onChange={(e) => setInterviewTime(e.target.value)}
+                            />
                           </div>
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label>Thời lượng (phút)</Label>
-                          <Input type="number" value={interviewDuration} onChange={(e) => setInterviewDuration(Number(e.target.value))} min={15} max={480} step={15} />
+                          <Input
+                            type="number"
+                            value={interviewDuration}
+                            onChange={(e) => setInterviewDuration(Number(e.target.value))}
+                            min={15}
+                            max={480}
+                            step={15}
+                          />
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label>Địa điểm</Label>
-                          <Input placeholder="Văn phòng, Online..." value={interviewLocation} onChange={(e) => setInterviewLocation(e.target.value)} />
+                          <Input
+                            placeholder="Văn phòng, Online..."
+                            value={interviewLocation}
+                            onChange={(e) => setInterviewLocation(e.target.value)}
+                          />
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label>Link họp (Google Meet, Zoom...)</Label>
-                          <Input placeholder="https://meet.google.com/..." value={interviewLink} onChange={(e) => setInterviewLink(e.target.value)} />
+                          <Input
+                            placeholder="https://meet.google.com/..."
+                            value={interviewLink}
+                            onChange={(e) => setInterviewLink(e.target.value)}
+                          />
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label>Ghi chú</Label>
-                          <Textarea placeholder="Ghi chú cho ứng viên..." value={interviewNotes} onChange={(e) => setInterviewNotes(e.target.value)} rows={3} />
+                          <Textarea
+                            placeholder="Ghi chú cho ứng viên..."
+                            value={interviewNotes}
+                            onChange={(e) => setInterviewNotes(e.target.value)}
+                            rows={3}
+                          />
                         </div>
-                        <Button className="w-full" onClick={handleScheduleInterview} disabled={createInterview.isPending}>
+                        <Button
+                          className="w-full"
+                          onClick={handleScheduleInterview}
+                          disabled={createInterview.isPending}
+                        >
                           {createInterview.isPending ? "Đang lưu..." : "Lưu lịch phỏng vấn"}
                         </Button>
                       </div>
@@ -412,8 +565,8 @@ function ApplicationDetailPage() {
 
                 {interviewsLoading ? (
                   <p className="text-sm text-muted-foreground">Đang tải...</p>
-                ) : interviews && (interviews as any[]).length > 0 ? (
-                  (interviews as any[]).map((iv: any) => {
+                ) : interviewItems.length > 0 ? (
+                  interviewItems.map((iv) => {
                     const isActive = iv.status !== "CANCELLED" && iv.status !== "COMPLETED";
                     const dateStr = new Date(iv.scheduledAt).toLocaleDateString("vi-VN", {
                       weekday: "long",
@@ -430,14 +583,25 @@ function ApplicationDetailPage() {
                         <CardContent className="p-4 space-y-2">
                           <div className="flex items-center justify-between">
                             <Badge variant={isActive ? "default" : "secondary"}>
-                              {iv.status === "SCHEDULED" ? "Đã lên lịch" :
-                               iv.status === "CONFIRMED" ? "Đã xác nhận" :
-                               iv.status === "CANCELLED" ? "Đã hủy" :
-                               iv.status === "COMPLETED" ? "Đã hoàn thành" : iv.status}
+                              {iv.status === "SCHEDULED"
+                                ? "Đã lên lịch"
+                                : iv.status === "CONFIRMED"
+                                  ? "Đã xác nhận"
+                                  : iv.status === "CANCELLED"
+                                    ? "Đã hủy"
+                                    : iv.status === "COMPLETED"
+                                      ? "Đã hoàn thành"
+                                      : iv.status}
                             </Badge>
                             {isActive && (
-                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => cancelInterview.mutate({ id: iv.id })}>
-                                <X className="h-4 w-4 mr-1" />Hủy
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => cancelInterview.mutate({ id: iv.id })}
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Hủy
                               </Button>
                             )}
                           </div>
@@ -448,7 +612,9 @@ function ApplicationDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-muted-foreground" />
-                              <span>{timeStr} · {iv.durationMinutes} phút</span>
+                              <span>
+                                {timeStr} · {iv.durationMinutes} phút
+                              </span>
                             </div>
                             {iv.location && (
                               <div className="flex items-center gap-2">
@@ -459,12 +625,21 @@ function ApplicationDetailPage() {
                             {iv.meetingLink && (
                               <div className="flex items-center gap-2">
                                 <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                                <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{iv.meetingLink}</a>
+                                <a
+                                  href={iv.meetingLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-primary hover:underline truncate"
+                                >
+                                  {iv.meetingLink}
+                                </a>
                               </div>
                             )}
                           </div>
                           {iv.notes && (
-                            <p className="text-xs text-muted-foreground mt-2 border-t pt-2">{iv.notes}</p>
+                            <p className="text-xs text-muted-foreground mt-2 border-t pt-2">
+                              {iv.notes}
+                            </p>
                           )}
                         </CardContent>
                       </Card>
@@ -490,7 +665,10 @@ function ApplicationDetailPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <a href={`mailto:${application.candidate.email}`} className="hover:text-primary hover:underline">
+                <a
+                  href={`mailto:${application.candidate.email}`}
+                  className="hover:text-primary hover:underline"
+                >
                   {application.candidate.email}
                 </a>
               </div>
@@ -510,7 +688,7 @@ function ApplicationDetailPage() {
               )}
             </CardContent>
           </Card>
-          
+
           {/* Links */}
           {(profile?.portfolioUrl || profile?.resumeUrl || application.resumeUrl) && (
             <Card>
@@ -549,17 +727,19 @@ function ApplicationDetailPage() {
           {/* Employer Notes */}
           <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-900/10">
             <CardHeader>
-              <CardTitle className="text-lg text-amber-900 dark:text-amber-500">Employer Notes (Private)</CardTitle>
+              <CardTitle className="text-lg text-amber-900 dark:text-amber-500">
+                Employer Notes (Private)
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea 
+              <Textarea
                 placeholder="Add notes about this candidate... Only visible to your team."
                 className="min-h-[150px] bg-background resize-none"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
-              <Button 
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white" 
+              <Button
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
                 onClick={handleSaveNotes}
                 disabled={notes === application.notes || updateNotesMutation.isPending}
               >

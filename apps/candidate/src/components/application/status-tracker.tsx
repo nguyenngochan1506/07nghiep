@@ -1,4 +1,3 @@
-import React from "react";
 import { Check, X } from "lucide-react";
 
 type StepKey = "PENDING" | "VIEWED" | "SHORTLISTED" | "INTERVIEWING" | "OFFERED";
@@ -11,7 +10,10 @@ export interface ApplicationStatusTrackerProps {
   lastKnownStep?: StepKey;
 }
 
-export function ApplicationStatusTracker({ currentStatus, lastKnownStep }: ApplicationStatusTrackerProps) {
+export function ApplicationStatusTracker({
+  currentStatus,
+  lastKnownStep,
+}: ApplicationStatusTrackerProps) {
   const terminal = currentStatus === "REJECTED" || currentStatus === "WITHDRAWN";
 
   // Determine the active index for normal statuses
@@ -38,7 +40,8 @@ export function ApplicationStatusTracker({ currentStatus, lastKnownStep }: Appli
 
           // Terminal visuals
           const showTerminalX = terminal && terminalIndex === idx;
-          const showTerminalCompleted = terminal && lastKnownStep ? STEP_ORDER.indexOf(lastKnownStep) >= idx : false;
+          const showTerminalCompleted =
+            terminal && lastKnownStep ? STEP_ORDER.indexOf(lastKnownStep) >= idx : false;
 
           return (
             <div key={step} className="flex items-center gap-3">
@@ -48,10 +51,10 @@ export function ApplicationStatusTracker({ currentStatus, lastKnownStep }: Appli
                     showGreenCheck || showTerminalCompleted
                       ? "bg-success text-white border-success"
                       : showBlueActive
-                      ? "bg-primary text-primary-foreground ring-4 ring-primary/20 border-primary"
-                      : showGray
-                      ? "bg-muted/10 text-muted-foreground border-border"
-                      : "bg-muted/10 text-muted-foreground border-border"
+                        ? "bg-primary text-primary-foreground ring-4 ring-primary/20 border-primary"
+                        : showGray
+                          ? "bg-muted/10 text-muted-foreground border-border"
+                          : "bg-muted/10 text-muted-foreground border-border"
                   }`}
                 >
                   {showGreenCheck || showTerminalCompleted ? (
@@ -73,8 +76,8 @@ export function ApplicationStatusTracker({ currentStatus, lastKnownStep }: Appli
                     showGreenCheck || showTerminalCompleted
                       ? "bg-success"
                       : showBlueActive
-                      ? "bg-primary"
-                      : "bg-border"
+                        ? "bg-primary"
+                        : "bg-border"
                   }`}
                 />
               ) : null}

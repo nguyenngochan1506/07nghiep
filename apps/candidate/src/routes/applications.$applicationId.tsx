@@ -1,7 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, CalendarDays, Clock3, FileText, Building2, MapPin, Link as LinkIcon, Check, X, Clock } from "lucide-react";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Clock3,
+  FileText,
+  Building2,
+  MapPin,
+  Link as LinkIcon,
+  Check,
+  X,
+  Clock,
+} from "lucide-react";
 
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
@@ -10,19 +23,19 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { Button } from "@07nghiep/ui/components/button";
 import {
   Sheet as Dialog,
-  SheetTrigger as DialogTrigger,
   SheetContent as DialogContent,
   SheetHeader as DialogHeader,
   SheetTitle as DialogTitle,
   SheetDescription as DialogDescription,
   SheetFooter as DialogFooter,
-  SheetClose as DialogClose,
 } from "@07nghiep/ui/components/sheet";
 
 import { trpc, queryClient } from "@/utils/trpc";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import ApplicationStatusTracker from "@/components/application/status-tracker";
+import ApplicationStatusTracker, {
+  type ApplicationStatusTrackerProps,
+} from "@/components/application/status-tracker";
 import { Label } from "@07nghiep/ui/components/label";
 import { Textarea } from "@07nghiep/ui/components/textarea";
 
@@ -67,6 +80,22 @@ const STATUS_META: Record<
   },
 };
 
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type ApplicationInterview = RouterOutputs["interview"]["list"][number];
+type TrackerStep = NonNullable<ApplicationStatusTrackerProps["lastKnownStep"]>;
+
+const TRACKER_STEP_ORDER = [
+  "PENDING",
+  "VIEWED",
+  "SHORTLISTED",
+  "INTERVIEWING",
+  "OFFERED",
+] as const satisfies readonly TrackerStep[];
+
+function isTrackerStep(status: string): status is TrackerStep {
+  return TRACKER_STEP_ORDER.includes(status as TrackerStep);
+}
+
 function formatDate(dateValue: string | Date) {
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
@@ -78,10 +107,12 @@ function formatDate(dateValue: string | Date) {
 }
 
 function getStatusMeta(status: string) {
-  return STATUS_META[status] ?? {
-    label: status,
-    className: "bg-muted text-muted-foreground border-border",
-  };
+  return (
+    STATUS_META[status] ?? {
+      label: status,
+      className: "bg-muted text-muted-foreground border-border",
+    }
+  );
 }
 
 function ApplicationDetailPage() {
@@ -101,13 +132,15 @@ function ApplicationDetailPage() {
   const { data: interviews, isLoading: interviewsLoading } = useQuery(
     trpc.interview.list.queryOptions({ applicationId }),
   );
-  const respondInterview = useMutation(trpc.interview.respond.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      toast.success("Đã cập nhật trạng thái phỏng vấn");
-    },
-    onError: (err: any) => toast.error(err.message || "Không thể cập nhật"),
-  }));
+  const respondInterview = useMutation(
+    trpc.interview.respond.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries();
+        toast.success("Đã cập nhật trạng thái phỏng vấn");
+      },
+      onError: (err) => toast.error(err.message || "Không thể cập nhật"),
+    }),
+  );
 
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [coverDraft, setCoverDraft] = useState("");
@@ -120,7 +153,9 @@ function ApplicationDetailPage() {
       await withdrawMutation.mutateAsync({ id: data.id, reason: withdrawReason || undefined });
       toast.success("Rút đơn thành công");
       // Invalidate current application data
-      queryClient.invalidateQueries({ queryKey: trpc.applications.getById.queryOptions({ id: data.id }).queryKey });
+      queryClient.invalidateQueries({
+        queryKey: trpc.applications.getById.queryOptions({ id: data.id }).queryKey,
+      });
       setWithdrawOpen(false);
       setWithdrawReason("");
     } catch (err) {
@@ -145,7 +180,9 @@ function ApplicationDetailPage() {
       await updateMutation.mutateAsync({ id: data.id, coverLetter: coverDraft });
       toast.success("Cập nhật cover letter thành công");
       // refresh application
-      queryClient.invalidateQueries({ queryKey: trpc.applications.getById.queryOptions({ id: data.id }).queryKey });
+      queryClient.invalidateQueries({
+        queryKey: trpc.applications.getById.queryOptions({ id: data.id }).queryKey,
+      });
       setIsEditingCover(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Không thể cập nhật";
@@ -184,11 +221,10 @@ function ApplicationDetailPage() {
               currentStatus={data.status}
               lastKnownStep={
                 // derive last successful step from histories, find last toStatus that is in our step order
-                ((): any => {
-                  const STEP_ORDER = ["PENDING", "VIEWED", "SHORTLISTED", "INTERVIEWING", "OFFERED"] as const;
+                ((): TrackerStep | undefined => {
                   for (let i = data.histories.length - 1; i >= 0; i--) {
                     const s = data.histories[i].toStatus;
-                    if ((STEP_ORDER as readonly string[]).includes(s)) return s;
+                    if (isTrackerStep(s)) return s;
                   }
                   return undefined;
                 })()
@@ -206,9 +242,11 @@ function ApplicationDetailPage() {
                       {data.job?.organization?.name ?? "Không rõ công ty"}
                     </p>
                   </div>
-                  {statusMeta ? <Badge className={statusMeta.className}>{statusMeta.label}</Badge> : null}
+                  {statusMeta ? (
+                    <Badge className={statusMeta.className}>{statusMeta.label}</Badge>
+                  ) : null}
                 </div>
-                </CardHeader>
+              </CardHeader>
               {canWithdraw ? (
                 <div className="flex items-center justify-end gap-2 p-4">
                   <Button variant="destructive" onClick={() => setWithdrawOpen(true)}>
@@ -220,8 +258,8 @@ function ApplicationDetailPage() {
                       <DialogHeader className="border-b pb-3">
                         <DialogTitle>Rút đơn ứng tuyển</DialogTitle>
                         <DialogDescription>
-                          Bạn có muốn rút đơn ứng tuyển này? Lý do rút (không bắt buộc) sẽ được gửi cho nhà tuyển
-                          dụng.
+                          Bạn có muốn rút đơn ứng tuyển này? Lý do rút (không bắt buộc) sẽ được gửi
+                          cho nhà tuyển dụng.
                         </DialogDescription>
                       </DialogHeader>
 
@@ -236,10 +274,18 @@ function ApplicationDetailPage() {
                       </div>
 
                       <DialogFooter>
-                        <Button variant="ghost" onClick={() => setWithdrawOpen(false)} className="mr-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setWithdrawOpen(false)}
+                          className="mr-2"
+                        >
                           Hủy
                         </Button>
-                        <Button onClick={handleWithdraw} className="bg-destructive" disabled={withdrawMutation.isPending}>
+                        <Button
+                          onClick={handleWithdraw}
+                          className="bg-destructive"
+                          disabled={withdrawMutation.isPending}
+                        >
                           {withdrawMutation.isPending ? "Đang xử lý..." : "Xác nhận rút"}
                         </Button>
                       </DialogFooter>
@@ -263,7 +309,9 @@ function ApplicationDetailPage() {
                   </p>
                 </div>
                 <div className="rounded-lg border bg-secondary/20 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Hồ sơ đính kèm</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Hồ sơ đính kèm
+                  </p>
                   <p className="mt-2 flex items-center gap-2 font-medium">
                     <FileText className="h-4 w-4 text-primary" />
                     {data.resumeUrl ? (
@@ -362,9 +410,9 @@ function ApplicationDetailPage() {
               <CardContent className="pt-4">
                 {interviewsLoading ? (
                   <Skeleton className="h-20 w-full" />
-                ) : interviews && (interviews as any[]).length > 0 ? (
+                ) : interviews && interviews.length > 0 ? (
                   <div className="space-y-3">
-                    {(interviews as any[]).map((iv: any) => {
+                    {interviews.map((iv: ApplicationInterview) => {
                       const isActive = iv.status !== "CANCELLED" && iv.status !== "COMPLETED";
                       const dateStr = new Date(iv.scheduledAt).toLocaleDateString("vi-VN", {
                         weekday: "long",
@@ -377,26 +425,54 @@ function ApplicationDetailPage() {
                         minute: "2-digit",
                       });
                       return (
-                        <div key={iv.id} className={`rounded-lg border p-4 ${!isActive ? "opacity-60" : ""}`}>
+                        <div
+                          key={iv.id}
+                          className={`rounded-lg border p-4 ${!isActive ? "opacity-60" : ""}`}
+                        >
                           <div className="flex items-center justify-between mb-3">
-                            <Badge className={
-                              iv.status === "SCHEDULED" ? "bg-warning/10 text-warning border-warning/20" :
-                              iv.status === "CONFIRMED" ? "bg-success/10 text-success border-success/20" :
-                              iv.status === "CANCELLED" ? "bg-destructive/10 text-destructive border-destructive/20" :
-                              "bg-muted text-muted-foreground"
-                            }>
-                              {iv.status === "SCHEDULED" ? "Đã lên lịch" :
-                               iv.status === "CONFIRMED" ? "Đã xác nhận" :
-                               iv.status === "CANCELLED" ? "Đã hủy" :
-                               iv.status === "COMPLETED" ? "Đã hoàn thành" : iv.status}
+                            <Badge
+                              className={
+                                iv.status === "SCHEDULED"
+                                  ? "bg-warning/10 text-warning border-warning/20"
+                                  : iv.status === "CONFIRMED"
+                                    ? "bg-success/10 text-success border-success/20"
+                                    : iv.status === "CANCELLED"
+                                      ? "bg-destructive/10 text-destructive border-destructive/20"
+                                      : "bg-muted text-muted-foreground"
+                              }
+                            >
+                              {iv.status === "SCHEDULED"
+                                ? "Đã lên lịch"
+                                : iv.status === "CONFIRMED"
+                                  ? "Đã xác nhận"
+                                  : iv.status === "CANCELLED"
+                                    ? "Đã hủy"
+                                    : iv.status === "COMPLETED"
+                                      ? "Đã hoàn thành"
+                                      : iv.status}
                             </Badge>
                             {iv.status === "SCHEDULED" && (
                               <div className="flex gap-2">
-                                <Button size="sm" onClick={() => respondInterview.mutate({ id: iv.id, action: "CONFIRMED" })} disabled={respondInterview.isPending}>
-                                  <Check className="h-4 w-4 mr-1" />Xác nhận
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    respondInterview.mutate({ id: iv.id, action: "CONFIRMED" })
+                                  }
+                                  disabled={respondInterview.isPending}
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Xác nhận
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => respondInterview.mutate({ id: iv.id, action: "CANCELLED" })} disabled={respondInterview.isPending}>
-                                  <X className="h-4 w-4 mr-1" />Từ chối
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    respondInterview.mutate({ id: iv.id, action: "CANCELLED" })
+                                  }
+                                  disabled={respondInterview.isPending}
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  Từ chối
                                 </Button>
                               </div>
                             )}
@@ -408,7 +484,9 @@ function ApplicationDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-muted-foreground" />
-                              <span>{timeStr} · {iv.durationMinutes} phút</span>
+                              <span>
+                                {timeStr} · {iv.durationMinutes} phút
+                              </span>
                             </div>
                             {iv.location && (
                               <div className="flex items-center gap-2">
@@ -419,12 +497,21 @@ function ApplicationDetailPage() {
                             {iv.meetingLink && (
                               <div className="flex items-center gap-2">
                                 <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                                <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">{iv.meetingLink}</a>
+                                <a
+                                  href={iv.meetingLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-primary hover:underline truncate"
+                                >
+                                  {iv.meetingLink}
+                                </a>
                               </div>
                             )}
                           </div>
                           {iv.notes && (
-                            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">{iv.notes}</p>
+                            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+                              {iv.notes}
+                            </p>
                           )}
                         </div>
                       );
@@ -447,7 +534,9 @@ function ApplicationDetailPage() {
                   <CardTitle className="text-lg">Ghi chú từ nhà tuyển dụng</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
-                  <p className="whitespace-pre-line text-sm leading-6 text-foreground">{data.notes}</p>
+                  <p className="whitespace-pre-line text-sm leading-6 text-foreground">
+                    {data.notes}
+                  </p>
                 </CardContent>
               </Card>
             ) : null}
@@ -461,9 +550,15 @@ function ApplicationDetailPage() {
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="flex flex-col gap-3">
-                  <div className="rounded-lg border bg-muted/10 p-4 text-sm text-muted-foreground">Chức năng nhắn tin sẽ được triển khai sau. Đây là khung thử nghiệm.</div>
+                  <div className="rounded-lg border bg-muted/10 p-4 text-sm text-muted-foreground">
+                    Chức năng nhắn tin sẽ được triển khai sau. Đây là khung thử nghiệm.
+                  </div>
                   <div className="flex items-center gap-2">
-                    <input className="flex-1 rounded-md border px-3 py-2" placeholder="Gửi tin nhắn (chưa khả dụng)" disabled />
+                    <input
+                      className="flex-1 rounded-md border px-3 py-2"
+                      placeholder="Gửi tin nhắn (chưa khả dụng)"
+                      disabled
+                    />
                     <Button disabled>Gửi</Button>
                   </div>
                 </div>

@@ -1,7 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@07nghiep/ui/components/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +73,7 @@ function AdminUserDetailPage() {
   const user = detailQuery.data?.user;
   const timeline = detailQuery.data?.activity.timeline ?? [];
   const notes = detailQuery.data?.adminNotes ?? [];
+  const roleHistory = detailQuery.data?.roleHistory ?? [];
   const status = detailQuery.data?.status ?? "SUSPENDED";
 
   const roleBadgeVariant = useMemo(() => {
@@ -226,202 +233,215 @@ function AdminUserDetailPage() {
       </div>
 
       <div className="mx-auto grid w-full max-w-7xl gap-6 p-6 lg:grid-cols-[320px_1fr]">
-      <aside className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Overview</CardTitle>
-            <CardDescription>Tổng quan tài khoản người dùng</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="size-16 border">
-                <AvatarImage src={user.image ?? undefined} alt={user.name || user.email} />
-                <AvatarFallback>{(user.name || user.email).slice(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold">{user.name}</p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
-                <Badge variant={roleBadgeVariant}>{user.role}</Badge>
+        <aside className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Overview</CardTitle>
+              <CardDescription>Tổng quan tài khoản người dùng</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-16 border">
+                  <AvatarImage src={user.image ?? undefined} alt={user.name || user.email} />
+                  <AvatarFallback>
+                    {(user.name || user.email).slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                  <Badge variant={roleBadgeVariant}>{user.role}</Badge>
+                </div>
               </div>
-            </div>
 
-            <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-              <div className="mb-2 flex items-center gap-2 text-foreground">
-                <CalendarDays className="size-4" />
-                <span className="font-medium">Ngày tham gia</span>
+              <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                <div className="mb-2 flex items-center gap-2 text-foreground">
+                  <CalendarDays className="size-4" />
+                  <span className="font-medium">Ngày tham gia</span>
+                </div>
+                <p>{new Date(user.createdAt).toLocaleString()}</p>
+                <p className="mt-1">
+                  Trạng thái: <span className="font-medium text-foreground">{status}</span>
+                </p>
               </div>
-              <p>{new Date(user.createdAt).toLocaleString()}</p>
-              <p className="mt-1">
-                Trạng thái: <span className="font-medium text-foreground">{status}</span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions</CardTitle>
-            <CardDescription>Điều khiển vai trò và trạng thái tài khoản</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <p className="text-xs font-medium">Thay đổi vai trò</p>
-              <Select value={user.role} onValueChange={onChangeRole}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn vai trò" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ADMIN">ADMIN</SelectItem>
-                  <SelectItem value="EMPLOYER">EMPLOYER</SelectItem>
-                  <SelectItem value="CANDIDATE">CANDIDATE</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Actions</CardTitle>
+              <CardDescription>Điều khiển vai trò và trạng thái tài khoản</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs font-medium">Thay đổi vai trò</p>
+                <Select value={user.role} onValueChange={onChangeRole}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn vai trò" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ADMIN">ADMIN</SelectItem>
+                    <SelectItem value="EMPLOYER">EMPLOYER</SelectItem>
+                    <SelectItem value="CANDIDATE">CANDIDATE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Button
-              className="w-full justify-start"
-              variant={status === "ACTIVE" ? "outline" : "default"}
-              onClick={onToggleStatus}
-              disabled={updateStatusMutation.isPending}
-            >
-              <UserCog className="mr-2" />
-              {status === "ACTIVE" ? "Khóa tài khoản" : "Kích hoạt tài khoản"}
-            </Button>
+              <Button
+                className="w-full justify-start"
+                variant={status === "ACTIVE" ? "outline" : "default"}
+                onClick={onToggleStatus}
+                disabled={updateStatusMutation.isPending}
+              >
+                <UserCog className="mr-2" />
+                {status === "ACTIVE" ? "Khóa tài khoản" : "Kích hoạt tài khoản"}
+              </Button>
 
-            <Button
-              className="w-full justify-start"
-              variant="outline"
-              onClick={onResetPassword}
-              disabled={resetPasswordMutation.isPending}
-            >
-              <KeyRound className="mr-2" />
-              Reset Mật khẩu
-            </Button>
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={onResetPassword}
+                disabled={resetPasswordMutation.isPending}
+              >
+                <KeyRound className="mr-2" />
+                Reset Mật khẩu
+              </Button>
 
-            <AlertDialog>
-              <AlertDialogTrigger render={<Button className="w-full justify-start" variant="destructive" />}>
-                <Trash2 className="mr-2" />
-                Xóa tài khoản
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Xác nhận xóa tài khoản?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Hành động này không thể hoàn tác. Toàn bộ dữ liệu liên quan tới người dùng sẽ bị xóa.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Hủy</AlertDialogCancel>
-                  <AlertDialogAction
-                    variant="destructive"
-                    onClick={onDeleteUser}
-                    disabled={deleteUserMutation.isPending}
-                  >
-                    Xác nhận xóa
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </CardContent>
-        </Card>
-      </aside>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={<Button className="w-full justify-start" variant="destructive" />}
+                >
+                  <Trash2 className="mr-2" />
+                  Xóa tài khoản
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Xác nhận xóa tài khoản?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Hành động này không thể hoàn tác. Toàn bộ dữ liệu liên quan tới người dùng sẽ
+                      bị xóa.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={onDeleteUser}
+                      disabled={deleteUserMutation.isPending}
+                    >
+                      Xác nhận xóa
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        </aside>
 
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin chi tiết</CardTitle>
-            <CardDescription>Lịch sử hoạt động và ghi chú nội bộ</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="activity" className="w-full">
-              <TabsList variant="line" className="mb-4">
-                <TabsTrigger value="activity">Lịch sử hoạt động</TabsTrigger>
-                <TabsTrigger value="notes">Ghi chú Admin</TabsTrigger>
-                <TabsTrigger value="roles">Lịch sử vai trò</TabsTrigger>
-              </TabsList>
+        <section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin chi tiết</CardTitle>
+              <CardDescription>Lịch sử hoạt động và ghi chú nội bộ</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="activity" className="w-full">
+                <TabsList variant="line" className="mb-4">
+                  <TabsTrigger value="activity">Lịch sử hoạt động</TabsTrigger>
+                  <TabsTrigger value="notes">Ghi chú Admin</TabsTrigger>
+                  <TabsTrigger value="roles">Lịch sử vai trò</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="activity" className="space-y-3">
-                {timeline.length === 0 ? (
-                  <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                    Chưa có dữ liệu hoạt động.
-                  </div>
-                ) : (
-                  timeline.map((item) => (
-                    <div key={`${item.type}-${item.occurredAt}`} className="rounded-md border p-3">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <Badge variant="outline">{item.type}</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(item.occurredAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm">{item.label}</p>
-                    </div>
-                  ))
-                )}
-              </TabsContent>
-
-              <TabsContent value="notes" className="space-y-4">
-                <form className="space-y-3" onSubmit={onSubmitNote}>
-                  <Textarea
-                    rows={5}
-                    placeholder="Nhập ghi chú nội bộ cho người dùng này..."
-                    {...form.register("content")}
-                  />
-                  {form.formState.errors.content ? (
-                    <p className="text-xs text-destructive">{form.formState.errors.content.message}</p>
-                  ) : null}
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={addAdminNoteMutation.isPending}>
-                      Lưu ghi chú
-                    </Button>
-                  </div>
-                </form>
-
-                <div className="space-y-3">
-                  {notes.length === 0 ? (
+                <TabsContent value="activity" className="space-y-3">
+                  {timeline.length === 0 ? (
                     <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                      Chưa có ghi chú nội bộ.
+                      Chưa có dữ liệu hoạt động.
                     </div>
                   ) : (
-                    notes.map((note) => (
-                      <div key={note.id} className="rounded-md border bg-muted/20 p-3">
-                        <p className="text-sm whitespace-pre-wrap">{note.text}</p>
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {note.createdAt ? new Date(note.createdAt).toLocaleString() : "N/A"}
-                        </p>
+                    timeline.map((item) => (
+                      <div
+                        key={`${item.type}-${item.occurredAt}`}
+                        className="rounded-md border p-3"
+                      >
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <Badge variant="outline">{item.type}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(item.occurredAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm">{item.label}</p>
                       </div>
                     ))
                   )}
-                </div>
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="roles" className="space-y-3">
-                {detailQuery.data?.roleHistory && detailQuery.data.roleHistory.length > 0 ? (
-                  detailQuery.data.roleHistory.map((r: any) => (
-                    <div key={r.id} className="rounded-md border p-3">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <Badge variant="outline">ROLE_CHANGE</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(r.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm">
-                        {r.adminId ? "Bởi admin: " : ""}
-                        <strong>{formatRole(r.previousRole ?? "UNKNOWN")}</strong> → <strong>{formatRole(r.newRole ?? "UNKNOWN")}</strong>
+                <TabsContent value="notes" className="space-y-4">
+                  <form className="space-y-3" onSubmit={onSubmitNote}>
+                    <Textarea
+                      rows={5}
+                      placeholder="Nhập ghi chú nội bộ cho người dùng này..."
+                      {...form.register("content")}
+                    />
+                    {form.formState.errors.content ? (
+                      <p className="text-xs text-destructive">
+                        {form.formState.errors.content.message}
                       </p>
-                      {r.note ? <p className="mt-2 text-sm text-muted-foreground">{r.note}</p> : null}
+                    ) : null}
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={addAdminNoteMutation.isPending}>
+                        Lưu ghi chú
+                      </Button>
                     </div>
-                  ))
-                ) : (
-                  <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                    Chưa có lịch sử thay đổi vai trò.
+                  </form>
+
+                  <div className="space-y-3">
+                    {notes.length === 0 ? (
+                      <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                        Chưa có ghi chú nội bộ.
+                      </div>
+                    ) : (
+                      notes.map((note) => (
+                        <div key={note.id} className="rounded-md border bg-muted/20 p-3">
+                          <p className="text-sm whitespace-pre-wrap">{note.text}</p>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            {note.createdAt ? new Date(note.createdAt).toLocaleString() : "N/A"}
+                          </p>
+                        </div>
+                      ))
+                    )}
                   </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </section>
+                </TabsContent>
+
+                <TabsContent value="roles" className="space-y-3">
+                  {roleHistory.length > 0 ? (
+                    roleHistory.map((r) => (
+                      <div key={r.id} className="rounded-md border p-3">
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <Badge variant="outline">ROLE_CHANGE</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(r.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm">
+                          {r.adminId ? "Bởi admin: " : ""}
+                          <strong>{formatRole(r.previousRole ?? "UNKNOWN")}</strong> →{" "}
+                          <strong>{formatRole(r.newRole ?? "UNKNOWN")}</strong>
+                        </p>
+                        {r.note ? (
+                          <p className="mt-2 text-sm text-muted-foreground">{r.note}</p>
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      Chưa có lịch sử thay đổi vai trò.
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </div>
   );

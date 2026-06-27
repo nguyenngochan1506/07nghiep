@@ -54,20 +54,14 @@ export function MessageBubble({ message, isOwn, showAvatar = true }: MessageBubb
       )}
       {!showAvatar && <div className="w-8 shrink-0" />}
       <div
-        className={`group flex max-w-[75%] flex-col gap-1 ${
-          isOwn ? "items-end" : "items-start"
-        }`}
+        className={`group flex max-w-[75%] flex-col gap-1 ${isOwn ? "items-end" : "items-start"}`}
       >
         {!isOwn && message.sender.name && (
-          <span className="text-xs font-medium text-muted-foreground">
-            {message.sender.name}
-          </span>
+          <span className="text-xs font-medium text-muted-foreground">{message.sender.name}</span>
         )}
         <div
           className={`rounded-2xl px-3.5 py-2.5 text-sm ${
-            isOwn
-              ? "rounded-br-md bg-primary text-primary-foreground"
-              : "rounded-bl-md bg-muted"
+            isOwn ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-muted"
           }`}
         >
           <p className="whitespace-pre-wrap break-words">{message.content}</p>

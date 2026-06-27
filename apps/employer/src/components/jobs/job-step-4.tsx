@@ -54,8 +54,8 @@ export function JobStep4({ data, errors, onChange }: JobStep4Props) {
           <p className="text-sm text-destructive">{errors.expiresAt}</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Khuyến nghị: {getSuggestedDate()} (30 ngày kể từ hôm nay). Để
-            trống nếu không giới hạn thời gian.
+            Khuyến nghị: {getSuggestedDate()} (30 ngày kể từ hôm nay). Để trống nếu không giới hạn
+            thời gian.
           </p>
         )}
       </div>
@@ -66,15 +66,9 @@ export function JobStep4({ data, errors, onChange }: JobStep4Props) {
         <div className="text-sm text-blue-700 dark:text-blue-300">
           <p className="font-medium">Lưu ý</p>
           <ul className="mt-1 list-inside list-disc space-y-1 text-xs">
-            <li>
-              Tin tuyển dụng sẽ tự động đóng sau ngày hết hạn
-            </li>
-            <li>
-              Bạn có thể đăng lại hoặc gia hạn tin trong phần Quản lý tin đăng
-            </li>
-            <li>
-              Draft sẽ được tự động lưu mỗi 30 giây
-            </li>
+            <li>Tin tuyển dụng sẽ tự động đóng sau ngày hết hạn</li>
+            <li>Bạn có thể đăng lại hoặc gia hạn tin trong phần Quản lý tin đăng</li>
+            <li>Draft sẽ được tự động lưu mỗi 30 giây</li>
           </ul>
         </div>
       </div>

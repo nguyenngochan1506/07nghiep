@@ -1,15 +1,13 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { NotificationBell } from "@07nghiep/ui/components/notification-bell";
-import type { NotificationItem } from "@07nghiep/ui/components/notification-bell";
+import { NotificationBell, type NotificationItem } from "@07nghiep/ui/components/notification-bell";
 import { trpc } from "../utils/trpc";
 import { env } from "@07nghiep/env/admin";
 
 function createSSEConnection(
   url: string,
   onEvent: (event: string, data: string) => void,
-  signal: AbortSignal
+  signal: AbortSignal,
 ) {
   fetch(url, {
     headers: { Accept: "text/event-stream" },
@@ -52,26 +50,33 @@ function createSSEConnection(
 
 export function NotificationBellContainer() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const abortRef = useRef<AbortController | null>(null);
 
   const { data: unreadCount = 0 } = useQuery(trpc.notification.getUnreadCount.queryOptions());
   const { data: notificationsData } = useQuery(trpc.notification.list.queryOptions({ limit: 10 }));
-  const notifications = notificationsData?.items || [];
+  const notifications: NotificationItem[] =
+    notificationsData?.items.map((notification) => ({
+      ...notification,
+      createdAt: String(notification.createdAt),
+    })) ?? [];
 
-  const markAsRead = useMutation(trpc.notification.markAsRead.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
-      queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
-    },
-  }));
+  const markAsRead = useMutation(
+    trpc.notification.markAsRead.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
+        queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
+      },
+    }),
+  );
 
-  const markAllAsRead = useMutation(trpc.notification.markAllAsRead.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
-      queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
-    },
-  }));
+  const markAllAsRead = useMutation(
+    trpc.notification.markAllAsRead.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.notification.getUnreadCount.queryKey() });
+        queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
+      },
+    }),
+  );
 
   useEffect(() => {
     const abort = new AbortController();
@@ -85,7 +90,7 @@ export function NotificationBellContainer() {
           queryClient.invalidateQueries({ queryKey: trpc.notification.list.queryKey() });
         }
       },
-      abort.signal
+      abort.signal,
     );
 
     return () => {
@@ -93,36 +98,12 @@ export function NotificationBellContainer() {
     };
   }, [queryClient]);
 
-  const handleNotificationClick = (notification: NotificationItem) => {
-    // Parse notification data
-    let data: any;
-    if (typeof notification.data === "string") {
-      try {
-        data = JSON.parse(notification.data);
-      } catch {
-        data = {};
-      }
-    } else {
-      data = notification.data || {};
-    }
-    
-    // Navigate based on notification type and data
-    if (data?.reportId) {
-      // Navigate to report detail page
-      navigate({ to: `/admin/reports/${data.reportId}` });
-    } else if (data?.jobId) {
-      // Navigate to pending jobs page (job will be in the list)
-      navigate({ to: "/admin/jobs/pending" });
-    }
-  };
-
   return (
     <NotificationBell
       unreadCount={unreadCount}
-      notifications={notifications as any}
+      notifications={notifications}
       onMarkAsRead={(id) => markAsRead.mutate({ id })}
       onMarkAllAsRead={() => markAllAsRead.mutate()}
-      onNotificationClick={handleNotificationClick}
     />
   );
 }

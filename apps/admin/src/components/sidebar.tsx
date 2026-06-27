@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
+  Building2,
   FileText,
   BarChart3,
   Settings,
@@ -20,11 +21,12 @@ import UserMenu from "./user-menu";
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Users, label: "Người dùng", href: "/admin/users" },
+  { icon: Building2, label: "Duyệt công ty", href: "/admin/organizations" },
   { icon: Briefcase, label: "Việc làm chờ duyệt", href: "/admin/jobs/pending" },
   { icon: History, label: "Lịch sử kiểm duyệt", href: "/admin/jobs/history" },
   { icon: AlertTriangle, label: "Báo cáo vi phạm", href: "/admin/reports" },
-  // { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
-  // { icon: BarChart3, label: "Báo cáo", href: "/" },
+  { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
+  { icon: BarChart3, label: "Báo cáo", href: "/" },
   { icon: Shield, label: "Bảo mật", href: "/" },
   { icon: Settings, label: "Cài đặt", href: "/" },
 ];
@@ -39,12 +41,9 @@ export default function Sidebar({ children }: SidebarProps) {
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r bg-card">
         {/* Logo */}
-        <div className="flex h-14 items-center gap-2 border-b px-4">
+        <div className="flex h-16 items-center gap-2 border-b px-4">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-bold text-primary-foreground">
-              07
-            </div>
-            <span className="font-semibold">07nghiep</span>
+            <img src="/07logo.png" alt="07nghiep" className="h-12 w-auto object-contain" />
             <span className="ml-1 rounded-sm bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground">
               Admin
             </span>
@@ -83,9 +82,7 @@ export default function Sidebar({ children }: SidebarProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex flex-1 flex-col overflow-auto">
-        {children}
-      </main>
+      <main className="flex flex-1 flex-col overflow-auto">{children}</main>
     </div>
   );
 }

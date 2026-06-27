@@ -2,7 +2,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 
 import type { Context } from "./context";
 
-export { type Context } from "./context";
+export type { Context } from "./context";
 
 export {
   profileUpdateSchema,
@@ -39,7 +39,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     ctx: {
       ...ctx,
       session: ctx.session,
-      user: ctx.user,
+      user: ctx.session.user,
       role: ctx.role,
     },
   });
@@ -74,10 +74,14 @@ function createRoleGuard(allowedRoles: UserRole[]) {
   });
 }
 
-export const candidateProcedure = protectedProcedure.use(createRoleGuard(["CANDIDATE", "EMPLOYER", "ADMIN"]));
+export const candidateProcedure = protectedProcedure.use(
+  createRoleGuard(["CANDIDATE", "EMPLOYER", "ADMIN"]),
+);
 
-export const employerProcedure = protectedProcedure.use(createRoleGuard(["EMPLOYER"]));
+export const employerProcedure = protectedProcedure.use(createRoleGuard(["EMPLOYER", "ADMIN"]));
 
 export const adminProcedure = protectedProcedure.use(createRoleGuard(["ADMIN"]));
 
-export const employerOrAdminProcedure = protectedProcedure.use(createRoleGuard(["EMPLOYER", "ADMIN"]));
+export const employerOrAdminProcedure = protectedProcedure.use(
+  createRoleGuard(["EMPLOYER", "ADMIN"]),
+);

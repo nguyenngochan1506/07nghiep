@@ -1,12 +1,4 @@
-import {
-  MapPin,
-  Briefcase,
-  Clock,
-  DollarSign,
-  Calendar,
-  GraduationCap,
-  Tag,
-} from "lucide-react";
+import { MapPin, Briefcase, Clock, DollarSign, Calendar, GraduationCap, Tag } from "lucide-react";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Card } from "@07nghiep/ui/components/card";
 import { Separator } from "@07nghiep/ui/components/separator";
@@ -79,14 +71,10 @@ export function JobPreview({ step1, step2, step3, step4, companyName }: JobPrevi
             <div className="flex-1">
               <h1 className="text-2xl font-bold">
                 {step1.title || (
-                  <span className="text-muted-foreground italic">
-                    (Chưa có tiêu đề)
-                  </span>
+                  <span className="text-muted-foreground italic">(Chưa có tiêu đề)</span>
                 )}
               </h1>
-              {companyName && (
-                <p className="mt-1 text-muted-foreground">{companyName}</p>
-              )}
+              {companyName && <p className="mt-1 text-muted-foreground">{companyName}</p>}
             </div>
             <Badge className="shrink-0">Đang tuyển</Badge>
           </div>
@@ -119,7 +107,12 @@ export function JobPreview({ step1, step2, step3, step4, companyName }: JobPrevi
             )}
             <span className="flex items-center gap-1.5">
               <DollarSign className="h-4 w-4" />
-              {formatSalary(step3.salaryMin, step3.salaryMax, step3.salaryType, step3.salaryNegotiable)}
+              {formatSalary(
+                step3.salaryMin,
+                step3.salaryMax,
+                step3.salaryType,
+                step3.salaryNegotiable,
+              )}
             </span>
             {step4.expiresAt && (
               <span className="flex items-center gap-1.5">

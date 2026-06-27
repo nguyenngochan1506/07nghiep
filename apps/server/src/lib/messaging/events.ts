@@ -1,4 +1,4 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 
 export const messageEvents = new EventEmitter();
 
@@ -19,7 +19,7 @@ export type MessagePayload = {
 export const emitMessage = (conversationId: string, payload: MessagePayload) => {
   messageEvents.emit(`message:${conversationId}`, payload);
 
-  messageEvents.emit(`message:user:${payload.senderId === payload.senderId ? payload.senderId : ""}`, payload);
+  messageEvents.emit(`message:user:${payload.senderId}`, payload);
 };
 
 export const emitTyping = (conversationId: string, userId: string, userName: string | null) => {

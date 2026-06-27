@@ -28,25 +28,19 @@ export function JobFormStepper({ currentStep }: JobFormStepperProps) {
                 <div
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all",
-                    isCompleted &&
-                      "border-primary bg-primary text-primary-foreground",
-                    isActive &&
-                      "border-primary bg-background text-primary shadow-md",
+                    isCompleted && "border-primary bg-primary text-primary-foreground",
+                    isActive && "border-primary bg-background text-primary shadow-md",
                     !isCompleted &&
                       !isActive &&
-                      "border-border bg-background text-muted-foreground"
+                      "border-border bg-background text-muted-foreground",
                   )}
                 >
-                  {isCompleted ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <span>{step.id}</span>
-                  )}
+                  {isCompleted ? <Check className="h-4 w-4" /> : <span>{step.id}</span>}
                 </div>
                 <span
                   className={cn(
                     "hidden text-center text-xs font-medium sm:block",
-                    isActive ? "text-primary" : "text-muted-foreground"
+                    isActive ? "text-primary" : "text-muted-foreground",
                   )}
                 >
                   {step.label}
@@ -58,7 +52,7 @@ export function JobFormStepper({ currentStep }: JobFormStepperProps) {
                 <div
                   className={cn(
                     "mx-2 mb-5 h-0.5 flex-1 transition-colors",
-                    isCompleted ? "bg-primary" : "bg-border"
+                    isCompleted ? "bg-primary" : "bg-border",
                   )}
                 />
               )}

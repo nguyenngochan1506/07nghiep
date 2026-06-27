@@ -67,9 +67,7 @@ export function JobStep1({ data, errors, onChange }: JobStep1Props) {
           onChange={(e) => onChange("title", e.target.value)}
           className={errors.title ? "border-destructive" : ""}
         />
-        {errors.title && (
-          <p className="text-sm text-destructive">{errors.title}</p>
-        )}
+        {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
       </div>
 
       {/* Job Type & Work Type */}
@@ -78,10 +76,7 @@ export function JobStep1({ data, errors, onChange }: JobStep1Props) {
           <Label htmlFor="job-type">
             Loại hợp đồng <span className="text-destructive">*</span>
           </Label>
-          <Select
-            value={data.jobType}
-            onValueChange={(v) => onChange("jobType", v || "")}
-          >
+          <Select value={data.jobType} onValueChange={(v) => onChange("jobType", v || "")}>
             <SelectTrigger id="job-type" className={errors.jobType ? "border-destructive" : ""}>
               <SelectValue placeholder="Chọn loại hợp đồng" />
             </SelectTrigger>
@@ -93,19 +88,14 @@ export function JobStep1({ data, errors, onChange }: JobStep1Props) {
               ))}
             </SelectContent>
           </Select>
-          {errors.jobType && (
-            <p className="text-sm text-destructive">{errors.jobType}</p>
-          )}
+          {errors.jobType && <p className="text-sm text-destructive">{errors.jobType}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="work-type">
             Hình thức làm việc <span className="text-destructive">*</span>
           </Label>
-          <Select
-            value={data.workType}
-            onValueChange={(v) => onChange("workType", v || "")}
-          >
+          <Select value={data.workType} onValueChange={(v) => onChange("workType", v || "")}>
             <SelectTrigger id="work-type" className={errors.workType ? "border-destructive" : ""}>
               <SelectValue placeholder="Chọn hình thức" />
             </SelectTrigger>
@@ -117,9 +107,7 @@ export function JobStep1({ data, errors, onChange }: JobStep1Props) {
               ))}
             </SelectContent>
           </Select>
-          {errors.workType && (
-            <p className="text-sm text-destructive">{errors.workType}</p>
-          )}
+          {errors.workType && <p className="text-sm text-destructive">{errors.workType}</p>}
         </div>
       </div>
 
@@ -163,9 +151,7 @@ export function JobStep1({ data, errors, onChange }: JobStep1Props) {
           onChange={(e) => onChange("location", e.target.value)}
           className={errors.location ? "border-destructive" : ""}
         />
-        {errors.location && (
-          <p className="text-sm text-destructive">{errors.location}</p>
-        )}
+        {errors.location && <p className="text-sm text-destructive">{errors.location}</p>}
       </div>
     </div>
   );

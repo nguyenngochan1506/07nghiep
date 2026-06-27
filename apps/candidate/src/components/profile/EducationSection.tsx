@@ -4,6 +4,7 @@ import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
+import { ProvinceCombobox } from "@/components/province-combobox";
 import type { ProfileFormValues } from "@/utils/profile-schema";
 
 type EducationSectionProps = {
@@ -81,12 +82,17 @@ export default function EducationSection({ form }: EducationSectionProps) {
 
                 <div className="flex flex-col gap-2">
                   <Label htmlFor={`education.${index}.location`}>Địa điểm</Label>
-                  <Input
+                  <ProvinceCombobox
                     id={`education.${index}.location`}
-                    placeholder="Hà Nội"
-                    data-invalid={Boolean(errors?.location)}
-                    aria-invalid={Boolean(errors?.location)}
-                    {...form.register(`education.${index}.location`)}
+                    value={form.watch(`education.${index}.location`) ?? ""}
+                    onValueChange={(value) =>
+                      form.setValue(`education.${index}.location`, value, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    invalid={Boolean(errors?.location)}
                   />
                   <FieldError message={errors?.location?.message} />
                 </div>

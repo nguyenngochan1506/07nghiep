@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { trpc } from "../utils/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import { Button } from "@07nghiep/ui/components/button";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Check, Trash2, BellOff } from "lucide-react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
 export const Route = createFileRoute("/notifications")({
   component: NotificationsPage,
@@ -15,21 +17,25 @@ function getRelativeTime(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return 'Vừa xong';
+
+  if (diffInSeconds < 60) return "Vừa xong";
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `${diffInHours} giờ trước`;
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 30) return `${diffInDays} ngày trước`;
-  
-  return date.toLocaleDateString('vi-VN');
+
+  return date.toLocaleDateString("vi-VN");
 }
 
 function NotificationsPage() {
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery(trpc.notification.list.queryOptions({ limit: 50 }));
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
+  const { data, isLoading } = useQuery(
+    trpc.notification.list.queryOptions({ limit: 50 }, { enabled: isLoggedIn }),
+  );
   const notifications = data?.items || [];
 
   const markAsRead = useMutation(
@@ -37,7 +43,7 @@ function NotificationsPage() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["notification"] });
       },
-    })
+    }),
   );
 
   const markAllAsRead = useMutation(
@@ -46,7 +52,7 @@ function NotificationsPage() {
         queryClient.invalidateQueries({ queryKey: ["notification"] });
         toast.success("Đã đánh dấu tất cả là đã đọc");
       },
-    })
+    }),
   );
 
   const deleteNotification = useMutation(
@@ -55,21 +61,17 @@ function NotificationsPage() {
         queryClient.invalidateQueries({ queryKey: ["notification"] });
         toast.success("Đã xóa thông báo");
       },
-    })
+    }),
   );
 
-  if (isLoading) {
-    return <div className="container py-8">Đang tải thông báo...</div>;
-  }
-
   return (
-    <div className="container max-w-4xl py-8">
+    <div className="container min-h-[100dvh] max-w-4xl bg-background py-8 text-foreground">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Thông báo</h1>
           <p className="text-muted-foreground">Xem tất cả các cập nhật về ứng tuyển và hệ thống.</p>
         </div>
-        {notifications.some(n => !n.read) && (
+        {notifications.some((n) => !n.read) && (
           <Button variant="outline" size="sm" onClick={() => markAllAsRead.mutate()}>
             <Check className="mr-2 h-4 w-4" />
             Đánh dấu tất cả đã đọc
@@ -78,12 +80,45 @@ function NotificationsPage() {
       </div>
 
       <div className="space-y-4">
-        {notifications.length === 0 ? (
+        {sessionPending ? (
+          <Card>
+            <CardContent className="flex flex-col gap-4 py-12">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+          </Card>
+        ) : !isLoggedIn ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+              <BellOff className="h-12 w-12 text-muted-foreground" />
+              <div>
+                <p className="text-lg font-medium">Đăng nhập để xem thông báo</p>
+                <p className="text-sm text-muted-foreground">
+                  Thông báo ứng tuyển và hệ thống được gắn với tài khoản của bạn.
+                </p>
+              </div>
+              <Button asChild>
+                <Link to="/login">Đăng nhập</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : isLoading ? (
+          <Card>
+            <CardContent className="flex flex-col gap-4 py-12">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+          </Card>
+        ) : notifications.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <BellOff className="mb-4 h-12 w-12 text-muted-foreground opacity-20" />
               <p className="text-lg font-medium">Bạn chưa có thông báo nào</p>
-              <p className="text-sm text-muted-foreground">Các cập nhật quan trọng sẽ xuất hiện ở đây.</p>
+              <p className="text-sm text-muted-foreground">
+                Các cập nhật quan trọng sẽ xuất hiện ở đây.
+              </p>
             </CardContent>
           </Card>
         ) : (

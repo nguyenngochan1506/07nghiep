@@ -4,6 +4,8 @@ import { interviewRouter } from "./interview";
 
 import { jobRouter } from "./job";
 import { applicationsRouter } from "./applications";
+import { adminJobRouter } from "./admin/job";
+import { adminOrganizationRouter } from "./admin/organization";
 import { adminUserRouter } from "./admin/user";
 import { moderationRouter, reportRouter } from "./admin/moderation";
 import { organizationRouter } from "./organization";
@@ -12,6 +14,7 @@ import { profileRouter } from "./profile";
 import { userRouter } from "./user";
 import { conversationRouter } from "./conversation";
 import { messageRouter } from "./message";
+import { savedJobRouter } from "./savedJob";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -33,11 +36,14 @@ export const appRouter = router({
   admin: router({
     users: adminUserRouter,
     moderation: moderationRouter,
+    organizations: adminOrganizationRouter,
+    jobs: adminJobRouter,
   }),
   report: reportRouter,
   interview: interviewRouter,
   conversation: conversationRouter,
   message: messageRouter,
+  savedJob: savedJobRouter,
 });
 
 export type AppRouter = typeof appRouter;

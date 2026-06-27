@@ -33,7 +33,6 @@ export interface ApplicantItem {
 
 interface ApplicantListProps {
   applicants: ApplicantItem[];
-  currentUserId: string;
   activeConversationId?: string;
   isLoading?: boolean;
   onSelect: (applicant: ApplicantItem) => void;
@@ -91,7 +90,6 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
 
 export function ApplicantList({
   applicants,
-  currentUserId,
   activeConversationId,
   isLoading,
   onSelect,
@@ -149,6 +147,7 @@ export function ApplicantList({
 
               return (
                 <button
+                  type="button"
                   key={applicant.id}
                   onClick={() => onSelect(applicant)}
                   className={`flex items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
@@ -161,9 +160,7 @@ export function ApplicantList({
                         src={getAvatarUrl(applicant.candidate)}
                         alt={applicant.candidate.name ?? ""}
                       />
-                      <AvatarFallback>
-                        {getInitials(applicant.candidate.name)}
-                      </AvatarFallback>
+                      <AvatarFallback>{getInitials(applicant.candidate.name)}</AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="min-w-0 flex-1">
@@ -175,9 +172,7 @@ export function ApplicantList({
                         {getRelativeTime(applicant.appliedAt)}
                       </span>
                     </div>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {applicant.job.title}
-                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{applicant.job.title}</p>
                     <div className="mt-1 flex items-center gap-2">
                       <Badge
                         variant={statusVariant[applicant.applicationStatus] ?? "secondary"}

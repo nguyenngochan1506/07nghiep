@@ -8,7 +8,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80",
+        default:
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
@@ -38,10 +39,14 @@ const buttonVariants = cva(
   },
 );
 
-type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { asChild?: boolean };
+type ButtonProps = ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & { asChild?: boolean };
 
 const Button = React.forwardRef<HTMLElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", asChild = false, children, ...props }, ref) => {
+  (
+    { className, variant = "default", size = "default", asChild = false, children, ...props },
+    ref,
+  ) => {
     const classes = cn(buttonVariants({ variant, size, className }));
 
     if (asChild) {
@@ -58,12 +63,7 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
     }
 
     return (
-      <ButtonPrimitive
-        ref={ref}
-        data-slot="button"
-        className={classes}
-        {...props}
-      >
+      <ButtonPrimitive ref={ref} data-slot="button" className={classes} {...props}>
         {children}
       </ButtonPrimitive>
     );

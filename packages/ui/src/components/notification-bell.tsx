@@ -1,21 +1,27 @@
 import { Bell } from "lucide-react";
-
+import { cn } from "../lib/utils";
+import { Badge } from "./badge";
+import { Button, buttonVariants } from "./button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-import { Badge } from "./badge";
 
-export type NotificationType = "APPLICATION_RECEIVED" | "APPLICATION_STATUS" | "MESSAGE" | "JOB_ALERT" | "SYSTEM" | "INTERVIEW_INVITATION";
+export type NotificationType =
+  | "APPLICATION_RECEIVED"
+  | "APPLICATION_STATUS"
+  | "MESSAGE"
+  | "JOB_ALERT"
+  | "SYSTEM"
+  | "INTERVIEW_INVITATION";
 
 export interface NotificationItem {
   id: string;
   type: string;
   title: string;
   body: string;
-  data?: any;
   read: boolean;
   createdAt: string;
 }
@@ -25,23 +31,22 @@ interface NotificationBellProps {
   notifications: NotificationItem[];
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
-  onNotificationClick?: (notification: NotificationItem) => void;
 }
 
 function getRelativeTime(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return 'Vừa xong';
+
+  if (diffInSeconds < 60) return "Vừa xong";
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `${diffInHours} giờ trước`;
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 30) return `${diffInDays} ngày trước`;
-  
-  return date.toLocaleDateString('vi-VN');
+
+  return date.toLocaleDateString("vi-VN");
 }
 
 export function NotificationBell({
@@ -49,48 +54,52 @@ export function NotificationBell({
   notifications,
   onMarkAsRead,
   onMarkAllAsRead,
-  onNotificationClick,
 }: NotificationBellProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="group/button inline-flex shrink-0 items-center justify-center rounded-md text-sm font-medium outline-hidden transition duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-disabled:pointer-events-none data-disabled:opacity-50 group-hover/button:bg-accent group-hover/button:text-accent-foreground h-10 w-10 hover:bg-accent hover:text-accent-foreground relative">
-        <Bell className="h-5 w-5" />
+      <DropdownMenuTrigger
+        className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "relative")}
+      >
+        <Bell />
         {unreadCount > 0 && (
           <Badge
             variant="destructive"
-            className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px]"
+            className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-96 p-0">
+      <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm font-semibold">Thông báo</span>
           {unreadCount > 0 && (
-            <button 
-              onClick={onMarkAllAsRead} 
-              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onMarkAllAsRead}
+              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent"
             >
               Đánh dấu tất cả đã đọc
-            </button>
+            </Button>
           )}
         </div>
         <DropdownMenuSeparator className="m-0" />
-        <div className="flex max-h-[500px] flex-col overflow-y-auto">
+        <div className="flex max-h-[350px] flex-col overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">Không có thông báo nào</div>
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              Không có thông báo nào
+            </div>
           ) : (
             notifications.map((n) => (
-              <div
+              <button
+                type="button"
                 key={n.id}
-                className={`flex flex-col gap-1 border-b px-4 py-3 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors ${
-                  !n.read ? "bg-primary/5" : ""
-                }`}
-                onClick={() => {
-                  if (!n.read) onMarkAsRead(n.id);
-                  onNotificationClick?.(n);
-                }}
+                className={cn(
+                  "flex cursor-pointer flex-col gap-1 border-b px-4 py-3 text-left transition-colors last:border-0 hover:bg-muted/50",
+                  !n.read && "bg-primary/5",
+                )}
+                onClick={() => !n.read && onMarkAsRead(n.id)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-sm font-medium leading-tight">{n.title}</span>
@@ -100,7 +109,7 @@ export function NotificationBell({
                 <span className="text-[10px] text-muted-foreground">
                   {getRelativeTime(n.createdAt)}
                 </span>
-              </div>
+              </button>
             ))
           )}
         </div>

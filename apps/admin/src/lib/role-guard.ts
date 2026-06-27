@@ -1,6 +1,4 @@
-import { createRootRouteWithContext, redirect } from "@tanstack/react-router";
 import { env } from "@07nghiep/env/admin";
-import { authClient } from "@/lib/auth-client";
 
 const APP_ROLE = env.VITE_APP_ROLE;
 

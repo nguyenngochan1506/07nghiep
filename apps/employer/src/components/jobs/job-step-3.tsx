@@ -58,10 +58,7 @@ export function JobStep3({ data, errors, onChange }: JobStep3Props) {
           {/* Salary Type */}
           <div className="space-y-2">
             <Label htmlFor="salary-type">Đơn vị lương</Label>
-            <Select
-              value={data.salaryType}
-              onValueChange={(v) => onChange("salaryType", v || "")}
-            >
+            <Select value={data.salaryType} onValueChange={(v) => onChange("salaryType", v || "")}>
               <SelectTrigger id="salary-type">
                 <SelectValue placeholder="Chọn đơn vị lương" />
               </SelectTrigger>
@@ -79,8 +76,7 @@ export function JobStep3({ data, errors, onChange }: JobStep3Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="salary-min">
-                Lương tối thiểu{" "}
-                <span className="text-muted-foreground text-xs">(VND)</span>
+                Lương tối thiểu <span className="text-muted-foreground text-xs">(VND)</span>
               </Label>
               <Input
                 id="salary-min"
@@ -91,15 +87,12 @@ export function JobStep3({ data, errors, onChange }: JobStep3Props) {
                 onChange={(e) => onChange("salaryMin", e.target.value)}
                 className={errors.salaryMin ? "border-destructive" : ""}
               />
-              {errors.salaryMin && (
-                <p className="text-sm text-destructive">{errors.salaryMin}</p>
-              )}
+              {errors.salaryMin && <p className="text-sm text-destructive">{errors.salaryMin}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="salary-max">
-                Lương tối đa{" "}
-                <span className="text-muted-foreground text-xs">(VND)</span>
+                Lương tối đa <span className="text-muted-foreground text-xs">(VND)</span>
               </Label>
               <Input
                 id="salary-max"
@@ -110,9 +103,7 @@ export function JobStep3({ data, errors, onChange }: JobStep3Props) {
                 onChange={(e) => onChange("salaryMax", e.target.value)}
                 className={errors.salaryMax ? "border-destructive" : ""}
               />
-              {errors.salaryMax && (
-                <p className="text-sm text-destructive">{errors.salaryMax}</p>
-              )}
+              {errors.salaryMax && <p className="text-sm text-destructive">{errors.salaryMax}</p>}
             </div>
           </div>
 
@@ -135,8 +126,7 @@ export function JobStep3({ data, errors, onChange }: JobStep3Props) {
 
       {data.salaryNegotiable && (
         <div className="rounded-lg bg-secondary/50 p-4 text-sm text-muted-foreground">
-          ℹ️ Mức lương sẽ được thỏa thuận trực tiếp với ứng viên phù hợp trong
-          quá trình phỏng vấn.
+          ℹ️ Mức lương sẽ được thỏa thuận trực tiếp với ứng viên phù hợp trong quá trình phỏng vấn.
         </div>
       )}
     </div>

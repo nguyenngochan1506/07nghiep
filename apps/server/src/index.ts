@@ -11,9 +11,24 @@ import { notificationEvents } from "./lib/notifications/events";
 import { messageEvents } from "./lib/messaging/events";
 
 const SEED_USERS = [
-  { email: "candidate_user@gmail.com", password: "candidate_user", name: "Candidate User", role: "CANDIDATE" as const },
-  { email: "employer_user@gmail.com", password: "employer_user", name: "Employer User", role: "EMPLOYER" as const },
-  { email: "admin_user@gmail.com", password: "admin_user", name: "Admin User", role: "ADMIN" as const },
+  {
+    email: "candidate_user@gmail.com",
+    password: "candidate_user",
+    name: "Candidate User",
+    role: "CANDIDATE" as const,
+  },
+  {
+    email: "employer_user@gmail.com",
+    password: "employer_user",
+    name: "Employer User",
+    role: "EMPLOYER" as const,
+  },
+  {
+    email: "admin_user@gmail.com",
+    password: "admin_user",
+    name: "Admin User",
+    role: "ADMIN" as const,
+  },
 ];
 
 async function seedUsers() {
@@ -33,7 +48,7 @@ async function seedUsers() {
     }
 
     // Create user + account via Better Auth API (handles password hashing correctly)
-    const res = await fetch("http://localhost:3000/api/auth/sign-up/email", {
+    const res = await fetch(`${env.BETTER_AUTH_URL}/api/auth/sign-up/email`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: "http://localhost:3000" },
       body: JSON.stringify({
@@ -108,7 +123,7 @@ app.get("/api/notifications/sse", async (c) => {
   const userId = session.user.id;
 
   return streamSSE(c, async (stream) => {
-    const handler = (payload: any) => {
+    const handler = (payload: unknown) => {
       stream.writeSSE({
         data: JSON.stringify(payload),
         event: "notification",
@@ -126,7 +141,7 @@ app.get("/api/notifications/sse", async (c) => {
       await stream.sleep(30000);
       try {
         await stream.writeSSE({ data: "ping", event: "ping" });
-      } catch (e) {
+      } catch (_e) {
         // Connection closed
         break;
       }
@@ -146,7 +161,7 @@ app.get("/api/messages/sse", async (c) => {
   }
 
   return streamSSE(c, async (stream) => {
-    const handler = (payload: any) => {
+    const handler = (payload: unknown) => {
       stream.writeSSE({
         data: JSON.stringify(payload),
         event: "message",
@@ -175,14 +190,16 @@ app.get("/", (c) => c.text("OK"));
 async function main() {
   const { serve } = await import("@hono/node-server");
 
-  serve({ fetch: app.fetch, port: 3000 });
-  console.log(`Server running on http://localhost:3000`);
+  serve({ fetch: app.fetch, port: env.SERVER_PORT });
+  console.log(`Server running on http://localhost:${env.SERVER_PORT}`);
 
-  // Give the server a moment to start listening
-  await new Promise((r) => setTimeout(r, 100));
+  if (env.SEED_DEMO_USERS) {
+    // Give the server a moment to start listening before calling its auth API.
+    await new Promise((r) => setTimeout(r, 100));
 
-  console.log("Seeding users...");
-  await seedUsers();
+    console.log("Seeding demo users...");
+    await seedUsers();
+  }
 }
 
 main().catch((err) => {

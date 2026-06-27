@@ -1,15 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
-import { toast } from "sonner";
-import { Building, Save, Globe, MapPin, Users, Calendar, Image as ImageIcon } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
+import type { CompanySize } from "@07nghiep/db";
 import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
-import { Textarea } from "@07nghiep/ui/components/textarea";
 import {
   Select,
   SelectContent,
@@ -17,17 +10,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@07nghiep/ui/components/select";
+import { Textarea } from "@07nghiep/ui/components/textarea";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Building, Calendar, Globe, Image as ImageIcon, MapPin, Save } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
 
+import Loader from "@/components/loader";
 import { authClient } from "@/lib/auth-client";
 import { authorizedRoles } from "@/lib/role-guard";
-import { trpc } from "@/utils/trpc";
-import Loader from "@/components/loader";
+import { trpc, trpcClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/settings/organization")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) redirect({ to: "/login", throw: true });
-    const role = (session.data!.user as { role?: string }).role ?? "CANDIDATE";
+    const role = (session.data?.user as { role?: string }).role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       await authClient.signOut();
       redirect({ to: "/login", throw: true });
@@ -45,6 +45,27 @@ const COMPANY_SIZES = [
   { value: "ENTERPRISE", label: "Tập đoàn (>1000 nhân viên)" },
 ] as const;
 
+type ErrorWithTRPCCode = {
+  data?: {
+    code?: string;
+  };
+};
+
+type OrganizationFormPayload = {
+  name: string;
+  description?: string;
+  website?: string;
+  industry?: string;
+  companySize?: CompanySize;
+  foundedYear?: number;
+  location?: string;
+  logoUrl?: string;
+};
+
+function isCompanySize(value: string): value is CompanySize {
+  return COMPANY_SIZES.some((size) => size.value === value);
+}
+
 function OrganizationSettingsPage() {
   const queryClient = useQueryClient();
   const orgQuery = useQuery({
@@ -52,29 +73,28 @@ function OrganizationSettingsPage() {
     retry: false, // Don't retry on 404
   });
 
-  const isNotFound = orgQuery.isError && (orgQuery.error as any)?.data?.code === "NOT_FOUND";
+  const isNotFound =
+    orgQuery.isError && (orgQuery.error as unknown as ErrorWithTRPCCode).data?.code === "NOT_FOUND";
   const isLoading = orgQuery.isLoading;
   const isEditing = !isNotFound && !!orgQuery.data;
 
-  const createMutation = useMutation(
-    trpc.organization.create.mutationOptions({
-      onSuccess: () => {
-        toast.success("Tạo thông tin tổ chức thành công!");
-        queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
-      },
-      onError: (err) => toast.error(err.message),
-    })
-  );
+  const createMutation = useMutation({
+    mutationFn: (input: OrganizationFormPayload) => trpcClient.organization.create.mutate(input),
+    onSuccess: () => {
+      toast.success("Tạo thông tin tổ chức thành công!");
+      queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
-  const updateMutation = useMutation(
-    trpc.organization.update.mutationOptions({
-      onSuccess: () => {
-        toast.success("Cập nhật thông tin tổ chức thành công!");
-        queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
-      },
-      onError: (err) => toast.error(err.message),
-    })
-  );
+  const updateMutation = useMutation({
+    mutationFn: (input: OrganizationFormPayload) => trpcClient.organization.update.mutate(input),
+    onSuccess: () => {
+      toast.success("Cập nhật thông tin tổ chức thành công!");
+      queryClient.invalidateQueries(trpc.organization.getMyOrganization.queryFilter());
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const form = useForm({
     defaultValues: {
@@ -93,9 +113,7 @@ function OrganizationSettingsPage() {
         description: value.description || undefined,
         website: value.website || undefined,
         industry: value.industry || undefined,
-        companySize: value.companySize
-          ? (value.companySize as any)
-          : undefined,
+        companySize: isCompanySize(value.companySize) ? value.companySize : undefined,
         foundedYear: value.foundedYear ? parseInt(value.foundedYear, 10) : undefined,
         location: value.location || undefined,
         logoUrl: value.logoUrl || undefined,
@@ -121,7 +139,7 @@ function OrganizationSettingsPage() {
             .regex(/^\d{4}$/, "Năm phải có 4 chữ số")
             .refine(
               (v) => !v || (parseInt(v, 10) >= 1800 && parseInt(v, 10) <= new Date().getFullYear()),
-              "Năm thành lập không hợp lệ"
+              "Năm thành lập không hợp lệ",
             ),
         ]),
         location: z.string(),
@@ -215,16 +233,16 @@ function OrganizationSettingsPage() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <form.Field name="industry">
                   {(field) => (
-                     <div className="space-y-2">
-                       <Label htmlFor={field.name}>Ngành nghề chính</Label>
-                       <Input
-                         id={field.name}
-                         placeholder="VD: Công nghệ thông tin, Bán lẻ..."
-                         value={field.state.value}
-                         onBlur={field.handleBlur}
-                         onChange={(e) => field.handleChange(e.target.value)}
-                       />
-                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={field.name}>Ngành nghề chính</Label>
+                      <Input
+                        id={field.name}
+                        placeholder="VD: Công nghệ thông tin, Bán lẻ..."
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                    </div>
                   )}
                 </form.Field>
 
@@ -339,12 +357,13 @@ function OrganizationSettingsPage() {
                   <div className="space-y-4">
                     {field.state.value ? (
                       <div className="flex justify-center">
-                        <img 
-                          src={field.state.value} 
-                          alt="Company logo preview" 
+                        <img
+                          src={field.state.value}
+                          alt="Company logo preview"
                           className="h-24 w-24 object-contain rounded-md border p-1"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=L%E1%BB%97i+Logo";
+                            (e.target as HTMLImageElement).src =
+                              "https://via.placeholder.com/150?text=L%E1%BB%97i+Logo";
                           }}
                         />
                       </div>
@@ -384,18 +403,14 @@ function OrganizationSettingsPage() {
             })}
           >
             {({ canSubmit }) => (
-              <Button 
-                type="submit" 
-                size="lg" 
+              <Button
+                type="submit"
+                size="lg"
                 disabled={!canSubmit || isSubmitting}
                 className="gap-2"
               >
                 <Save className="h-4 w-4" />
-                {isSubmitting 
-                  ? "Đang lưu..." 
-                  : isEditing 
-                    ? "Lưu thay đổi" 
-                    : "Hoàn tất tạo hồ sơ"}
+                {isSubmitting ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Hoàn tất tạo hồ sơ"}
               </Button>
             )}
           </form.Subscribe>

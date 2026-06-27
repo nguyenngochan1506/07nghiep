@@ -10,6 +10,12 @@ import { useEffect, useRef } from "react";
 import { env } from "@07nghiep/env/employer";
 import type { MessageData } from "@07nghiep/ui/components/message/message-bubble";
 import { createSSEConnection } from "@07nghiep/ui/lib/sse";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
+
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type MessageListData = RouterOutputs["message"]["list"];
+type MessageListItem = MessageListData["items"][number];
 
 export const Route = createFileRoute("/messages/$conversationId")({
   component: ConversationDetail,
@@ -25,9 +31,26 @@ function getInitials(name: string | null) {
     .slice(0, 2);
 }
 
-function getAvatarUrl(user: { image: string | null; profile: { avatarUrl: string | null } | null } | undefined) {
+function getAvatarUrl(
+  user: { image: string | null; profile: { avatarUrl: string | null } | null } | undefined,
+) {
   if (!user) return undefined;
   return user.profile?.avatarUrl || user.image || undefined;
+}
+
+function toMessageData(message: {
+  id: string;
+  content: string;
+  senderId: string;
+  read: boolean;
+  createdAt: Date | string;
+  sender: MessageData["sender"];
+}): MessageData {
+  return {
+    ...message,
+    createdAt:
+      message.createdAt instanceof Date ? message.createdAt.toISOString() : message.createdAt,
+  };
 }
 
 function ConversationDetail() {
@@ -41,15 +64,21 @@ function ConversationDetail() {
   const messagesQueryKey = trpc.message.list.queryKey({ conversationId });
 
   const { data: conversation, isLoading: convLoading } = useQuery(
-    trpc.conversation.getById.queryOptions({ id: conversationId }, {
-      enabled: !!conversationId,
-    })
+    trpc.conversation.getById.queryOptions(
+      { id: conversationId },
+      {
+        enabled: !!conversationId,
+      },
+    ),
   );
 
   const { data: messagesData, isLoading: msgLoading } = useQuery(
-    trpc.message.list.queryOptions({ conversationId, limit: 50 }, {
-      enabled: !!conversationId,
-    })
+    trpc.message.list.queryOptions(
+      { conversationId, limit: 50 },
+      {
+        enabled: !!conversationId,
+      },
+    ),
   );
 
   const markAsRead = useMutation(
@@ -58,31 +87,33 @@ function ConversationDetail() {
         queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
         queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
       },
-    })
+    }),
   );
 
   const sendMessage = useMutation(
     trpc.message.send.mutationOptions({
       onMutate: async (newMsg) => {
         await queryClient.cancelQueries({ queryKey: messagesQueryKey });
-        const previous = queryClient.getQueryData(messagesQueryKey);
+        const previous = queryClient.getQueryData<MessageListData>(messagesQueryKey);
 
-        const optimisticMsg: MessageData = {
+        const optimisticMsg: MessageListItem = {
           id: `temp-${Date.now()}`,
+          conversationId,
           content: newMsg.content,
           senderId: currentUserId,
           read: false,
+          readAt: null,
           createdAt: new Date().toISOString(),
           sender: {
             id: currentUserId,
-            name: currentUserName,
+            name: currentUserName ?? "",
             image: null,
             profile: null,
           },
         };
 
-        queryClient.setQueryData(messagesQueryKey, (old: any) => {
-          if (!old) return { items: [optimisticMsg], nextCursor: null };
+        queryClient.setQueryData<MessageListData>(messagesQueryKey, (old) => {
+          if (!old) return { items: [optimisticMsg], nextCursor: undefined };
           return { ...old, items: [...old.items, optimisticMsg] };
         });
 
@@ -97,7 +128,7 @@ function ConversationDetail() {
         queryClient.invalidateQueries({ queryKey: messagesQueryKey });
         queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
       },
-    })
+    }),
   );
 
   useEffect(() => {
@@ -126,20 +157,20 @@ function ConversationDetail() {
             }
             queryClient.invalidateQueries({ queryKey: messagesQueryKey });
             queryClient.invalidateQueries({ queryKey: trpc.conversation.getApplicants.queryKey() });
-            queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
+            queryClient.invalidateQueries({
+              queryKey: trpc.conversation.getUnreadCount.queryKey(),
+            });
           }
         } catch {}
       },
-      abort.signal
+      abort.signal,
     );
 
     return () => abort.abort();
   }, [conversationId, currentUserId, queryClient, markAsRead, messagesQueryKey]);
 
   const otherUser =
-    conversation?.employer?.id === currentUserId
-      ? conversation?.candidate
-      : conversation?.employer;
+    conversation?.employer?.id === currentUserId ? conversation?.candidate : conversation?.employer;
 
   return (
     <div className="flex h-full flex-col">
@@ -160,16 +191,14 @@ function ConversationDetail() {
           <div>
             <p className="text-sm font-medium">{otherUser.name || "Người dùng"}</p>
             {conversation?.job && (
-              <p className="text-xs text-muted-foreground">
-                {conversation.job.title}
-              </p>
+              <p className="text-xs text-muted-foreground">{conversation.job.title}</p>
             )}
           </div>
         </div>
       ) : null}
 
       <MessageThread
-        messages={messagesData?.items ?? []}
+        messages={messagesData?.items.map(toMessageData) ?? []}
         currentUserId={currentUserId}
         isLoading={msgLoading}
       />

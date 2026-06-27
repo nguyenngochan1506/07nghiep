@@ -1,97 +1,96 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, X } from "lucide-react";
 import { Button } from "@07nghiep/ui/components/button";
-// Nếu bạn chưa có component Input từ shadcn, hãy dùng thẻ <input> HTML mặc định tạm thời như dưới đây,
-// hoặc chạy lệnh: pnpm dlx shadcn@latest add input -c packages/ui để cài nhé!
+import { Input } from "@07nghiep/ui/components/input";
+import { ProvinceCombobox } from "@/components/province-combobox";
 
 interface SearchBarProps {
-    onSearch: (keyword: string, location: string) => void;
-    initialKeyword?: string;
-    initialLocation?: string;
+  onSearch: (keyword: string, location: string) => void;
+  initialKeyword?: string;
+  initialLocation?: string;
 }
 
 export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" }: SearchBarProps) {
-    const [keyword, setKeyword] = useState(initialKeyword);
-    const [location, setLocation] = useState(initialLocation);
+  const [keyword, setKeyword] = useState(initialKeyword);
+  const [location, setLocation] = useState(initialLocation);
 
-    // Dùng useRef để giữ giá trị timeout ID (phục vụ cho Debounce)
-    const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    setKeyword(initialKeyword);
+    setLocation(initialLocation);
+  }, [initialKeyword, initialLocation]);
 
-    // Hàm xử lý Debounce 300ms
-    useEffect(() => {
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
+  // Dùng useRef để giữ giá trị timeout ID (phục vụ cho Debounce)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-        debounceTimeoutRef.current = setTimeout(() => {
-            onSearch(keyword, location);
-        }, 300);
+  // Hàm xử lý Debounce 300ms
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
 
-        return () => {
-            if (debounceTimeoutRef.current) {
-                clearTimeout(debounceTimeoutRef.current);
-            }
-        };
-    }, [keyword, location, onSearch]);
+    debounceTimeoutRef.current = setTimeout(() => {
+      onSearch(keyword, location);
+    }, 300);
 
-    const handleClearKeyword = () => setKeyword("");
-    const handleClearLocation = () => setLocation("");
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [keyword, location, onSearch]);
 
-    return (
-        <div className="w-full max-w-4xl mx-auto bg-card rounded-2xl shadow-sm border p-2 flex flex-col md:flex-row items-center gap-2 relative z-10">
+  const handleClearKeyword = () => setKeyword("");
+  const handleClearLocation = () => setLocation("");
 
-            {/* Ô tìm kiếm theo từ khóa */}
-            <div className="relative flex-grow w-full md:w-auto flex items-center h-12">
-                <Search className="absolute left-4 h-5 w-5 text-muted-foreground shrink-0" />
-                <input
-                    type="text"
-                    placeholder="Job title, keywords, or company..."
-                    className="w-full h-full pl-11 pr-10 border-0 bg-transparent shadow-none focus:outline-none text-base text-foreground"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                />
-                {keyword && (
-                    <button
-                        onClick={handleClearKeyword}
-                        className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label="Clear search"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
-                )}
-            </div>
+  return (
+    <div className="mx-auto grid w-full max-w-5xl gap-2 rounded-xl border bg-card p-2 shadow-md shadow-primary/5 md:grid-cols-[1fr_0.7fr_auto]">
+      <div className="relative flex h-11 w-full items-center">
+        <Search className="absolute left-3 size-4 shrink-0 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Chức danh, kỹ năng hoặc công ty"
+          className="h-11 border-transparent bg-transparent pl-9 pr-9 focus-visible:border-ring"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+        />
+        {keyword && (
+          <button
+            type="button"
+            onClick={handleClearKeyword}
+            className="absolute right-3 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Xóa từ khóa"
+          >
+            <X className="size-4" />
+          </button>
+        )}
+      </div>
 
-            {/* Đường kẻ dọc chia tách (chỉ hiện trên Desktop) */}
-            <div className="hidden md:block w-px h-8 bg-border shrink-0"></div>
+      <div className="relative flex h-11 w-full items-center">
+        <MapPin className="pointer-events-none absolute left-3 z-10 size-4 shrink-0 text-muted-foreground" />
+        <ProvinceCombobox
+          value={location}
+          onValueChange={setLocation}
+          inputClassName="h-11 border-transparent bg-transparent pl-9 pr-16 focus-visible:border-ring"
+        />
+        {location && (
+          <button
+            type="button"
+            onClick={handleClearLocation}
+            className="absolute right-9 z-10 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Xóa địa điểm"
+          >
+            <X className="size-4" />
+          </button>
+        )}
+      </div>
 
-            {/* Ô tìm kiếm theo địa điểm */}
-            <div className="relative flex-grow md:w-1/3 w-full flex items-center h-12 border-t md:border-t-0 pt-2 md:pt-0">
-                <MapPin className="absolute left-4 h-5 w-5 text-muted-foreground shrink-0" />
-                <input
-                    type="text"
-                    placeholder="City, state, or 'Remote'"
-                    className="w-full h-full pl-11 pr-10 border-0 bg-transparent shadow-none focus:outline-none text-base text-foreground"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                />
-                {location && (
-                    <button
-                        onClick={handleClearLocation}
-                        className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label="Clear location"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
-                )}
-            </div>
-
-            {/* Nút Tìm kiếm */}
-            <Button
-                className="w-full md:w-auto h-12 px-8 rounded-xl font-medium"
-                onClick={() => onSearch(keyword, location)}
-            >
-                Search
-            </Button>
-        </div>
-    );
+      <Button
+        className="h-11 w-full bg-brand-orange px-8 text-brand-orange-foreground shadow-sm hover:bg-brand-orange/90 md:w-auto"
+        onClick={() => onSearch(keyword, location)}
+      >
+        <Search data-icon="inline-start" />
+        Tìm việc
+      </Button>
+    </div>
+  );
 }

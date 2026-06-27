@@ -1,41 +1,180 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useJobs } from './__root'; // Lấy dữ liệu từ Context chung
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
+import type React from "react";
+import { ArrowRight, Heart, Search } from "lucide-react";
 import { JobCardItem } from "@/components/job-card";
+import { queryClient, trpc } from "@/utils/trpc";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@07nghiep/ui/components/button";
+import { Card, CardContent, CardTitle } from "@07nghiep/ui/components/card";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
-export const Route = createFileRoute('/saved-jobs')({
-    component: SavedJobsPage,
+export const Route = createFileRoute("/saved-jobs")({
+  component: SavedJobsPage,
 });
 
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type SavedJob = RouterOutputs["savedJob"]["list"]["jobs"][number];
+type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
+
+function mapSavedJob(raw: SavedJob): JobCardItemProps["job"] {
+  const salaryRange =
+    raw.salaryMin && raw.salaryMax
+      ? `$${raw.salaryMin.toLocaleString()} - $${raw.salaryMax.toLocaleString()}`
+      : "Thỏa thuận";
+
+  const postedAt = new Date(raw.createdAt);
+  const diffDays = Math.floor((Date.now() - postedAt.getTime()) / (1000 * 60 * 60 * 24));
+  const postedDate =
+    diffDays === 0
+      ? "Hôm nay"
+      : diffDays === 1
+        ? "1 ngày trước"
+        : diffDays < 30
+          ? `${diffDays} ngày trước`
+          : `${Math.floor(diffDays / 30)} tháng trước`;
+
+  return {
+    id: raw.id,
+    companyName: raw.organization?.name ?? "Unknown",
+    companyLogo: raw.organization?.logoUrl ?? "",
+    isVerified: raw.organization?.verified ?? false,
+    title: raw.title,
+    location: raw.location ?? "",
+    workType: raw.workType ?? "",
+    jobType: raw.jobType ?? "",
+    salaryRange,
+    skills: raw.skills ?? [],
+    postedDate,
+    isSaved: true,
+  };
+}
+
 function SavedJobsPage() {
-    // Gọi kho dữ liệu chung
-    const { jobs, toggleSave } = useJobs();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
+  const savedJobsOptions = trpc.savedJob.list.queryOptions(
+    { page: 1, pageSize: 20 },
+    { enabled: isLoggedIn },
+  );
+  const savedJobsQuery = useQuery(savedJobsOptions);
+  const toggleSavedJob = useMutation(
+    trpc.savedJob.toggle.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
+      },
+    }),
+  );
+  const savedJobs = (savedJobsQuery.data?.jobs ?? []).map(mapSavedJob);
 
-    // Lọc ra những công việc đã được thả tim
-    const savedJobs = jobs.filter(job => job.isSaved);
-
-    return (
-        <div className="max-w-5xl mx-auto p-6 min-h-screen">
-            <h1 className="text-2xl font-bold mb-6 text-gray-900">Việc làm đã lưu</h1>
-
-            {savedJobs.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {savedJobs.map((job) => (
-                        <JobCardItem
-                            key={job.id}
-                            job={job as any}
-                            onSave={toggleSave}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="bg-white p-12 rounded-xl shadow-sm border border-dashed border-gray-300 text-center flex flex-col items-center justify-center">
-                    <span className="text-4xl mb-4">🤍</span>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Chưa có công việc nào được lưu</h3>
-                    <p className="text-gray-500 max-w-sm">
-                        Hãy quay lại trang danh sách việc làm và nhấn vào biểu tượng trái tim để lưu lại những vị trí hấp dẫn nhé!
-                    </p>
-                </div>
-            )}
+  return (
+    <div className="min-h-[100dvh] bg-background text-foreground">
+      <section className="border-b border-border bg-surface-wash">
+        <div className="container mx-auto max-w-7xl px-4 py-10 md:px-6">
+          <div className="flex flex-col gap-2">
+            <p className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-orange/30 bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
+              <Heart className="size-4" />
+              Danh sách quan tâm
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Việc làm đã lưu</h1>
+            <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
+              Lưu lại những vị trí phù hợp để so sánh, quay lại đọc kỹ và ứng tuyển khi sẵn sàng.
+            </p>
+          </div>
         </div>
-    );
+      </section>
+
+      <main className="container mx-auto max-w-7xl px-4 py-8 md:px-6">
+        {sessionPending ? (
+          <SavedJobsSkeleton />
+        ) : !isLoggedIn ? (
+          <SavedJobsEmptyState
+            title="Đăng nhập để xem việc đã lưu"
+            description="Danh sách việc làm đã lưu được gắn với tài khoản ứng viên của bạn."
+            actionLabel="Đăng nhập"
+            actionTo="/login"
+          />
+        ) : savedJobsQuery.isLoading ? (
+          <SavedJobsSkeleton />
+        ) : savedJobs.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {savedJobs.map((job) => (
+              <JobCardItem
+                key={job.id}
+                job={job}
+                onSave={(jobId) => toggleSavedJob.mutate({ jobId })}
+              />
+            ))}
+          </div>
+        ) : (
+          <SavedJobsEmptyState
+            title="Chưa có công việc nào được lưu"
+            description="Khi thấy một vị trí đáng cân nhắc, nhấn biểu tượng trái tim để giữ lại tại đây."
+            actionLabel="Khám phá việc làm"
+            actionTo="/jobs"
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+function SavedJobsSkeleton() {
+  return (
+    <Card className="mx-auto w-full max-w-3xl border-dashed">
+      <CardContent className="flex flex-col gap-4 px-6 py-12 md:px-12">
+        <Skeleton className="mx-auto size-14 rounded-full" />
+        <Skeleton className="mx-auto h-6 w-56" />
+        <Skeleton className="mx-auto h-4 w-full max-w-md" />
+        <Skeleton className="mx-auto h-9 w-36 rounded-md" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function SavedJobsEmptyState({
+  title,
+  description,
+  actionLabel,
+  actionTo,
+}: {
+  title: string;
+  description: string;
+  actionLabel: string;
+  actionTo: "/jobs" | "/login";
+}) {
+  return (
+    <Card className="mx-auto w-full max-w-3xl border-dashed bg-card/80">
+      <CardContent className="flex flex-col items-center gap-6 px-6 py-12 text-center md:px-12 md:py-14">
+        <div className="flex size-16 items-center justify-center rounded-full bg-accent text-accent-foreground">
+          <Heart className="size-7" />
+        </div>
+        <div className="flex max-w-xl flex-col gap-2">
+          <CardTitle className="text-xl font-semibold md:text-2xl">{title}</CardTitle>
+          <p className="text-sm leading-6 text-muted-foreground md:text-base">{description}</p>
+        </div>
+        <div className="flex flex-col items-center gap-3 sm:flex-row">
+          <Button
+            asChild
+            className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+          >
+            <Link to={actionTo}>
+              {actionLabel}
+              <ArrowRight data-icon="inline-end" />
+            </Link>
+          </Button>
+          {actionTo === "/jobs" ? (
+            <Button asChild variant="outline">
+              <Link to="/jobs">
+                <Search data-icon="inline-start" />
+                Tìm theo bộ lọc
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

@@ -1,3 +1,4 @@
+import { type Prisma, WorkType } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -10,77 +11,74 @@ import {
   router,
 } from "../lib/api";
 
+const WORK_TYPES = Object.values(WorkType);
+const PUBLIC_JOBS_LIMIT_MAX = 100;
+
+function isWorkType(value: string): value is WorkType {
+  return WORK_TYPES.includes(value as WorkType);
+}
+
 export const jobRouter = router({
   // ── Employer: Get my jobs ─────────────────────────────────────────────────
-  getMyJobs: employerOrAdminProcedure
-    .input(jobListQuerySchema)
-    .query(async ({ ctx, input }) => {
-      const { page, pageSize, status, search } = input;
-      const skip = (page - 1) * pageSize;
+  getMyJobs: employerOrAdminProcedure.input(jobListQuerySchema).query(async ({ ctx, input }) => {
+    const { page, pageSize, status, search } = input;
+    const skip = (page - 1) * pageSize;
 
-      // Get the employer's organization
-      const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
-        select: { id: true },
+    // Get the employer's organization
+    const org = await ctx.prisma.organization.findUnique({
+      where: { userId: ctx.user?.id },
+      select: { id: true },
+    });
+
+    if (!org) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Bạn chưa có tổ chức. Vui lòng tạo tổ chức trước.",
       });
+    }
 
-      if (!org) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Bạn chưa có tổ chức. Vui lòng tạo tổ chức trước.",
-        });
-      }
+    const where = {
+      organizationId: org.id,
+      ...(status ? { status } : {}),
+      ...(search
+        ? {
+            title: { contains: search, mode: "insensitive" as const },
+          }
+        : {}),
+    };
 
-      const where = {
-        organizationId: org.id,
-        ...(status ? { status } : {}),
-        ...(search
-          ? {
-              title: { contains: search, mode: "insensitive" as const },
-            }
-          : {}),
-      };
-
-      const [jobs, total] = await Promise.all([
-        ctx.prisma.job.findMany({
-          where,
-          orderBy: { updatedAt: "desc" },
-          skip,
-          take: pageSize,
-          include: {
-            skills: true,
-            _count: { select: { applications: true } },
-          },
-        }),
-        ctx.prisma.job.count({ where }),
-      ]);
-
-      return {
-        jobs: jobs.map((j) => ({
-          ...j,
-          applicationsCount: j._count.applications,
-        })),
-        pagination: {
-          page,
-          pageSize,
-          total,
-          totalPages: Math.ceil(total / pageSize),
+    const [jobs, total] = await Promise.all([
+      ctx.prisma.job.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        skip,
+        take: pageSize,
+        include: {
+          skills: true,
+          _count: { select: { applications: true } },
         },
-      } as {
-        jobs: any[];
-        pagination: {
-          page: number;
-          pageSize: number;
-          total: number;
-          totalPages: number;
-        };
-      };
-    }),
+      }),
+      ctx.prisma.job.count({ where }),
+    ]);
+
+    return {
+      jobs: jobs.map((j) => ({
+        ...j,
+        applicationsCount: j._count.applications,
+      })),
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  }),
 
   // ── Employer: Get stats ───────────────────────────────────────────────────
   getMyStats: employerOrAdminProcedure.query(async ({ ctx }) => {
     const org = await ctx.prisma.organization.findUnique({
-      where: { userId: ctx.user!.id },
+      where: { userId: ctx.user?.id },
       select: { id: true },
     });
 
@@ -108,15 +106,13 @@ export const jobRouter = router({
       }),
     ]);
 
-    const byStatus = Object.fromEntries(
-      statusCounts.map((s) => [s.status, s._count.id])
-    );
+    const byStatus = Object.fromEntries(statusCounts.map((s) => [s.status, s._count.id]));
 
     return {
       totalJobs: totals._count.id,
-      openJobs: byStatus["OPEN"] ?? 0,
-      draftJobs: byStatus["DRAFT"] ?? 0,
-      closedJobs: byStatus["CLOSED"] ?? 0,
+      openJobs: byStatus.OPEN ?? 0,
+      draftJobs: byStatus.DRAFT ?? 0,
+      closedJobs: byStatus.CLOSED ?? 0,
       totalApplications: totals._sum.applicationsCount ?? 0,
       totalViews: totals._sum.views ?? 0,
     };
@@ -127,7 +123,7 @@ export const jobRouter = router({
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
+        where: { userId: ctx.user?.id },
         select: { id: true },
       });
 
@@ -147,35 +143,19 @@ export const jobRouter = router({
       return {
         ...job,
         skills: job.skills.map((s) => s.skill),
-      } as {
-        id: string;
-        title: string;
-        description: string;
-        requirements: string | null;
-        benefits: string | null;
-        salaryMin: any;
-        salaryMax: any;
-        salaryType: any;
-        salaryNegotiable: boolean;
-        location: string;
-        workType: any;
-        jobType: any;
-        experienceLevel: any;
-        status: any;
-        publishedAt: Date | null;
-        expiresAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
-        skills: string[];
       };
     }),
 
   // ── Employer: Create job ──────────────────────────────────────────────────
   create: employerOrAdminProcedure
-    .input(jobCreateSchema.extend({ status: z.enum(["DRAFT", "OPEN"]).default("DRAFT") }))
+    .input(
+      jobCreateSchema.extend({
+        status: z.enum(["DRAFT", "OPEN", "PENDING_APPROVAL"]).default("DRAFT"),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
+        where: { userId: ctx.user?.id },
         select: { id: true, name: true },
       });
 
@@ -187,8 +167,7 @@ export const jobRouter = router({
       }
 
       const { skills, salaryMin, salaryMax, status, ...rest } = input;
-
-      const needsModeration = status === "OPEN";
+      const needsModeration = status === "OPEN" || status === "PENDING_APPROVAL";
       const finalStatus = needsModeration ? "PENDING_APPROVAL" : status;
 
       const job = await ctx.prisma.job.create({
@@ -233,7 +212,7 @@ export const jobRouter = router({
   // ── Employer: Update job ──────────────────────────────────────────────────
   update: employerOrAdminProcedure.input(jobUpdateSchema).mutation(async ({ ctx, input }) => {
     const org = await ctx.prisma.organization.findUnique({
-      where: { userId: ctx.user!.id },
+      where: { userId: ctx.user?.id },
       select: { id: true },
     });
 
@@ -277,7 +256,7 @@ export const jobRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
+        where: { userId: ctx.user?.id },
         select: { id: true, name: true },
       });
 
@@ -286,19 +265,19 @@ export const jobRouter = router({
       const job = await ctx.prisma.job.findFirst({
         where: { id: input.id, organizationId: org.id },
       });
-
-      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
+      if (!job)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
 
       if (!["DRAFT", "CLOSED"].includes(job.status)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Chỉ có thể đăng tin ở trạng thái Nháp hoặc Đã đóng" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Chỉ có thể đăng tin ở trạng thái Nháp hoặc Đã đóng",
+        });
       }
 
       const updatedJob = await ctx.prisma.job.update({
         where: { id: input.id },
-        data: {
-          status: "PENDING_APPROVAL",
-          publishedAt: null,
-        },
+        data: { status: "PENDING_APPROVAL", publishedAt: null },
       });
 
       const admins = await ctx.prisma.user.findMany({
@@ -328,7 +307,7 @@ export const jobRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
+        where: { userId: ctx.user?.id },
         select: { id: true },
       });
       if (!org) throw new TRPCError({ code: "NOT_FOUND", message: "Tổ chức không tồn tại" });
@@ -336,7 +315,8 @@ export const jobRouter = router({
       const job = await ctx.prisma.job.findFirst({
         where: { id: input.id, organizationId: org.id },
       });
-      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
+      if (!job)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
 
       return ctx.prisma.job.update({
         where: { id: input.id },
@@ -349,7 +329,7 @@ export const jobRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
+        where: { userId: ctx.user?.id },
         select: { id: true },
       });
       if (!org) throw new TRPCError({ code: "NOT_FOUND", message: "Tổ chức không tồn tại" });
@@ -357,7 +337,8 @@ export const jobRouter = router({
       const job = await ctx.prisma.job.findFirst({
         where: { id: input.id, organizationId: org.id },
       });
-      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
+      if (!job)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
 
       return ctx.prisma.job.update({
         where: { id: input.id },
@@ -370,7 +351,7 @@ export const jobRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const org = await ctx.prisma.organization.findUnique({
-        where: { userId: ctx.user!.id },
+        where: { userId: ctx.user?.id },
         select: { id: true },
       });
       if (!org) throw new TRPCError({ code: "NOT_FOUND", message: "Tổ chức không tồn tại" });
@@ -379,15 +360,33 @@ export const jobRouter = router({
         where: { id: input.id, organizationId: org.id },
         include: { skills: true },
       });
-      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
+      if (!job)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy tin tuyển dụng" });
 
       const {
         id: _id,
         createdAt: _ca,
         updatedAt: _ua,
         publishedAt: _pa,
+        expiresAt: _ea,
         views: _v,
         applicationsCount: _ac,
+        industry: _industry,
+        salaryCurrency: _salaryCurrency,
+        salaryUnit: _salaryUnit,
+        sourcePublishedAt: _sourcePublishedAt,
+        experienceMonths: _experienceMonths,
+        streetAddress: _streetAddress,
+        addressLocality: _addressLocality,
+        addressRegion: _addressRegion,
+        addressCountry: _addressCountry,
+        directApply: _directApply,
+        applicantLocation: _applicantLocation,
+        sourceSite: _sourceSite,
+        sourceUrl: _sourceUrl,
+        externalId: _externalId,
+        crawledAt: _crawledAt,
+        rawPayload: _rawPayload,
         skills,
         ...jobData
       } = job;
@@ -413,12 +412,12 @@ export const jobRouter = router({
         keyword: z.string().optional(),
         location: z.string().optional(),
         workType: z.string().optional(),
-        limit: z.number().min(1).max(50).default(20),
+        limit: z.number().int().min(1).max(PUBLIC_JOBS_LIMIT_MAX).default(20),
         offset: z.number().min(0).default(0),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
-      const where: any = { status: "OPEN" };
+      const where: Prisma.JobWhereInput = { status: "OPEN" };
 
       if (input.keyword) {
         where.OR = [
@@ -435,7 +434,7 @@ export const jobRouter = router({
         where.location = { contains: input.location, mode: "insensitive" };
       }
 
-      if (input.workType) {
+      if (input.workType && isWorkType(input.workType)) {
         where.workType = input.workType;
       }
 

@@ -9,7 +9,7 @@ import { Card } from "@07nghiep/ui/components/card";
 
 import { authorizedRoles } from "@/lib/role-guard";
 import { authClient } from "@/lib/auth-client";
-import { trpc, trpcClient } from "@/utils/trpc";
+import { trpc } from "@/utils/trpc";
 import { JobFormStepper } from "@/components/jobs/job-form-stepper";
 import { JobStep1, type Step1Data } from "@/components/jobs/job-step-1";
 import { JobStep2, type Step2Data } from "@/components/jobs/job-step-2";
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/jobs/new")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) redirect({ to: "/login", throw: true });
-    const role = (session.data!.user as { role?: string }).role ?? "CANDIDATE";
+    const role = (session.data?.user as { role?: string }).role ?? "CANDIDATE";
     if (!authorizedRoles(role)) {
       await authClient.signOut();
       redirect({ to: "/login", throw: true });
@@ -64,13 +64,11 @@ export const Route = createFileRoute("/jobs/new")({
 
 function validateStep1(data: Step1Data): FormErrors {
   const errors: FormErrors = {};
-  if (!data.title || data.title.trim().length < 5)
-    errors.title = "Tiêu đề phải có ít nhất 5 ký tự";
+  if (!data.title || data.title.trim().length < 5) errors.title = "Tiêu đề phải có ít nhất 5 ký tự";
   if (!data.jobType) errors.jobType = "Vui lòng chọn loại hợp đồng";
   if (!data.workType) errors.workType = "Vui lòng chọn hình thức làm việc";
   if (!data.experienceLevel) errors.experienceLevel = "Vui lòng chọn cấp độ kinh nghiệm";
-  if (!data.location || data.location.trim().length < 2)
-    errors.location = "Địa điểm là bắt buộc";
+  if (!data.location || data.location.trim().length < 2) errors.location = "Địa điểm là bắt buộc";
   return errors;
 }
 
@@ -86,8 +84,8 @@ function validateStep3(data: Step3Data): FormErrors {
   if (!data.salaryNegotiable) {
     const min = Number(data.salaryMin);
     const max = Number(data.salaryMax);
-    if (data.salaryMin && isNaN(min)) errors.salaryMin = "Lương không hợp lệ";
-    if (data.salaryMax && isNaN(max)) errors.salaryMax = "Lương không hợp lệ";
+    if (data.salaryMin && Number.isNaN(min)) errors.salaryMin = "Lương không hợp lệ";
+    if (data.salaryMax && Number.isNaN(max)) errors.salaryMax = "Lương không hợp lệ";
     if (data.salaryMin && data.salaryMax && min > max)
       errors.salaryMax = "Lương tối đa phải lớn hơn lương tối thiểu";
   }
@@ -98,7 +96,7 @@ function validateStep4(data: Step4Data): FormErrors {
   const errors: FormErrors = {};
   if (data.expiresAt) {
     const d = new Date(data.expiresAt);
-    if (isNaN(d.getTime()) || d <= new Date())
+    if (Number.isNaN(d.getTime()) || d <= new Date())
       errors.expiresAt = "Ngày hết hạn phải trong tương lai";
   }
   return errors;
@@ -155,11 +153,11 @@ function NewJobPage() {
     trpc.job.create.mutationOptions({
       onSuccess: () => {
         localStorage.removeItem(DRAFT_KEY);
-        toast.success("Tin tuyển dụng đã được đăng thành công!");
+        toast.success("Tin tuyển dụng đã được gửi duyệt!");
         navigate({ to: "/my-jobs" });
       },
       onError: (err) => toast.error(err.message),
-    })
+    }),
   );
 
   const saveDraftMutation = useMutation(
@@ -170,7 +168,7 @@ function NewJobPage() {
         navigate({ to: "/my-jobs" });
       },
       onError: (err) => toast.error(err.message),
-    })
+    }),
   );
 
   // ── Step navigation ───────────────────────────────────────────────────────
@@ -196,19 +194,27 @@ function NewJobPage() {
     setCurrentStep((s) => Math.max(1, s - 1));
   }
 
-  function buildPayload(status: "DRAFT" | "OPEN") {
+  function buildPayload(status: "DRAFT" | "PENDING_APPROVAL") {
     return {
       title: step1.title,
       jobType: step1.jobType as "FULLTIME" | "PARTIME" | "CONTRACT" | "INTERNSHIP" | "FREELANCE",
       workType: step1.workType as "REMOTE" | "HYBRID" | "ONSITE",
-      experienceLevel: step1.experienceLevel as "ENTRY" | "JUNIOR" | "MIDDLE" | "SENIOR" | "LEAD" | "EXECUTIVE",
+      experienceLevel: step1.experienceLevel as
+        | "ENTRY"
+        | "JUNIOR"
+        | "MIDDLE"
+        | "SENIOR"
+        | "LEAD"
+        | "EXECUTIVE",
       location: step1.location,
       description: step2.description,
       requirements: step2.requirements || undefined,
       benefits: step2.benefits || undefined,
       skills: step2.skills,
       salaryNegotiable: step3.salaryNegotiable,
-      salaryType: step3.salaryType ? (step3.salaryType as "HOURLY" | "MONTHLY" | "YEARLY") : undefined,
+      salaryType: step3.salaryType
+        ? (step3.salaryType as "HOURLY" | "MONTHLY" | "YEARLY")
+        : undefined,
       salaryMin: step3.salaryMin ? Number(step3.salaryMin) : undefined,
       salaryMax: step3.salaryMax ? Number(step3.salaryMax) : undefined,
       expiresAt: step4.expiresAt ? new Date(step4.expiresAt) : undefined,
@@ -217,7 +223,7 @@ function NewJobPage() {
   }
 
   function handlePublish() {
-    createJob.mutate(buildPayload("OPEN"));
+    createJob.mutate(buildPayload("PENDING_APPROVAL"));
   }
 
   function handleSaveDraft() {
@@ -247,12 +253,7 @@ function NewJobPage() {
               )}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleManualSave}
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={handleManualSave} className="gap-2">
             <Save className="h-4 w-4" />
             Lưu nháp
           </Button>
@@ -267,18 +268,14 @@ function NewJobPage() {
             <JobStep1
               data={step1}
               errors={errors}
-              onChange={(field, value) =>
-                setStep1((prev) => ({ ...prev, [field]: value }))
-              }
+              onChange={(field, value) => setStep1((prev) => ({ ...prev, [field]: value }))}
             />
           )}
           {currentStep === 2 && (
             <JobStep2
               data={step2}
               errors={errors}
-              onChange={(field, value) =>
-                setStep2((prev) => ({ ...prev, [field]: value }))
-              }
+              onChange={(field, value) => setStep2((prev) => ({ ...prev, [field]: value }))}
             />
           )}
           {currentStep === 3 && (
@@ -294,9 +291,7 @@ function NewJobPage() {
             <JobStep4
               data={step4}
               errors={errors}
-              onChange={(field, value) =>
-                setStep4((prev) => ({ ...prev, [field]: value }))
-              }
+              onChange={(field, value) => setStep4((prev) => ({ ...prev, [field]: value }))}
             />
           )}
           {currentStep === 5 && (
@@ -334,17 +329,13 @@ function NewJobPage() {
                   <Save className="h-4 w-4" />
                   Lưu nháp
                 </Button>
-                <Button
-                  onClick={handlePublish}
-                  disabled={isSubmitting}
-                  className="gap-2"
-                >
+                <Button onClick={handlePublish} disabled={isSubmitting} className="gap-2">
                   {isSubmitting ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  Đăng tin ngay
+                  Gửi duyệt
                 </Button>
               </>
             ) : (

@@ -11,10 +11,13 @@ export const profileUpdateSchema = z.object({
         company: z.string().min(1).max(100),
         location: z.string().max(100).optional(),
         startDate: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM"),
-        endDate: z.string().regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM").optional(),
+        endDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}$/, "Format: YYYY-MM")
+          .optional(),
         current: z.boolean().default(false),
         description: z.string().max(1000).optional(),
-      })
+      }),
     )
     .max(20)
     .optional(),
@@ -27,7 +30,7 @@ export const profileUpdateSchema = z.object({
         startYear: z.number().int().min(1950).max(2030),
         endYear: z.number().int().min(1950).max(2030).optional(),
         gpa: z.string().max(20).nullable().optional(),
-      })
+      }),
     )
     .max(10)
     .optional(),

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/component
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
 
+import { ProvinceCombobox } from "@/components/province-combobox";
 import type { ProfileFormValues } from "@/utils/profile-schema";
 
 import AvatarUpload from "./AvatarUpload";
@@ -36,13 +37,11 @@ function FieldError({ message }: { message?: string }) {
 export default function BasicInfoSection({ form, email, onAvatarChange }: BasicInfoSectionProps) {
   const avatarUrl = form.watch("avatarUrl");
   const aboutMe = form.watch("aboutMe") ?? "";
+  const location = form.watch("location") ?? "";
 
   return (
     <div className="flex flex-col gap-6">
-      <AvatarUpload
-        value={avatarUrl}
-        onChange={onAvatarChange}
-      />
+      <AvatarUpload value={avatarUrl} onChange={onAvatarChange} />
 
       <Card>
         <CardHeader>
@@ -94,12 +93,17 @@ export default function BasicInfoSection({ form, email, onAvatarChange }: BasicI
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="location">Địa điểm</Label>
-              <Input
+              <ProvinceCombobox
                 id="location"
-                placeholder="Hà Nội, Việt Nam"
-                data-invalid={Boolean(form.formState.errors.location)}
-                aria-invalid={Boolean(form.formState.errors.location)}
-                {...form.register("location")}
+                value={location}
+                onValueChange={(value) =>
+                  form.setValue("location", value, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  })
+                }
+                invalid={Boolean(form.formState.errors.location)}
               />
               <FieldError message={form.formState.errors.location?.message} />
             </div>

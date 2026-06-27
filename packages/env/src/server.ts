@@ -2,9 +2,7 @@ import "dotenv/config";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-const urlList = z.string().transform((val) =>
-  val.split(",").map((s) => s.trim())
-);
+const urlList = z.string().transform((val) => val.split(",").map((s) => s.trim()));
 
 export const env = createEnv({
   server: {
@@ -13,6 +11,8 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.string().min(1),
     CORS_ORIGIN: urlList,
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    SERVER_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+    SEED_DEMO_USERS: z.coerce.boolean().default(false),
     SESSION_EXPIRY_DAYS: z.coerce.number().default(7),
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.coerce.number().optional(),

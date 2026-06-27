@@ -86,10 +86,7 @@ export function MessageThread({
 
   return (
     <div className="relative flex min-h-0 flex-1">
-      <div
-        ref={scrollRef}
-        className="absolute inset-0 overflow-y-auto"
-      >
+      <div ref={scrollRef} className="absolute inset-0 overflow-y-auto">
         <div className="flex flex-col gap-2 p-4">
           {isLoadingMore && (
             <div className="flex justify-center py-2">

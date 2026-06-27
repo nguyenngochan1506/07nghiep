@@ -1,4 +1,5 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
+import type { Prisma } from "@07nghiep/db";
 
 export const notificationEvents = new EventEmitter();
 
@@ -8,7 +9,7 @@ export type NotificationPayload = {
   type: string;
   title: string;
   body: string;
-  data?: any;
+  data?: Prisma.JsonValue;
   createdAt: string;
 };
 

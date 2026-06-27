@@ -2,13 +2,7 @@ import { z } from "zod";
 
 // ── Enums (mirror Prisma enums) ──────────────────────────────────────────────
 
-export const jobTypeEnum = z.enum([
-  "FULLTIME",
-  "PARTIME",
-  "CONTRACT",
-  "INTERNSHIP",
-  "FREELANCE",
-]);
+export const jobTypeEnum = z.enum(["FULLTIME", "PARTIME", "CONTRACT", "INTERNSHIP", "FREELANCE"]);
 
 export const workTypeEnum = z.enum(["REMOTE", "HYBRID", "ONSITE"]);
 
@@ -23,13 +17,7 @@ export const experienceLevelEnum = z.enum([
 
 export const salaryTypeEnum = z.enum(["HOURLY", "MONTHLY", "YEARLY"]);
 
-export const jobStatusEnum = z.enum([
-  "DRAFT",
-  "PENDING_APPROVAL",
-  "OPEN",
-  "CLOSED",
-  "ARCHIVED",
-]);
+export const jobStatusEnum = z.enum(["DRAFT", "PENDING_APPROVAL", "OPEN", "CLOSED", "ARCHIVED"]);
 
 // ── Step Schemas ─────────────────────────────────────────────────────────────
 
@@ -60,24 +48,17 @@ export const jobStep3Schema = z
   })
   .refine(
     (data) => {
-      if (
-        !data.salaryNegotiable &&
-        data.salaryMin !== undefined &&
-        data.salaryMax !== undefined
-      ) {
+      if (!data.salaryNegotiable && data.salaryMin !== undefined && data.salaryMax !== undefined) {
         return data.salaryMin <= data.salaryMax;
       }
       return true;
     },
-    { message: "Lương tối thiểu phải nhỏ hơn hoặc bằng lương tối đa", path: ["salaryMax"] }
+    { message: "Lương tối thiểu phải nhỏ hơn hoặc bằng lương tối đa", path: ["salaryMax"] },
   );
 
 /** Step 4: Additional Info */
 export const jobStep4Schema = z.object({
-  expiresAt: z.coerce
-    .date()
-    .min(new Date(), "Ngày hết hạn phải trong tương lai")
-    .optional(),
+  expiresAt: z.coerce.date().min(new Date(), "Ngày hết hạn phải trong tương lai").optional(),
 });
 
 // ── Full Create/Update Schemas ───────────────────────────────────────────────

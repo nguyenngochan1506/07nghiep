@@ -1,6 +1,7 @@
+import type { Prisma } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { protectedProcedure, router } from "../lib/api";
+import { type Context, protectedProcedure, router } from "../lib/api";
 
 const userSelect = {
   select: {
@@ -25,9 +26,7 @@ export const conversationRouter = router({
     const role = ctx.role as string;
 
     const where =
-      role === "EMPLOYER" || role === "ADMIN"
-        ? { employerId: userId }
-        : { candidateId: userId };
+      role === "EMPLOYER" || role === "ADMIN" ? { employerId: userId } : { candidateId: userId };
 
     const conversations = await ctx.prisma.conversation.findMany({
       where,
@@ -75,7 +74,7 @@ export const conversationRouter = router({
         search: z.string().optional(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
@@ -93,7 +92,7 @@ export const conversationRouter = router({
         });
       }
 
-      const where: any = {
+      const where: Prisma.ApplicationWhereInput = {
         job: { organizationId: organization.id },
         ...(search
           ? {
@@ -120,7 +119,7 @@ export const conversationRouter = router({
         orderBy: { appliedAt: "desc" },
       });
 
-      const seen = new Map<string, typeof allApplications[0]>();
+      const seen = new Map<string, (typeof allApplications)[0]>();
       for (const app of allApplications) {
         if (!seen.has(app.candidateId)) {
           seen.set(app.candidateId, app);
@@ -158,9 +157,7 @@ export const conversationRouter = router({
         },
       });
 
-      const convMap = new Map(
-        existingConversations.map((c) => [c.candidateId, c])
-      );
+      const convMap = new Map(existingConversations.map((c) => [c.candidateId, c]));
 
       const applicants = paged.map((a) => {
         const conv = convMap.get(a.candidateId);
@@ -186,41 +183,36 @@ export const conversationRouter = router({
       };
     }),
 
-  getById: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+  getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id;
 
-      const conversation = await ctx.prisma.conversation.findUnique({
-        where: { id: input.id },
-        include: {
-          employer: userSelect,
-          candidate: userSelect,
-          job: {
-            select: { id: true, title: true },
-          },
+    const conversation = await ctx.prisma.conversation.findUnique({
+      where: { id: input.id },
+      include: {
+        employer: userSelect,
+        candidate: userSelect,
+        job: {
+          select: { id: true, title: true },
         },
+      },
+    });
+
+    if (!conversation) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Conversation not found",
       });
+    }
 
-      if (!conversation) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Conversation not found",
-        });
-      }
+    if (conversation.employerId !== userId && conversation.candidateId !== userId) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have access to this conversation",
+      });
+    }
 
-      if (
-        conversation.employerId !== userId &&
-        conversation.candidateId !== userId
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have access to this conversation",
-        });
-      }
-
-      return conversation;
-    }),
+    return conversation;
+  }),
 
   start: protectedProcedure
     .input(
@@ -228,7 +220,7 @@ export const conversationRouter = router({
         candidateId: z.string(),
         jobId: z.string().optional(),
         initialMessage: z.string().max(2000).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
@@ -286,7 +278,12 @@ export const conversationRouter = router({
             },
             include: {
               sender: {
-                select: { id: true, name: true, image: true, profile: { select: { avatarUrl: true } } },
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                  profile: { select: { avatarUrl: true } },
+                },
               },
             },
           });
@@ -302,7 +299,14 @@ export const conversationRouter = router({
             createdAt: message.createdAt.toISOString(),
           });
 
-          await notifyOtherParty(ctx, existing.employerId, existing.candidateId, userId, input.initialMessage, existing.id);
+          await notifyOtherParty(
+            ctx,
+            existing.employerId,
+            existing.candidateId,
+            userId,
+            input.initialMessage,
+            existing.id,
+          );
         }
 
         return existing;
@@ -339,7 +343,12 @@ export const conversationRouter = router({
           orderBy: { createdAt: "desc" },
           include: {
             sender: {
-              select: { id: true, name: true, image: true, profile: { select: { avatarUrl: true } } },
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                profile: { select: { avatarUrl: true } },
+              },
             },
           },
         });
@@ -352,7 +361,14 @@ export const conversationRouter = router({
           });
         }
 
-        await notifyOtherParty(ctx, employerId, candidateId, userId, input.initialMessage, conversation.id);
+        await notifyOtherParty(
+          ctx,
+          employerId,
+          candidateId,
+          userId,
+          input.initialMessage,
+          conversation.id,
+        );
       }
 
       return conversation;
@@ -375,10 +391,7 @@ export const conversationRouter = router({
         });
       }
 
-      if (
-        conversation.employerId !== userId &&
-        conversation.candidateId !== userId
-      ) {
+      if (conversation.employerId !== userId && conversation.candidateId !== userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have access to this conversation",
@@ -405,9 +418,7 @@ export const conversationRouter = router({
     const role = ctx.role as string;
 
     const where =
-      role === "EMPLOYER" || role === "ADMIN"
-        ? { employerId: userId }
-        : { candidateId: userId };
+      role === "EMPLOYER" || role === "ADMIN" ? { employerId: userId } : { candidateId: userId };
 
     const conversations = await ctx.prisma.conversation.findMany({
       where,
@@ -429,12 +440,12 @@ export const conversationRouter = router({
 });
 
 async function notifyOtherParty(
-  ctx: any,
+  ctx: Pick<Context, "prisma">,
   employerId: string,
   candidateId: string,
   senderId: string,
   content: string,
-  conversationId: string
+  conversationId: string,
 ) {
   const targetUserId = senderId === employerId ? candidateId : employerId;
   const sender = await ctx.prisma.user.findUnique({

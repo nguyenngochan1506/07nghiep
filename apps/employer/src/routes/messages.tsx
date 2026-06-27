@@ -23,8 +23,8 @@ function MessagesLayout() {
   const { data: applicantsData, isLoading } = useQuery(
     trpc.conversation.getApplicants.queryOptions(
       { limit: 50, search: search || undefined },
-      { enabled: !!currentUserId }
-    )
+      { enabled: !!currentUserId },
+    ),
   );
 
   const startConversation = useMutation(
@@ -39,7 +39,7 @@ function MessagesLayout() {
       onError: (error) => {
         toast.error(error.message);
       },
-    })
+    }),
   );
 
   useEffect(() => {
@@ -60,7 +60,7 @@ function MessagesLayout() {
           queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
         }
       },
-      abort.signal
+      abort.signal,
     );
 
     return () => abort.abort();
@@ -91,7 +91,6 @@ function MessagesLayout() {
         </div>
         <ApplicantList
           applicants={applicantsData?.items ?? []}
-          currentUserId={currentUserId}
           activeConversationId={params.conversationId}
           isLoading={isLoading}
           onSelect={handleSelect}

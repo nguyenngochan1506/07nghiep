@@ -13,13 +13,10 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo & Branding */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-bold text-primary-foreground">
-            07
-          </div>
-          <span className="font-semibold">07nghiep</span>
+          <img src="/07logo.png" alt="07nghiep" className="h-12 w-auto object-contain" />
           <span className="ml-1 rounded-sm bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
             Nhà tuyển dụng
           </span>

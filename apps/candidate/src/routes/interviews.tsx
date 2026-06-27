@@ -1,23 +1,44 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link as RouterLink } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
-import { CalendarDays, Clock, MapPin, Link, Building2, Check, X, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  MapPin,
+  Link,
+  Building2,
+  Check,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/interviews")({
   component: CandidateInterviewsPage,
 });
 
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type Interview = RouterOutputs["interview"]["getMyInterviews"][number];
+
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   SCHEDULED: { label: "Chờ xác nhận", className: "bg-warning/10 text-warning border-warning/20" },
   CONFIRMED: { label: "Đã xác nhận", className: "bg-success/10 text-success border-success/20" },
   COMPLETED: { label: "Đã xong", className: "bg-muted text-muted-foreground border-border" },
-  CANCELLED: { label: "Đã hủy", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  CANCELLED: {
+    label: "Đã hủy",
+    className: "bg-destructive/10 text-destructive border-destructive/20",
+  },
 };
 
 const HOUR_HEIGHT = 64;
@@ -27,7 +48,12 @@ const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_
 const DAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 function formatDateShort(date: Date) {
-  return date.toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  return date.toLocaleDateString("vi-VN", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function formatTime(date: Date) {
@@ -54,12 +80,21 @@ function getMonthStart(date: Date) {
 
 function CandidateInterviewsPage() {
   const queryClient = useQueryClient();
-  const { data: interviews, isLoading } = useQuery(trpc.interview.getMyInterviews.queryOptions());
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
+  const { data: interviews, isLoading } = useQuery(
+    trpc.interview.getMyInterviews.queryOptions(undefined, { enabled: isLoggedIn }),
+  );
 
-  const respondInterview = useMutation(trpc.interview.respond.mutationOptions({
-    onSuccess: () => { queryClient.invalidateQueries(); toast.success("Đã cập nhật"); },
-    onError: (err: any) => toast.error(err.message),
-  }));
+  const respondInterview = useMutation(
+    trpc.interview.respond.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries();
+        toast.success("Đã cập nhật");
+      },
+      onError: (err) => toast.error(err.message),
+    }),
+  );
 
   const [viewMode, setViewMode] = useState<"week" | "month" | "list">("week");
   const [weekOffset, setWeekOffset] = useState(0);
@@ -68,7 +103,9 @@ function CandidateInterviewsPage() {
   const today = new Date();
 
   // Week view
-  const weekStart = getWeekStart(new Date(today.getFullYear(), today.getMonth(), today.getDate() + weekOffset * 7));
+  const weekStart = getWeekStart(
+    new Date(today.getFullYear(), today.getMonth(), today.getDate() + weekOffset * 7),
+  );
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
@@ -86,7 +123,7 @@ function CandidateInterviewsPage() {
 
   const interviewsByDate = useMemo(() => {
     if (!interviews) return {};
-    const map: Record<string, any[]> = {};
+    const map: Record<string, Interview[]> = {};
     for (const iv of interviews) {
       const d = new Date(iv.scheduledAt).toDateString();
       if (!map[d]) map[d] = [];
@@ -99,7 +136,7 @@ function CandidateInterviewsPage() {
     if (!interviews) return [];
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    return (interviews as any[]).filter((iv) => {
+    return interviews.filter((iv) => {
       const d = new Date(iv.scheduledAt);
       return d >= weekStart && d < weekEnd;
     });
@@ -109,18 +146,58 @@ function CandidateInterviewsPage() {
 
   const upcoming = useMemo(() => {
     if (!interviews) return [];
-    return (interviews as any[]).filter((iv) => iv.status === "SCHEDULED" || iv.status === "CONFIRMED");
+    return interviews.filter((iv) => iv.status === "SCHEDULED" || iv.status === "CONFIRMED");
   }, [interviews]);
 
   const past = useMemo(() => {
     if (!interviews) return [];
-    return (interviews as any[]).filter((iv) => iv.status === "COMPLETED" || iv.status === "CANCELLED");
+    return interviews.filter((iv) => iv.status === "COMPLETED" || iv.status === "CANCELLED");
   }, [interviews]);
+
+  if (sessionPending) {
+    return (
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
+          <Skeleton className="h-10 w-60" />
+          <Skeleton className="h-[600px] rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+        <div className="mx-auto flex max-w-[900px] flex-col gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Lịch phỏng vấn</h1>
+            <p className="mt-1 text-muted-foreground">Quản lý các buổi phỏng vấn của bạn</p>
+          </div>
+          <Card className="border-dashed text-center">
+            <CardContent className="flex flex-col items-center gap-5 py-12">
+              <CalendarDays className="size-12 text-muted-foreground" />
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Đăng nhập để xem lịch phỏng vấn
+                </h2>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  Các buổi phỏng vấn được đồng bộ theo tài khoản ứng viên của bạn.
+                </p>
+              </div>
+              <Button asChild>
+                <RouterLink to="/login">Đăng nhập</RouterLink>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8 md:px-8">
-        <div className="max-w-[1400px] mx-auto space-y-4">
+      <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
           <Skeleton className="h-10 w-60" />
           <Skeleton className="h-[600px] rounded-xl" />
         </div>
@@ -129,11 +206,11 @@ function CandidateInterviewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8 md:px-8">
-      <div className="max-w-[1800px] mx-auto space-y-6">
+    <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
+      <div className="mx-auto flex max-w-[1800px] flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Lịch phỏng vấn</h1>
-          <p className="text-muted-foreground mt-1">Quản lý các buổi phỏng vấn của bạn</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Lịch phỏng vấn</h1>
+          <p className="mt-1 text-muted-foreground">Quản lý các buổi phỏng vấn của bạn</p>
         </div>
 
         {/* View toggle */}
@@ -147,9 +224,13 @@ function CandidateInterviewsPage() {
                 className="h-7 px-3 text-xs"
                 onClick={() => setViewMode(mode)}
               >
-                {mode === "week" ? <LayoutGrid className="h-3.5 w-3.5 mr-1" /> :
-                 mode === "month" ? <CalendarDays className="h-3.5 w-3.5 mr-1" /> :
-                 <List className="h-3.5 w-3.5 mr-1" />}
+                {mode === "week" ? (
+                  <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                ) : mode === "month" ? (
+                  <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                ) : (
+                  <List className="h-3.5 w-3.5 mr-1" />
+                )}
                 {mode === "week" ? "Tuần" : mode === "month" ? "Tháng" : "Danh sách"}
               </Button>
             ))}
@@ -166,11 +247,13 @@ function CandidateInterviewsPage() {
                   {weekStart.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
                 </CardTitle>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setWeekOffset(w => w - 1)}>
+                  <Button variant="ghost" size="icon" onClick={() => setWeekOffset((w) => w - 1)}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>Hôm nay</Button>
-                  <Button variant="ghost" size="icon" onClick={() => setWeekOffset(w => w + 1)}>
+                  <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
+                    Hôm nay
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setWeekOffset((w) => w + 1)}>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -185,11 +268,18 @@ function CandidateInterviewsPage() {
                     {weekDays.map((day, idx) => {
                       const isToday = day.toDateString() === now.toDateString();
                       return (
-                        <div key={idx} className={`flex-1 text-center py-2 border-l ${isToday ? "bg-primary/5" : ""}`}>
-                          <p className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}>
+                        <div
+                          key={idx}
+                          className={`flex-1 text-center py-2 border-l ${isToday ? "bg-primary/5" : ""}`}
+                        >
+                          <p
+                            className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}
+                          >
                             {DAY_LABELS[idx]}
                           </p>
-                          <p className={`text-lg font-bold ${isToday ? "text-primary" : "text-foreground"}`}>
+                          <p
+                            className={`text-lg font-bold ${isToday ? "text-primary" : "text-foreground"}`}
+                          >
                             {day.getDate()}
                           </p>
                         </div>
@@ -202,7 +292,11 @@ function CandidateInterviewsPage() {
                     {/* Hour Labels */}
                     <div className="w-14 shrink-0">
                       {HOURS.map((hour) => (
-                        <div key={hour} style={{ height: HOUR_HEIGHT }} className="border-b border-border/50 pr-2 relative">
+                        <div
+                          key={hour}
+                          style={{ height: HOUR_HEIGHT }}
+                          className="border-b border-border/50 pr-2 relative"
+                        >
                           <span className="text-[10px] text-muted-foreground absolute -top-2 right-2 leading-none">
                             {String(hour).padStart(2, "0")}:00
                           </span>
@@ -214,7 +308,7 @@ function CandidateInterviewsPage() {
                     {weekDays.map((day, dayIdx) => {
                       const isToday = day.toDateString() === now.toDateString();
                       const dayEvents = weekInterviews.filter(
-                        (iv) => getDayIndex(new Date(iv.scheduledAt)) === dayIdx
+                        (iv) => getDayIndex(new Date(iv.scheduledAt)) === dayIdx,
                       );
 
                       return (
@@ -224,25 +318,33 @@ function CandidateInterviewsPage() {
                         >
                           {/* Hour grid lines */}
                           {HOURS.map((hour) => (
-                            <div key={hour} style={{ height: HOUR_HEIGHT }} className="border-b border-border/30" />
+                            <div
+                              key={hour}
+                              style={{ height: HOUR_HEIGHT }}
+                              className="border-b border-border/30"
+                            />
                           ))}
 
                           {/* Red current time line */}
                           {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
                             <div
-                              className="absolute left-0 right-0 z-20 border-t-2 border-red-500 pointer-events-none"
+                              className="pointer-events-none absolute left-0 right-0 z-20 border-t-2 border-destructive"
                               style={{
-                                top: ((now.getHours() - START_HOUR) * 60 + now.getMinutes()) / 60 * HOUR_HEIGHT,
+                                top:
+                                  (((now.getHours() - START_HOUR) * 60 + now.getMinutes()) / 60) *
+                                  HOUR_HEIGHT,
                               }}
                             >
-                              <div className="h-2 w-2 rounded-full bg-red-500 -mt-1 -ml-1" />
+                              <div className="-ml-1 -mt-1 size-2 rounded-full bg-destructive" />
                             </div>
                           )}
 
                           {/* Events */}
-                          {dayEvents.map((iv: any) => {
+                          {dayEvents.map((iv) => {
                             const scheduledDate = new Date(iv.scheduledAt);
-                            const startMinutes = (scheduledDate.getHours() - START_HOUR) * 60 + scheduledDate.getMinutes();
+                            const startMinutes =
+                              (scheduledDate.getHours() - START_HOUR) * 60 +
+                              scheduledDate.getMinutes();
                             const top = (startMinutes / 60) * HOUR_HEIGHT;
                             const height = Math.max((iv.durationMinutes / 60) * HOUR_HEIGHT, 28);
                             const job = iv.application?.job;
@@ -256,22 +358,30 @@ function CandidateInterviewsPage() {
                               <div
                                 key={iv.id}
                                 className={`absolute inset-x-0.5 rounded-md px-1.5 py-0.5 overflow-hidden z-10 border text-[11px] leading-tight cursor-pointer transition-opacity hover:opacity-90 ${
-                                  isConfirmed ? "bg-primary/20 text-primary border-primary/40" :
-                                  isScheduled ? "bg-primary/10 text-primary border-primary/30" :
-                                  "bg-muted/50 text-muted-foreground border-border"
+                                  isConfirmed
+                                    ? "bg-primary/20 text-primary border-primary/40"
+                                    : isScheduled
+                                      ? "bg-primary/10 text-primary border-primary/30"
+                                      : "bg-muted/50 text-muted-foreground border-border"
                                 }`}
-                                style={{ top, height: Math.min(height, HOUR_HEIGHT * HOURS.length - top) }}
+                                style={{
+                                  top,
+                                  height: Math.min(height, HOUR_HEIGHT * HOURS.length - top),
+                                }}
                                 title={`${job?.title} - ${org?.name}`}
                               >
                                 <span className="font-semibold">{formatTime(scheduledDate)}</span>{" "}
                                 <span className="truncate">{job?.title}</span>
                                 {height >= 40 && (
                                   <div className="text-[10px] opacity-80 mt-0.5 truncate">
-                                    {org?.name}{iv.location ? ` · ${iv.location}` : ""}
+                                    {org?.name}
+                                    {iv.location ? ` · ${iv.location}` : ""}
                                   </div>
                                 )}
                                 {height >= 56 && iv.meetingLink && (
-                                  <div className="text-[10px] opacity-70 mt-0.5 truncate">{iv.meetingLink}</div>
+                                  <div className="text-[10px] opacity-70 mt-0.5 truncate">
+                                    {iv.meetingLink}
+                                  </div>
                                 )}
                               </div>
                             );
@@ -296,11 +406,13 @@ function CandidateInterviewsPage() {
                   {monthStart.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
                 </CardTitle>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setMonthOffset(m => m - 1)}>
+                  <Button variant="ghost" size="icon" onClick={() => setMonthOffset((m) => m - 1)}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setMonthOffset(0)}>Hôm nay</Button>
-                  <Button variant="ghost" size="icon" onClick={() => setMonthOffset(m => m + 1)}>
+                  <Button variant="ghost" size="sm" onClick={() => setMonthOffset(0)}>
+                    Hôm nay
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setMonthOffset((m) => m + 1)}>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -309,7 +421,10 @@ function CandidateInterviewsPage() {
             <CardContent className="p-0">
               <div className="grid grid-cols-7">
                 {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((label) => (
-                  <div key={label} className="text-center py-2 text-xs font-medium text-muted-foreground border-b">
+                  <div
+                    key={label}
+                    className="text-center py-2 text-xs font-medium text-muted-foreground border-b"
+                  >
                     {label}
                   </div>
                 ))}
@@ -317,78 +432,103 @@ function CandidateInterviewsPage() {
                 {Array.from({ length: weeks * 7 }, (_, i) => {
                   const dayNum = i - monthStartDay + 1;
                   const isValid = dayNum >= 1 && dayNum <= totalDays;
-                  const date = isValid ? new Date(monthStart.getFullYear(), monthStart.getMonth(), dayNum) : null;
+                  const date = isValid
+                    ? new Date(monthStart.getFullYear(), monthStart.getMonth(), dayNum)
+                    : null;
                   const dateStr = date?.toDateString();
-                const dayInterviews = dateStr ? (interviewsByDate[dateStr] || []) : [];
-                const isToday = date?.toDateString() === now.toDateString();
-                const hasConfirmed = dayInterviews.some((iv: any) => iv.status === "CONFIRMED");
-                const hasScheduled = dayInterviews.some((iv: any) => iv.status === "SCHEDULED");
-                const hasInterviews = dayInterviews.length > 0;
+                  const dayInterviews = dateStr ? interviewsByDate[dateStr] || [] : [];
+                  const isToday = date?.toDateString() === now.toDateString();
+                  const hasConfirmed = dayInterviews.some((iv) => iv.status === "CONFIRMED");
+                  const hasScheduled = dayInterviews.some((iv) => iv.status === "SCHEDULED");
+                  const hasInterviews = dayInterviews.length > 0;
 
-                return (
-                  <div
-                    key={i}
-                    className={`min-h-[100px] border-b border-r p-1 transition-colors group relative ${
-                      !isValid ? "bg-muted/20" : ""
-                    } ${
-                      isToday
-                        ? "bg-primary/5 ring-2 ring-primary ring-inset"
-                        : hasConfirmed
-                        ? "bg-success/5 border-l-2 border-l-success"
-                        : hasScheduled
-                        ? "bg-warning/5 border-l-2 border-l-warning"
-                        : hasInterviews
-                        ? "bg-muted/20"
-                        : ""
-                    }`}
-                  >
-                    {/* Hover tooltip */}
-                    {hasInterviews && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none">
-                        <div className="bg-card border shadow-lg rounded-lg p-3 min-w-[220px] max-w-[300px] text-left">
-                          <p className="text-xs font-semibold text-foreground mb-2">
-                            {date!.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" })}
-                          </p>
-                          <div className="space-y-2">
-                            {dayInterviews.map((iv: any) => (
-                              <div key={iv.id} className="flex items-start gap-2">
-                                <span className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
-                                  iv.status === "CONFIRMED" ? "bg-success" :
-                                  iv.status === "SCHEDULED" ? "bg-warning" :
-                                  "bg-muted-foreground"
-                                }`} />
-                                <div className="min-w-0">
-                                  <p className="text-xs font-medium truncate">{iv.application?.job?.title}</p>
-                                  <p className="text-[11px] text-muted-foreground truncate">{iv.application?.job?.organization?.name}</p>
-                                  <p className="text-[11px] text-muted-foreground">
-                                    {formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes} phút
-                                  </p>
-                                  {iv.location && <p className="text-[11px] text-muted-foreground">{iv.location}</p>}
+                  return (
+                    <div
+                      key={i}
+                      className={`min-h-[100px] border-b border-r p-1 transition-colors group relative ${
+                        !isValid ? "bg-muted/20" : ""
+                      } ${
+                        isToday
+                          ? "bg-primary/5 ring-2 ring-primary ring-inset"
+                          : hasConfirmed
+                            ? "bg-success/5 border-l-2 border-l-success"
+                            : hasScheduled
+                              ? "bg-warning/5 border-l-2 border-l-warning"
+                              : hasInterviews
+                                ? "bg-muted/20"
+                                : ""
+                      }`}
+                    >
+                      {/* Hover tooltip */}
+                      {hasInterviews && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none">
+                          <div className="bg-card border shadow-lg rounded-lg p-3 min-w-[220px] max-w-[300px] text-left">
+                            <p className="text-xs font-semibold text-foreground mb-2">
+                              {date?.toLocaleDateString("vi-VN", {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "long",
+                              })}
+                            </p>
+                            <div className="space-y-2">
+                              {dayInterviews.map((iv) => (
+                                <div key={iv.id} className="flex items-start gap-2">
+                                  <span
+                                    className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
+                                      iv.status === "CONFIRMED"
+                                        ? "bg-success"
+                                        : iv.status === "SCHEDULED"
+                                          ? "bg-warning"
+                                          : "bg-muted-foreground"
+                                    }`}
+                                  />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium truncate">
+                                      {iv.application?.job?.title}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground truncate">
+                                      {iv.application?.job?.organization?.name}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes}{" "}
+                                      phút
+                                    </p>
+                                    {iv.location && (
+                                      <p className="text-[11px] text-muted-foreground">
+                                        {iv.location}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
+                          <div className="h-2 w-2 bg-card border-b border-r rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
                         </div>
-                        <div className="h-2 w-2 bg-card border-b border-r rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
-                      </div>
-                    )}
-                    {isValid && (
-                      <>
-                        <p className={`text-xs font-semibold mb-0.5 px-0.5 ${
-                          isToday ? "text-primary" :
-                          hasInterviews ? "text-foreground" :
-                          "text-muted-foreground"
-                        }`}>
-                          {dayNum}
-                        </p>
+                      )}
+                      {isValid && (
+                        <>
+                          <p
+                            className={`text-xs font-semibold mb-0.5 px-0.5 ${
+                              isToday
+                                ? "text-primary"
+                                : hasInterviews
+                                  ? "text-foreground"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            {dayNum}
+                          </p>
                           <div className="space-y-0.5">
-                            {dayInterviews.slice(0, 3).map((iv: any) => (
+                            {dayInterviews.slice(0, 3).map((iv) => (
                               <div
                                 key={iv.id}
                                 className={`text-[10px] rounded px-1 py-0.5 truncate cursor-default ${
-                                  iv.status === "CONFIRMED" ? "bg-success/20 text-success" :
-                                  iv.status === "SCHEDULED" ? "bg-warning/20 text-warning" :
-                                  "bg-muted/40 text-muted-foreground"
+                                  iv.status === "CONFIRMED"
+                                    ? "bg-success/20 text-success"
+                                    : iv.status === "SCHEDULED"
+                                      ? "bg-warning/20 text-warning"
+                                      : "bg-muted/40 text-muted-foreground"
                                 }`}
                                 title={`${formatTime(new Date(iv.scheduledAt))} - ${iv.application?.job?.title} - ${iv.application?.job?.organization?.name}`}
                               >
@@ -415,10 +555,10 @@ function CandidateInterviewsPage() {
         {viewMode === "list" && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Sắp tới</h2>
+              <h2 className="mb-4 text-lg font-semibold text-foreground">Sắp tới</h2>
               {upcoming.length > 0 ? (
                 <div className="space-y-3">
-                  {upcoming.map((iv: any) => {
+                  {upcoming.map((iv) => {
                     const job = iv.application?.job;
                     const org = job?.organization;
                     return (
@@ -427,33 +567,74 @@ function CandidateInterviewsPage() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex items-start gap-4">
                               {org?.logoUrl ? (
-                                <img src={org.logoUrl} alt={org.name} className="w-10 h-10 rounded-lg object-cover" />
+                                <img
+                                  src={org.logoUrl}
+                                  alt={org.name}
+                                  className="w-10 h-10 rounded-lg object-cover"
+                                />
                               ) : (
-                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                  <Building2 className="h-5 w-5 text-primary" />
+                                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                                  <Building2 className="size-5 text-primary" />
                                 </div>
                               )}
                               <div className="space-y-1.5">
                                 <h3 className="font-semibold">{job?.title}</h3>
                                 <p className="text-sm text-muted-foreground">{org?.name}</p>
                                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formatDateShort(new Date(iv.scheduledAt))}</span>
-                                  <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes} phút</span>
-                                  {iv.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{iv.location}</span>}
+                                  <span className="flex items-center gap-1">
+                                    <CalendarDays className="h-3.5 w-3.5" />
+                                    {formatDateShort(new Date(iv.scheduledAt))}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes}{" "}
+                                    phút
+                                  </span>
+                                  {iv.location && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="h-3.5 w-3.5" />
+                                      {iv.location}
+                                    </span>
+                                  )}
                                 </div>
                                 {iv.meetingLink && (
-                                  <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
-                                    <Link className="h-3.5 w-3.5" />Link họp
+                                  <a
+                                    href={iv.meetingLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                                  >
+                                    <Link className="h-3.5 w-3.5" />
+                                    Link họp
                                   </a>
                                 )}
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              <Badge className={STATUS_CONFIG[iv.status]?.className}>{STATUS_CONFIG[iv.status]?.label}</Badge>
+                              <Badge className={STATUS_CONFIG[iv.status]?.className}>
+                                {STATUS_CONFIG[iv.status]?.label}
+                              </Badge>
                               {iv.status === "SCHEDULED" && (
                                 <div className="flex gap-1">
-                                  <Button size="sm" onClick={() => respondInterview.mutate({ id: iv.id, action: "CONFIRMED" })}><Check className="h-3.5 w-3.5 mr-1" />Xác nhận</Button>
-                                  <Button size="sm" variant="outline" onClick={() => respondInterview.mutate({ id: iv.id, action: "CANCELLED" })}><X className="h-3.5 w-3.5 mr-1" />Từ chối</Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() =>
+                                      respondInterview.mutate({ id: iv.id, action: "CONFIRMED" })
+                                    }
+                                  >
+                                    <Check className="h-3.5 w-3.5 mr-1" />
+                                    Xác nhận
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      respondInterview.mutate({ id: iv.id, action: "CANCELLED" })
+                                    }
+                                  >
+                                    <X className="h-3.5 w-3.5 mr-1" />
+                                    Từ chối
+                                  </Button>
                                 </div>
                               )}
                             </div>
@@ -464,30 +645,39 @@ function CandidateInterviewsPage() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
-                  <CalendarDays className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                  <p className="text-gray-500">Chưa có lịch phỏng vấn nào sắp tới</p>
+                <div className="rounded-xl border border-dashed bg-card py-12 text-center">
+                  <CalendarDays className="mx-auto mb-3 size-12 text-muted-foreground" />
+                  <p className="text-muted-foreground">Chưa có lịch phỏng vấn nào sắp tới</p>
                 </div>
               )}
             </div>
             {past.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Đã qua</h2>
+                <h2 className="mb-4 text-lg font-semibold text-foreground">Đã qua</h2>
                 <div className="space-y-2">
-                  {past.map((iv: any) => {
+                  {past.map((iv) => {
                     const job = iv.application?.job;
                     const org = job?.organization;
                     return (
                       <Card key={iv.id} className="opacity-70">
                         <CardContent className="p-4 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"><Building2 className="h-4 w-4 text-muted-foreground" /></div>
+                            <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
+                              <Building2 className="size-4 text-muted-foreground" />
+                            </div>
                             <div>
-                              <p className="text-sm font-medium">{job?.title} · {org?.name}</p>
-                              <p className="text-xs text-muted-foreground">{formatDateShort(new Date(iv.scheduledAt))} · {formatTime(new Date(iv.scheduledAt))}</p>
+                              <p className="text-sm font-medium">
+                                {job?.title} · {org?.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDateShort(new Date(iv.scheduledAt))} ·{" "}
+                                {formatTime(new Date(iv.scheduledAt))}
+                              </p>
                             </div>
                           </div>
-                          <Badge className={STATUS_CONFIG[iv.status]?.className}>{STATUS_CONFIG[iv.status]?.label}</Badge>
+                          <Badge className={STATUS_CONFIG[iv.status]?.className}>
+                            {STATUS_CONFIG[iv.status]?.label}
+                          </Badge>
                         </CardContent>
                       </Card>
                     );

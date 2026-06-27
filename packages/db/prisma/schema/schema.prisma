@@ -25,6 +25,13 @@ enum CompanySize {
   ENTERPRISE
 }
 
+enum OrganizationVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 enum SalaryType {
   HOURLY
   MONTHLY
@@ -152,11 +159,27 @@ model Organization {
   companySize CompanySize?
   foundedYear Int?
   location    String?
-  verified    Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  sourceSite  String?
+  sourceUrl   String?
+  externalId  String?
+  country     String?
+  companyType String?
+  workingDays String?
+  overtimePolicy String?
+  coverImageUrl String?
+  linkedinUrl String?
+  jobOpeningsCount Int?
+  rawPayload  Json?
+  verified    Boolean                        @default(false)
+  verificationStatus OrganizationVerificationStatus @default(UNVERIFIED)
+  verificationNote   String?
+  createdAt   DateTime                       @default(now())
+  updatedAt   DateTime                       @updatedAt
   jobs        Job[]
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sourceSite, externalId])
+  @@index([sourceUrl])
 }
 
 model Job {
@@ -179,6 +202,22 @@ model Job {
   expiresAt         DateTime?
   views             Int             @default(0)
   applicationsCount Int             @default(0)
+  industry          String?
+  salaryCurrency    String?
+  salaryUnit        String?
+  sourcePublishedAt DateTime?
+  experienceMonths  Int?
+  streetAddress     String?
+  addressLocality   String?
+  addressRegion     String?
+  addressCountry    String?
+  directApply       Boolean?
+  applicantLocation String?
+  sourceSite        String?
+  sourceUrl         String?         @unique
+  externalId        String?
+  crawledAt         DateTime?
+  rawPayload        Json?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   applications      Application[]
@@ -192,6 +231,8 @@ model Job {
   @@index([organizationId, status])
   @@index([workType, jobType])
   @@index([location])
+  @@index([sourceSite, externalId])
+  @@index([crawledAt])
 }
 
 model Application {

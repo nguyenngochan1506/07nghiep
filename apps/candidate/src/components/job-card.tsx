@@ -1,158 +1,135 @@
-import { Link } from '@tanstack/react-router';
+import { Link } from "@tanstack/react-router";
 import {
-    MapPin,
-    Building2,
-    Clock,
-    Banknote,
-    Heart,
-    BadgeCheck,
-    Calendar,
-} from 'lucide-react';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardAction,
-} from '@07nghiep/ui/components/card';
-import { Badge } from '@07nghiep/ui/components/badge';
-import { Button } from '@07nghiep/ui/components/button';
-import {
-    Avatar,
-    AvatarImage,
-    AvatarFallback,
-} from '@07nghiep/ui/components/avatar';
+  ArrowRight,
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  Clock3,
+  DollarSign,
+  Heart,
+  MapPin,
+} from "lucide-react";
+import { Badge } from "@07nghiep/ui/components/badge";
+import { Button } from "@07nghiep/ui/components/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 
 export interface Job {
-    id: string;
-    title: string;
-    companyName: string;
-    companyLogo: string;
-    isVerified: boolean;
-    location: string;
-    workType: string;
-    jobType: string;
-    salaryRange: string;
-    skills: string[];
-    postedDate: string;
-    isSaved?: boolean;
+  id: string;
+  title: string;
+  companyName: string;
+  companyLogo: string;
+  isVerified: boolean;
+  location: string;
+  workType: string;
+  jobType: string;
+  salaryRange: string;
+  skills: string[];
+  postedDate: string;
+  isSaved?: boolean;
 }
 
 interface JobCardProps {
-    job: Job;
-    onSave?: (id: string) => void;
+  job: Job;
+  onSave?: (id: string) => void;
 }
 
 export function JobCardItem({ job, onSave }: JobCardProps) {
-    const companyInitials = job.companyName
-        .split(' ')
-        .map((w) => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase();
+  return (
+    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-orange/50 hover:shadow-md hover:shadow-primary/5">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-muted">
+              {job.companyLogo ? (
+                <img
+                  src={job.companyLogo}
+                  alt={`${job.companyName} logo`}
+                  className="size-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <Building2 className="size-5 text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-base leading-snug">
+                <Link
+                  to={`/jobs/$jobId`}
+                  params={{ jobId: job.id }}
+                  className="line-clamp-2 text-foreground transition-colors hover:text-primary"
+                >
+                  {job.title}
+                </Link>
+              </CardTitle>
+              <p className="mt-1 flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
+                <span className="truncate">{job.companyName}</span>
+                {job.isVerified ? <CheckCircle2 className="size-4 text-primary" /> : null}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onSave?.(job.id);
+            }}
+            variant="ghost"
+            size="icon-sm"
+            aria-label={job.isSaved ? "Bỏ lưu việc làm" : "Lưu việc làm"}
+          >
+            <Heart className={job.isSaved ? "size-4 fill-current text-brand-orange" : "size-4"} />
+          </Button>
+        </div>
+      </CardHeader>
 
-    return (
-        <Card className="group/job-card transition-shadow duration-200 hover:shadow-md">
-            <CardHeader>
-                {/* Top row: logo + title + company */}
-                <div className="flex items-start gap-3">
-                    <Avatar size="lg">
-                        {job.companyLogo ? (
-                            <AvatarImage
-                                src={job.companyLogo}
-                                alt={job.companyName}
-                            />
-                        ) : null}
-                        <AvatarFallback className="bg-secondary text-secondary-foreground text-xs font-semibold">
-                            {companyInitials}
-                        </AvatarFallback>
-                    </Avatar>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+          {job.location ? (
+            <div className="flex items-start gap-1.5 rounded-md bg-secondary px-2 py-1 text-secondary-foreground">
+              <MapPin className="mt-0.5 size-3 shrink-0" />
+              <span className="line-clamp-2 min-w-0 leading-5">{job.location}</span>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">
+              <BriefcaseBusiness data-icon="inline-start" />
+              {job.workType}
+            </Badge>
+            <Badge variant="secondary">
+              <Clock3 data-icon="inline-start" />
+              {job.jobType}
+            </Badge>
+            <Badge variant="outline" className="border-brand-orange/30 text-primary">
+              <DollarSign data-icon="inline-start" />
+              {job.salaryRange}
+            </Badge>
+          </div>
+        </div>
 
-                    <div className="min-w-0 flex-1 space-y-0.5">
-                        <Link
-                            to={`/jobs/$jobId`}
-                            params={{ jobId: job.id }}
-                            className="text-sm font-semibold leading-snug text-foreground transition-colors hover:text-primary line-clamp-1"
-                        >
-                            {job.title}
-                        </Link>
+        <div className="flex flex-wrap gap-2">
+          {job.skills.map((skill) => (
+            <Badge key={skill} variant="outline">
+              {skill}
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
 
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <span className="truncate">{job.companyName}</span>
-                            {job.isVerified && (
-                                <BadgeCheck className="size-3.5 shrink-0 text-primary" />
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Save button (top-right via CardAction) */}
-                <CardAction>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            onSave?.(job.id);
-                        }}
-                        className="text-muted-foreground transition-colors hover:text-destructive"
-                        aria-label={job.isSaved ? 'Bỏ lưu' : 'Lưu việc làm'}
-                    >
-                        <Heart
-                            className={`size-4 transition-all ${
-                                job.isSaved
-                                    ? 'fill-destructive text-destructive scale-110'
-                                    : 'fill-none'
-                            }`}
-                        />
-                    </Button>
-                </CardAction>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-                {/* Meta info row */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <Badge variant="secondary" className="gap-1">
-                        <MapPin className="size-3" />
-                        {job.location}
-                    </Badge>
-                    <Badge variant="secondary" className="gap-1">
-                        <Building2 className="size-3" />
-                        {job.workType}
-                    </Badge>
-                    <Badge variant="secondary" className="gap-1">
-                        <Clock className="size-3" />
-                        {job.jobType}
-                    </Badge>
-                    <Badge
-                        variant="outline"
-                        className="gap-1 border-success/30 bg-success/5 text-success"
-                    >
-                        <Banknote className="size-3" />
-                        {job.salaryRange}
-                    </Badge>
-                </div>
-
-                {/* Skills */}
-                {job.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                        {job.skills.map((skill) => (
-                            <Badge
-                                key={skill}
-                                variant="outline"
-                                className="border-primary/20 bg-primary/5 text-primary font-normal"
-                            >
-                                {skill}
-                            </Badge>
-                        ))}
-                    </div>
-                )}
-
-                {/* Posted date */}
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
-                    <Calendar className="size-3" />
-                    <span>Đăng: {job.postedDate}</span>
-                </div>
-            </CardContent>
-        </Card>
-    );
+      <CardFooter>
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="text-xs text-muted-foreground">Đăng: {job.postedDate}</div>
+          <Button
+            asChild
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
+              Chi tiết
+              <ArrowRight data-icon="inline-end" />
+            </Link>
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
 }

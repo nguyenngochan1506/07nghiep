@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { Button } from "@07nghiep/ui/components/button";
 import { Card } from "@07nghiep/ui/components/card";
 
 export function NotFoundComponent() {

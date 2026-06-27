@@ -1,15 +1,19 @@
 # GitHub Actions CI/CD - Enhanced Configuration
 
+> Status: Reference proposal. The active workflow is `.github/workflows/ci.yml`.
+
 ## Current CI Pipeline
 
-The existing `ci.yml` workflow handles:
-- Type checking
-- Building all apps
-- Artifact upload
+The active `ci.yml` workflow handles:
+- Biome linting with `pnpm lint`
+- Type checking with `pnpm check-types`
+- Automated tests with `pnpm test`
+- Building all apps with `pnpm build`
+- Artifact upload for app and server build output
 
-## Enhanced CI with Quality Gates
+## Additional CI Enhancements
 
-Below is an enhanced version with additional quality checks.
+Below is a reference proposal for optional checks that are not part of the active workflow yet, such as database validation and security scanning.
 
 ```yaml
 name: CI

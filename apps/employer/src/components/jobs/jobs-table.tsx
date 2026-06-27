@@ -69,6 +69,7 @@ interface JobsTableProps {
 const STATUS_TABS = [
   { value: "", label: "Tất cả" },
   { value: "DRAFT", label: "Nháp" },
+  { value: "PENDING_APPROVAL", label: "Chờ duyệt" },
   { value: "OPEN", label: "Đang tuyển" },
   { value: "CLOSED", label: "Đã đóng" },
   { value: "ARCHIVED", label: "Lưu trữ" },
@@ -132,6 +133,7 @@ export function JobsTable({
         <div className="flex gap-1 rounded-lg border bg-muted p-1">
           {STATUS_TABS.map((tab) => (
             <button
+              type="button"
               key={tab.value}
               onClick={() => onStatusChange(tab.value)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -194,9 +196,7 @@ export function JobsTable({
                   <TableCell>
                     <div>
                       <p className="font-medium leading-tight">{job.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {job.location}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{job.location}</p>
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
@@ -212,9 +212,7 @@ export function JobsTable({
                     {job.applicationsCount}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                    {job.expiresAt
-                      ? new Date(job.expiresAt).toLocaleDateString("vi-VN")
-                      : "—"}
+                    {job.expiresAt ? new Date(job.expiresAt).toLocaleDateString("vi-VN") : "—"}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -246,7 +244,7 @@ export function JobsTable({
                         {(job.status === "DRAFT" || job.status === "CLOSED") && (
                           <DropdownMenuItem onClick={() => onPublish(job.id)}>
                             <CheckCircle className="mr-2 h-4 w-4 text-success" />
-                            Đăng tin
+                            Gửi duyệt
                           </DropdownMenuItem>
                         )}
 
@@ -269,9 +267,7 @@ export function JobsTable({
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          {confirmDeleteId === job.id
-                            ? "Xác nhận xóa?"
-                            : "Xóa tin"}
+                          {confirmDeleteId === job.id ? "Xác nhận xóa?" : "Xóa tin"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -322,6 +318,7 @@ export function JobsTable({
 function Briefcase({ className }: { className?: string }) {
   return (
     <svg
+      aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       fill="none"

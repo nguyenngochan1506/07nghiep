@@ -1,23 +1,40 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import type { AppRouter } from "@07nghiep/server/routers/index";
+import type { inferRouterOutputs } from "@trpc/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
-import { CalendarDays, Clock, MapPin, Link, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  MapPin,
+  Link,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 
 export const Route = createFileRoute("/interviews")({
   component: EmployerInterviewsPage,
 });
 
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+type InterviewItem = RouterOutputs["interview"]["getMyInterviews"][number];
+
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   SCHEDULED: { label: "Chờ xác nhận", className: "bg-warning/10 text-warning border-warning/20" },
   CONFIRMED: { label: "Đã xác nhận", className: "bg-success/10 text-success border-success/20" },
   COMPLETED: { label: "Đã xong", className: "bg-muted text-muted-foreground border-border" },
-  CANCELLED: { label: "Đã hủy", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  CANCELLED: {
+    label: "Đã hủy",
+    className: "bg-destructive/10 text-destructive border-destructive/20",
+  },
 };
 
 const HOUR_HEIGHT = 80;
@@ -27,7 +44,12 @@ const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_
 const DAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 function formatDateShort(date: Date) {
-  return date.toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  return date.toLocaleDateString("vi-VN", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function formatTime(date: Date) {
@@ -53,7 +75,7 @@ function getMonthStart(date: Date) {
 }
 
 function EmployerInterviewsPage() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { data: interviews, isLoading } = useQuery(trpc.interview.getMyInterviews.queryOptions());
 
   const [viewMode, setViewMode] = useState<"week" | "month" | "list">("week");
@@ -63,7 +85,9 @@ function EmployerInterviewsPage() {
   const now = new Date();
 
   // Week view
-  const weekStart = getWeekStart(new Date(now.getFullYear(), now.getMonth(), now.getDate() + weekOffset * 7));
+  const weekStart = getWeekStart(
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + weekOffset * 7),
+  );
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
@@ -79,9 +103,9 @@ function EmployerInterviewsPage() {
   const totalCells = monthStartDay + totalDays;
   const weeks = Math.ceil(totalCells / 7);
 
-  const interviewsByDate = useMemo(() => {
+  const interviewsByDate = useMemo<Record<string, InterviewItem[]>>(() => {
     if (!interviews) return {};
-    const map: Record<string, any[]> = {};
+    const map: Record<string, InterviewItem[]> = {};
     for (const iv of interviews) {
       const d = new Date(iv.scheduledAt).toDateString();
       if (!map[d]) map[d] = [];
@@ -90,24 +114,24 @@ function EmployerInterviewsPage() {
     return map;
   }, [interviews]);
 
-  const weekInterviews = useMemo(() => {
+  const weekInterviews = useMemo<InterviewItem[]>(() => {
     if (!interviews) return [];
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    return (interviews as any[]).filter((iv) => {
+    return interviews.filter((iv) => {
       const d = new Date(iv.scheduledAt);
       return d >= weekStart && d < weekEnd;
     });
   }, [interviews, weekStart]);
 
-  const upcoming = useMemo(() => {
+  const upcoming = useMemo<InterviewItem[]>(() => {
     if (!interviews) return [];
-    return (interviews as any[]).filter((iv) => iv.status === "SCHEDULED" || iv.status === "CONFIRMED");
+    return interviews.filter((iv) => iv.status === "SCHEDULED" || iv.status === "CONFIRMED");
   }, [interviews]);
 
-  const past = useMemo(() => {
+  const past = useMemo<InterviewItem[]>(() => {
     if (!interviews) return [];
-    return (interviews as any[]).filter((iv) => iv.status === "COMPLETED" || iv.status === "CANCELLED");
+    return interviews.filter((iv) => iv.status === "COMPLETED" || iv.status === "CANCELLED");
   }, [interviews]);
 
   if (isLoading) {
@@ -136,9 +160,13 @@ function EmployerInterviewsPage() {
               className="h-7 px-3 text-xs"
               onClick={() => setViewMode(mode)}
             >
-              {mode === "week" ? <LayoutGrid className="h-3.5 w-3.5 mr-1" /> :
-               mode === "month" ? <CalendarDays className="h-3.5 w-3.5 mr-1" /> :
-               <List className="h-3.5 w-3.5 mr-1" />}
+              {mode === "week" ? (
+                <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+              ) : mode === "month" ? (
+                <CalendarDays className="h-3.5 w-3.5 mr-1" />
+              ) : (
+                <List className="h-3.5 w-3.5 mr-1" />
+              )}
               {mode === "week" ? "Tuần" : mode === "month" ? "Tháng" : "Danh sách"}
             </Button>
           ))}
@@ -155,11 +183,13 @@ function EmployerInterviewsPage() {
                 {weekStart.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
               </CardTitle>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => setWeekOffset(w => w - 1)}>
+                <Button variant="ghost" size="icon" onClick={() => setWeekOffset((w) => w - 1)}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>Hôm nay</Button>
-                <Button variant="ghost" size="icon" onClick={() => setWeekOffset(w => w + 1)}>
+                <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
+                  Hôm nay
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setWeekOffset((w) => w + 1)}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -174,11 +204,18 @@ function EmployerInterviewsPage() {
                   {weekDays.map((day, idx) => {
                     const isToday = day.toDateString() === now.toDateString();
                     return (
-                      <div key={idx} className={`flex-1 text-center py-2 border-l ${isToday ? "bg-primary/5" : ""}`}>
-                        <p className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}>
+                      <div
+                        key={idx}
+                        className={`flex-1 text-center py-2 border-l ${isToday ? "bg-primary/5" : ""}`}
+                      >
+                        <p
+                          className={`text-xs font-medium ${isToday ? "text-primary" : "text-muted-foreground"}`}
+                        >
                           {DAY_LABELS[idx]}
                         </p>
-                        <p className={`text-lg font-bold ${isToday ? "text-primary" : "text-foreground"}`}>
+                        <p
+                          className={`text-lg font-bold ${isToday ? "text-primary" : "text-foreground"}`}
+                        >
                           {day.getDate()}
                         </p>
                       </div>
@@ -190,7 +227,11 @@ function EmployerInterviewsPage() {
                 <div className="flex relative">
                   <div className="w-14 shrink-0">
                     {HOURS.map((hour) => (
-                      <div key={hour} style={{ height: HOUR_HEIGHT }} className="border-b border-border/50 pr-2 relative">
+                      <div
+                        key={hour}
+                        style={{ height: HOUR_HEIGHT }}
+                        className="border-b border-border/50 pr-2 relative"
+                      >
                         <span className="text-xs text-muted-foreground absolute -top-2.5 right-2 leading-none">
                           {String(hour).padStart(2, "0")}:00
                         </span>
@@ -201,7 +242,7 @@ function EmployerInterviewsPage() {
                   {weekDays.map((day, dayIdx) => {
                     const isToday = day.toDateString() === now.toDateString();
                     const dayEvents = weekInterviews.filter(
-                      (iv) => getDayIndex(new Date(iv.scheduledAt)) === dayIdx
+                      (iv) => getDayIndex(new Date(iv.scheduledAt)) === dayIdx,
                     );
 
                     return (
@@ -210,28 +251,42 @@ function EmployerInterviewsPage() {
                         className={`flex-1 relative border-l ${isToday ? "bg-primary/[0.02]" : ""}`}
                       >
                         {HOURS.map((hour) => (
-                          <div key={hour} style={{ height: HOUR_HEIGHT }} className="border-b border-border/30" />
+                          <div
+                            key={hour}
+                            style={{ height: HOUR_HEIGHT }}
+                            className="border-b border-border/30"
+                          />
                         ))}
 
                         {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
                           <div
                             className="absolute left-0 right-0 z-20 border-t-2 border-red-500 pointer-events-none"
-                            style={{ top: ((now.getHours() - START_HOUR) * 60 + now.getMinutes()) / 60 * HOUR_HEIGHT }}
+                            style={{
+                              top:
+                                (((now.getHours() - START_HOUR) * 60 + now.getMinutes()) / 60) *
+                                HOUR_HEIGHT,
+                            }}
                           >
                             <div className="h-2 w-2 rounded-full bg-red-500 -mt-1 -ml-1" />
                           </div>
                         )}
 
-                        {dayEvents.map((iv: any) => {
+                        {dayEvents.map((iv) => {
                           const scheduledDate = new Date(iv.scheduledAt);
-                          const startMinutes = (scheduledDate.getHours() - START_HOUR) * 60 + scheduledDate.getMinutes();
+                          const startMinutes =
+                            (scheduledDate.getHours() - START_HOUR) * 60 +
+                            scheduledDate.getMinutes();
                           const top = (startMinutes / 60) * HOUR_HEIGHT;
                           const height = Math.max((iv.durationMinutes / 60) * HOUR_HEIGHT, 28);
                           const candidate = iv.application?.candidate;
                           const job = iv.application?.job;
-                          const profile = candidate?.profile;
-                          const initials = (candidate?.name || "?")
-                            .split(" ").slice(0, 2).map((w: string) => w[0] ?? "").join("").toUpperCase();
+                          const _profile = candidate?.profile;
+                          const _initials = (candidate?.name || "?")
+                            .split(" ")
+                            .slice(0, 2)
+                            .map((w: string) => w[0] ?? "")
+                            .join("")
+                            .toUpperCase();
                           const isConfirmed = iv.status === "CONFIRMED";
                           const isScheduled = iv.status === "SCHEDULED";
 
@@ -240,23 +295,31 @@ function EmployerInterviewsPage() {
                           return (
                             <div
                               key={iv.id}
-                                className={`absolute inset-x-1 rounded-md px-2 py-1 overflow-hidden z-10 border text-xs leading-tight cursor-pointer transition-opacity hover:opacity-90 ${
-                                  isConfirmed ? "bg-primary/20 text-primary border-primary/40" :
-                                  isScheduled ? "bg-primary/10 text-primary border-primary/30" :
-                                  "bg-muted/50 text-muted-foreground border-border"
-                                }`}
-                              style={{ top, height: Math.min(height, HOUR_HEIGHT * HOURS.length - top) }}
+                              className={`absolute inset-x-1 rounded-md px-2 py-1 overflow-hidden z-10 border text-xs leading-tight cursor-pointer transition-opacity hover:opacity-90 ${
+                                isConfirmed
+                                  ? "bg-primary/20 text-primary border-primary/40"
+                                  : isScheduled
+                                    ? "bg-primary/10 text-primary border-primary/30"
+                                    : "bg-muted/50 text-muted-foreground border-border"
+                              }`}
+                              style={{
+                                top,
+                                height: Math.min(height, HOUR_HEIGHT * HOURS.length - top),
+                              }}
                               title={`${candidate?.name} - ${job?.title}`}
                             >
                               <span className="font-semibold">{formatTime(scheduledDate)}</span>{" "}
                               <span className="truncate">{candidate?.name}</span>
                               {height >= 48 && (
                                 <div className="text-[11px] opacity-80 mt-0.5 truncate">
-                                  {job?.title}{iv.location ? ` · ${iv.location}` : ""}
+                                  {job?.title}
+                                  {iv.location ? ` · ${iv.location}` : ""}
                                 </div>
                               )}
                               {height >= 64 && iv.meetingLink && (
-                                <div className="text-[11px] opacity-70 mt-0.5 truncate">{iv.meetingLink}</div>
+                                <div className="text-[11px] opacity-70 mt-0.5 truncate">
+                                  {iv.meetingLink}
+                                </div>
                               )}
                             </div>
                           );
@@ -281,11 +344,13 @@ function EmployerInterviewsPage() {
                 {monthStart.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
               </CardTitle>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => setMonthOffset(m => m - 1)}>
+                <Button variant="ghost" size="icon" onClick={() => setMonthOffset((m) => m - 1)}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setMonthOffset(0)}>Hôm nay</Button>
-                <Button variant="ghost" size="icon" onClick={() => setMonthOffset(m => m + 1)}>
+                <Button variant="ghost" size="sm" onClick={() => setMonthOffset(0)}>
+                  Hôm nay
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setMonthOffset((m) => m + 1)}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -294,7 +359,10 @@ function EmployerInterviewsPage() {
           <CardContent className="p-0">
             <div className="grid grid-cols-7">
               {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((label) => (
-                <div key={label} className="text-center py-2 text-xs font-medium text-muted-foreground border-b">
+                <div
+                  key={label}
+                  className="text-center py-2 text-xs font-medium text-muted-foreground border-b"
+                >
                   {label}
                 </div>
               ))}
@@ -302,12 +370,14 @@ function EmployerInterviewsPage() {
               {Array.from({ length: weeks * 7 }, (_, i) => {
                 const dayNum = i - monthStartDay + 1;
                 const isValid = dayNum >= 1 && dayNum <= totalDays;
-                const date = isValid ? new Date(monthStart.getFullYear(), monthStart.getMonth(), dayNum) : null;
+                const date = isValid
+                  ? new Date(monthStart.getFullYear(), monthStart.getMonth(), dayNum)
+                  : null;
                 const dateStr = date?.toDateString();
-                const dayInterviews = dateStr ? (interviewsByDate[dateStr] || []) : [];
+                const dayInterviews = dateStr ? interviewsByDate[dateStr] || [] : [];
                 const isToday = date?.toDateString() === now.toDateString();
-                const hasConfirmed = dayInterviews.some((iv: any) => iv.status === "CONFIRMED");
-                const hasScheduled = dayInterviews.some((iv: any) => iv.status === "SCHEDULED");
+                const hasConfirmed = dayInterviews.some((iv) => iv.status === "CONFIRMED");
+                const hasScheduled = dayInterviews.some((iv) => iv.status === "SCHEDULED");
                 const hasInterviews = dayInterviews.length > 0;
 
                 return (
@@ -319,12 +389,12 @@ function EmployerInterviewsPage() {
                       isToday
                         ? "bg-primary/5 ring-2 ring-primary ring-inset"
                         : hasConfirmed
-                        ? "bg-success/5 border-l-2 border-l-success"
-                        : hasScheduled
-                        ? "bg-warning/5 border-l-2 border-l-warning"
-                        : hasInterviews
-                        ? "bg-muted/20"
-                        : ""
+                          ? "bg-success/5 border-l-2 border-l-success"
+                          : hasScheduled
+                            ? "bg-warning/5 border-l-2 border-l-warning"
+                            : hasInterviews
+                              ? "bg-muted/20"
+                              : ""
                     }`}
                   >
                     {/* Hover tooltip */}
@@ -332,23 +402,40 @@ function EmployerInterviewsPage() {
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none">
                         <div className="bg-card border shadow-lg rounded-lg p-3 min-w-[220px] max-w-[300px] text-left">
                           <p className="text-xs font-semibold text-foreground mb-2">
-                            {date!.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" })}
+                            {date?.toLocaleDateString("vi-VN", {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long",
+                            })}
                           </p>
                           <div className="space-y-2">
-                            {dayInterviews.map((iv: any) => (
+                            {dayInterviews.map((iv) => (
                               <div key={iv.id} className="flex items-start gap-2">
-                                <span className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
-                                  iv.status === "CONFIRMED" ? "bg-success" :
-                                  iv.status === "SCHEDULED" ? "bg-warning" :
-                                  "bg-muted-foreground"
-                                }`} />
+                                <span
+                                  className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
+                                    iv.status === "CONFIRMED"
+                                      ? "bg-success"
+                                      : iv.status === "SCHEDULED"
+                                        ? "bg-warning"
+                                        : "bg-muted-foreground"
+                                  }`}
+                                />
                                 <div className="min-w-0">
-                                  <p className="text-xs font-medium truncate">{iv.application?.candidate?.name}</p>
-                                  <p className="text-[11px] text-muted-foreground truncate">{iv.application?.job?.title}</p>
-                                  <p className="text-[11px] text-muted-foreground">
-                                    {formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes} phút
+                                  <p className="text-xs font-medium truncate">
+                                    {iv.application?.candidate?.name}
                                   </p>
-                                  {iv.location && <p className="text-[11px] text-muted-foreground">{iv.location}</p>}
+                                  <p className="text-[11px] text-muted-foreground truncate">
+                                    {iv.application?.job?.title}
+                                  </p>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes}{" "}
+                                    phút
+                                  </p>
+                                  {iv.location && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {iv.location}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -359,29 +446,38 @@ function EmployerInterviewsPage() {
                     )}
                     {isValid && (
                       <>
-                        <p className={`text-xs font-semibold mb-0.5 px-0.5 ${
-                          isToday ? "text-primary" :
-                          hasInterviews ? "text-foreground" :
-                          "text-muted-foreground"
-                        }`}>
+                        <p
+                          className={`text-xs font-semibold mb-0.5 px-0.5 ${
+                            isToday
+                              ? "text-primary"
+                              : hasInterviews
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                          }`}
+                        >
                           {dayNum}
                         </p>
                         <div className="space-y-0.5">
-                          {dayInterviews.slice(0, 3).map((iv: any) => (
+                          {dayInterviews.slice(0, 3).map((iv) => (
                             <div
                               key={iv.id}
                               className={`text-[10px] rounded px-1 py-0.5 truncate cursor-default ${
-                                iv.status === "CONFIRMED" ? "bg-success/20 text-success" :
-                                iv.status === "SCHEDULED" ? "bg-warning/20 text-warning" :
-                                "bg-muted/40 text-muted-foreground"
+                                iv.status === "CONFIRMED"
+                                  ? "bg-success/20 text-success"
+                                  : iv.status === "SCHEDULED"
+                                    ? "bg-warning/20 text-warning"
+                                    : "bg-muted/40 text-muted-foreground"
                               }`}
                               title={`${formatTime(new Date(iv.scheduledAt))} - ${iv.application?.candidate?.name} - ${iv.application?.job?.title}`}
                             >
-                              {formatTime(new Date(iv.scheduledAt))} {iv.application?.candidate?.name}
+                              {formatTime(new Date(iv.scheduledAt))}{" "}
+                              {iv.application?.candidate?.name}
                             </div>
                           ))}
                           {dayInterviews.length > 3 && (
-                            <p className="text-[10px] text-muted-foreground px-1">+{dayInterviews.length - 3} thêm</p>
+                            <p className="text-[10px] text-muted-foreground px-1">
+                              +{dayInterviews.length - 3} thêm
+                            </p>
                           )}
                         </div>
                       </>
@@ -401,11 +497,16 @@ function EmployerInterviewsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Sắp tới</h2>
             {upcoming.length > 0 ? (
               <div className="space-y-3">
-                {upcoming.map((iv: any) => {
+                {upcoming.map((iv) => {
                   const candidate = iv.application?.candidate;
                   const job = iv.application?.job;
                   const profile = candidate?.profile;
-                  const initials = (candidate?.name || "?").split(" ").slice(0, 2).map((w: string) => w[0] ?? "").join("").toUpperCase();
+                  const initials = (candidate?.name || "?")
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((w: string) => w[0] ?? "")
+                    .join("")
+                    .toUpperCase();
 
                   return (
                     <Card key={iv.id}>
@@ -413,28 +514,55 @@ function EmployerInterviewsPage() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-4">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={profile?.avatarUrl || candidate?.image} />
+                              <AvatarImage
+                                src={profile?.avatarUrl || candidate?.image || undefined}
+                              />
                               <AvatarFallback>{initials}</AvatarFallback>
                             </Avatar>
                             <div className="space-y-1.5">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold">{candidate?.name}</h3>
-                                <span className="text-sm text-muted-foreground">cho {job?.title}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  cho {job?.title}
+                                </span>
                               </div>
                               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formatDateShort(new Date(iv.scheduledAt))}</span>
-                                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes} phút</span>
-                                {iv.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{iv.location}</span>}
+                                <span className="flex items-center gap-1">
+                                  <CalendarDays className="h-3.5 w-3.5" />
+                                  {formatDateShort(new Date(iv.scheduledAt))}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  {formatTime(new Date(iv.scheduledAt))} · {iv.durationMinutes} phút
+                                </span>
+                                {iv.location && (
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="h-3.5 w-3.5" />
+                                    {iv.location}
+                                  </span>
+                                )}
                               </div>
                               {iv.meetingLink && (
-                                <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
-                                  <Link className="h-3.5 w-3.5" />Link họp
+                                <a
+                                  href={iv.meetingLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                                >
+                                  <Link className="h-3.5 w-3.5" />
+                                  Link họp
                                 </a>
                               )}
-                              {iv.notes && <p className="text-xs text-muted-foreground mt-1 border-t pt-2">{iv.notes}</p>}
+                              {iv.notes && (
+                                <p className="text-xs text-muted-foreground mt-1 border-t pt-2">
+                                  {iv.notes}
+                                </p>
+                              )}
                             </div>
                           </div>
-                          <Badge className={STATUS_CONFIG[iv.status]?.className}>{STATUS_CONFIG[iv.status]?.label}</Badge>
+                          <Badge className={STATUS_CONFIG[iv.status]?.className}>
+                            {STATUS_CONFIG[iv.status]?.label}
+                          </Badge>
                         </div>
                       </CardContent>
                     </Card>
@@ -452,21 +580,35 @@ function EmployerInterviewsPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Đã qua</h2>
               <div className="space-y-2">
-                {past.map((iv: any) => {
+                {past.map((iv) => {
                   const candidate = iv.application?.candidate;
                   const job = iv.application?.job;
-                  const initials = (candidate?.name || "?").split(" ").slice(0, 2).map((w: string) => w[0] ?? "").join("").toUpperCase();
+                  const initials = (candidate?.name || "?")
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((w: string) => w[0] ?? "")
+                    .join("")
+                    .toUpperCase();
                   return (
                     <Card key={iv.id} className="opacity-70">
                       <CardContent className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8"><AvatarFallback>{initials}</AvatarFallback></Avatar>
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback>{initials}</AvatarFallback>
+                          </Avatar>
                           <div>
-                            <p className="text-sm font-medium">{candidate?.name} · {job?.title}</p>
-                            <p className="text-xs text-muted-foreground">{formatDateShort(new Date(iv.scheduledAt))} · {formatTime(new Date(iv.scheduledAt))}</p>
+                            <p className="text-sm font-medium">
+                              {candidate?.name} · {job?.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDateShort(new Date(iv.scheduledAt))} ·{" "}
+                              {formatTime(new Date(iv.scheduledAt))}
+                            </p>
                           </div>
                         </div>
-                        <Badge className={STATUS_CONFIG[iv.status]?.className}>{STATUS_CONFIG[iv.status]?.label}</Badge>
+                        <Badge className={STATUS_CONFIG[iv.status]?.className}>
+                          {STATUS_CONFIG[iv.status]?.label}
+                        </Badge>
                       </CardContent>
                     </Card>
                   );

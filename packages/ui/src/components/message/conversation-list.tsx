@@ -102,12 +102,12 @@ export function ConversationList({
     <ScrollArea className="flex-1">
       <div className="flex flex-col">
         {conversations.map((conv) => {
-          const otherUser =
-            conv.employer.id === currentUserId ? conv.candidate : conv.employer;
+          const otherUser = conv.employer.id === currentUserId ? conv.candidate : conv.employer;
           const isActive = conv.id === activeId;
 
           return (
             <button
+              type="button"
               key={conv.id}
               onClick={() => onSelect(conv)}
               className={`flex items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 ${
@@ -130,18 +130,17 @@ export function ConversationList({
                   </span>
                 </div>
                 {conv.job && (
-                  <p className="truncate text-xs text-muted-foreground">
-                    {conv.job.title}
-                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{conv.job.title}</p>
                 )}
                 <div className="flex items-center gap-2">
                   <p className="truncate text-xs text-muted-foreground">
-                    {conv.lastMessage
-                      ? conv.lastMessage.content
-                      : "Chưa có tin nhắn"}
+                    {conv.lastMessage ? conv.lastMessage.content : "Chưa có tin nhắn"}
                   </p>
                   {conv.unreadCount > 0 && (
-                    <Badge variant="default" className="h-4 min-w-4 shrink-0 rounded-full px-1 text-[10px]">
+                    <Badge
+                      variant="default"
+                      className="h-4 min-w-4 shrink-0 rounded-full px-1 text-[10px]"
+                    >
                       {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                     </Badge>
                   )}

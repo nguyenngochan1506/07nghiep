@@ -2,17 +2,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react-router";
 import { trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
-import { ConversationList, type ConversationItem } from "@07nghiep/ui/components/message/conversation-list";
+import {
+  ConversationList,
+  type ConversationItem,
+} from "@07nghiep/ui/components/message/conversation-list";
 import { useEffect } from "react";
 import { env } from "@07nghiep/env/candidate";
 import { createSSEConnection } from "@07nghiep/ui/lib/sse";
+import { MessageSquare } from "lucide-react";
 
 export const Route = createFileRoute("/messages")({
   component: MessagesLayout,
 });
 
 function MessagesLayout() {
-  const { data: sessionData } = authClient.useSession();
+  const { data: sessionData, isPending: sessionPending } = authClient.useSession();
   const currentUserId = sessionData?.user?.id ?? "";
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -21,17 +25,17 @@ function MessagesLayout() {
   const { data: conversations, isLoading } = useQuery(
     trpc.conversation.list.queryOptions(undefined, {
       enabled: !!currentUserId,
-    })
+    }),
   );
 
   useEffect(() => {
-    if (!sessionData?.user) {
+    if (!sessionPending && !sessionData?.user) {
       navigate({ to: "/login" });
     }
-  }, [sessionData, navigate]);
+  }, [sessionData, sessionPending, navigate]);
 
   useEffect(() => {
-    if (!env.VITE_SERVER_URL) return;
+    if (!env.VITE_SERVER_URL || !currentUserId) return;
     const abort = new AbortController();
 
     createSSEConnection(
@@ -42,11 +46,11 @@ function MessagesLayout() {
           queryClient.invalidateQueries({ queryKey: trpc.conversation.getUnreadCount.queryKey() });
         }
       },
-      abort.signal
+      abort.signal,
     );
 
     return () => abort.abort();
-  }, [queryClient]);
+  }, [queryClient, currentUserId]);
 
   const handleSelect = (conversation: ConversationItem) => {
     navigate({
@@ -57,7 +61,7 @@ function MessagesLayout() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)] bg-background text-foreground">
       <div className="w-80 shrink-0 border-r bg-card">
         <div className="border-b px-4 py-3">
           <h2 className="text-lg font-semibold">Tin nhắn</h2>
@@ -76,11 +80,9 @@ function MessagesLayout() {
         ) : (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
-              <div className="mb-3 text-5xl">💬</div>
+              <MessageSquare className="mx-auto mb-3 size-12 text-muted-foreground" />
               <h3 className="text-lg font-medium">Tin nhắn của bạn</h3>
-              <p className="text-sm text-muted-foreground">
-                Chọn một cuộc trò chuyện để bắt đầu
-              </p>
+              <p className="text-sm text-muted-foreground">Chọn một cuộc trò chuyện để bắt đầu</p>
             </div>
           </div>
         )}

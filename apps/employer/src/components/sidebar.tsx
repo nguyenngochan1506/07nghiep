@@ -4,11 +4,8 @@ import {
   LayoutDashboard,
   Briefcase,
   FileText,
-  Users,
-  BarChart3,
   MessageSquare,
   Settings,
-  TrendingUp,
   Calendar,
   Plus,
 } from "lucide-react";
@@ -20,7 +17,12 @@ import UserMenu from "./user-menu";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { trpc } from "@/utils/trpc";
 
-const employerNavItems = [
+const employerNavItems: Array<{
+  icon: typeof LayoutDashboard;
+  label: string;
+  href: string;
+  hasMessageBadge?: boolean;
+}> = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Plus, label: "Đăng tin mới", href: "/jobs/new" },
   { icon: Briefcase, label: "Quản lý tin đăng", href: "/my-jobs" },
@@ -38,7 +40,7 @@ export default function Sidebar({ children }: SidebarProps) {
   const { data: unreadCount } = useQuery(
     trpc.conversation.getUnreadCount.queryOptions(undefined, {
       refetchInterval: 15000,
-    })
+    }),
   );
 
   return (
@@ -46,12 +48,9 @@ export default function Sidebar({ children }: SidebarProps) {
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r bg-card">
         {/* Logo */}
-        <div className="flex h-14 items-center gap-2 border-b px-4">
+        <div className="flex h-16 items-center gap-2 border-b px-4">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-sm font-bold text-primary-foreground">
-              07
-            </div>
-            <span className="font-semibold">07nghiep</span>
+            <img src="/07logo.png" alt="07nghiep" className="h-12 w-auto object-contain" />
             <span className="ml-1 rounded-sm bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               Employer
             </span>
@@ -69,8 +68,11 @@ export default function Sidebar({ children }: SidebarProps) {
                 >
                   <item.icon className="h-4 w-4" />
                   <span className="flex-1">{item.label}</span>
-                  {(item as any).hasMessageBadge && unreadCount && unreadCount > 0 ? (
-                    <Badge variant="destructive" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
+                  {item.hasMessageBadge && unreadCount && unreadCount > 0 ? (
+                    <Badge
+                      variant="destructive"
+                      className="h-4 min-w-4 rounded-full px-1 text-[10px]"
+                    >
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </Badge>
                   ) : null}
@@ -91,9 +93,7 @@ export default function Sidebar({ children }: SidebarProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex flex-1 flex-col overflow-auto">
-        {children}
-      </main>
+      <main className="flex flex-1 flex-col overflow-auto">{children}</main>
     </div>
   );
 }

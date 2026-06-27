@@ -10,6 +10,10 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
+    "test": "turbo test",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
     "dev:admin": "turbo -F admin dev",
     "dev:candidate": "turbo -F candidate dev",
     "dev:employer": "turbo -F employer dev",
@@ -21,7 +25,9 @@
     "db:start": "turbo -F @07nghiep/db db:start",
     "db:watch": "turbo -F @07nghiep/db db:watch",
     "db:stop": "turbo -F @07nghiep/db db:stop",
-    "db:down": "turbo -F @07nghiep/db db:down"
+    "db:down": "turbo -F @07nghiep/db db:down",
+    "job:crawl": "uv run --with-requirements scripts/job-crawler/crawler/requirements.txt python scripts/job-crawler/crawler/run.py",
+    "job:import": "pnpm --filter @07nghiep/server exec tsx ../../scripts/job-crawler/importer/import-jobs.ts"
   },
   "dependencies": {
     "@07nghiep/env": "workspace:*",
@@ -30,6 +36,7 @@
   },
   "devDependencies": {
     "@07nghiep/config": "workspace:*",
+    "@biomejs/biome": "^2.5.0",
     "@types/node": "catalog:",
     "react-hook-form": "^7.72.1",
     "turbo": "^2.8.12",

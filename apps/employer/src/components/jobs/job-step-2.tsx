@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { X, Plus } from "lucide-react";
 import { Label } from "@07nghiep/ui/components/label";
 import { Textarea } from "@07nghiep/ui/components/textarea";
-import { Input } from "@07nghiep/ui/components/input";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 
@@ -34,7 +33,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
   function removeSkill(skill: string) {
     onChange(
       "skills",
-      data.skills.filter((s) => s !== skill)
+      data.skills.filter((s) => s !== skill),
     );
   }
 
@@ -76,9 +75,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
           ) : (
             <span />
           )}
-          <p className="text-xs text-muted-foreground">
-            {data.description.length} ký tự
-          </p>
+          <p className="text-xs text-muted-foreground">{data.description.length} ký tự</p>
         </div>
       </div>
 
@@ -109,23 +106,18 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
       {/* Skills */}
       <div className="space-y-2">
         <Label htmlFor="skills-input">
-          Kỹ năng yêu cầu{" "}
-          <span className="text-muted-foreground">
-            ({data.skills.length}/20)
-          </span>
+          Kỹ năng yêu cầu <span className="text-muted-foreground">({data.skills.length}/20)</span>
         </Label>
 
         {/* Tag display + input */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: composite tag input focuses the nested text input when the container is clicked. */}
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard users can tab directly to the nested input. */}
         <div
           className="flex min-h-[44px] flex-wrap gap-2 rounded-md border bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-ring cursor-text"
           onClick={() => skillInputRef.current?.focus()}
         >
           {data.skills.map((skill) => (
-            <Badge
-              key={skill}
-              variant="secondary"
-              className="flex items-center gap-1 pr-1"
-            >
+            <Badge key={skill} variant="secondary" className="flex items-center gap-1 pr-1">
               {skill}
               <button
                 type="button"
@@ -162,9 +154,7 @@ export function JobStep2({ data, errors, onChange }: JobStep2Props) {
             <Plus className="mr-1 h-3 w-3" />
             Thêm
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Nhấn Enter hoặc dấu phẩy để thêm kỹ năng
-          </p>
+          <p className="text-xs text-muted-foreground">Nhấn Enter hoặc dấu phẩy để thêm kỹ năng</p>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { ApplicationStatus } from "@/types/application";
+import type { ApplicationStatus } from "@/types/application";
 import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/avatar";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
@@ -41,7 +41,7 @@ export function ApplicationList({
   onToggleAll,
 }: ApplicationListProps) {
   const allSelected = applications.length > 0 && selectedIds.length === applications.length;
-  const someSelected = selectedIds.length > 0 && selectedIds.length < applications.length;
+  const _someSelected = selectedIds.length > 0 && selectedIds.length < applications.length;
 
   return (
     <div className="rounded-md border">
@@ -90,9 +90,7 @@ export function ApplicationList({
                     <span className="font-medium">{app.candidate.name || "Unknown Candidate"}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {app.job?.title || "N/A"}
-                </TableCell>
+                <TableCell className="text-muted-foreground">{app.job?.title || "N/A"}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {format(new Date(app.appliedAt), "MMM d, yyyy")}
                 </TableCell>

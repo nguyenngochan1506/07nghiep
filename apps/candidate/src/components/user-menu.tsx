@@ -10,6 +10,7 @@ import {
 } from "@07nghiep/ui/components/dropdown-menu";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { UserRound } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -24,15 +25,28 @@ export default function UserMenu() {
   if (!session) {
     return (
       <Link to="/login">
-        <Button variant="outline">Sign In</Button>
+        <Button className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90">
+          Đăng nhập
+        </Button>
       </Link>
     );
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" />}>
-        {session.user.name}
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="sm:w-auto sm:px-3"
+            aria-label="Mở menu tài khoản"
+          />
+        }
+      >
+        <UserRound />
+        <span className="hidden max-w-32 truncate sm:inline">{session.user.name}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-card">
         <DropdownMenuGroup>

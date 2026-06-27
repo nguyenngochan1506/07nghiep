@@ -130,7 +130,11 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
 
         <div className="mt-6 text-center text-sm">
           <span className="text-muted-foreground">Chưa có tài khoản? </span>
-          <Button variant="link" onClick={onSwitchToSignUp} className="h-auto p-0 text-sm font-medium">
+          <Button
+            variant="link"
+            onClick={onSwitchToSignUp}
+            className="h-auto p-0 text-sm font-medium"
+          >
             Đăng ký ngay
           </Button>
         </div>

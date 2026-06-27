@@ -90,7 +90,8 @@ export default function FileUpload({ value, onChange, accept, maxSize, label }: 
   }, [previewUrl]);
 
   const displayedUrl = previewUrl ?? value;
-  const isPdfPreview = previewType === "application/pdf" || (!!value && !previewType && isLikelyPdfUrl(value));
+  const isPdfPreview =
+    previewType === "application/pdf" || (!!value && !previewType && isLikelyPdfUrl(value));
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -147,9 +148,17 @@ export default function FileUpload({ value, onChange, accept, maxSize, label }: 
           <div className="flex flex-col gap-2 rounded-xl border p-3">
             <Label>Preview</Label>
             {isPdfPreview ? (
-              <iframe title="File preview" src={displayedUrl} className="h-72 w-full rounded-lg border" />
+              <iframe
+                title="File preview"
+                src={displayedUrl}
+                className="h-72 w-full rounded-lg border"
+              />
             ) : (
-              <img src={displayedUrl} alt="File preview" className="h-56 w-full rounded-lg object-cover" />
+              <img
+                src={displayedUrl}
+                alt="File preview"
+                className="h-56 w-full rounded-lg object-cover"
+              />
             )}
             {fileName ? <p className="text-xs text-muted-foreground">{fileName}</p> : null}
           </div>

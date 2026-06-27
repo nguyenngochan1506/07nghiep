@@ -14,8 +14,7 @@ const VALID_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const VALID_RESUME_TYPES = ["application/pdf"];
 
 function validateUpload(type: UploadType, contentType: string): void {
-  const allowed =
-    type === "avatar" ? VALID_AVATAR_TYPES : VALID_RESUME_TYPES;
+  const allowed = type === "avatar" ? VALID_AVATAR_TYPES : VALID_RESUME_TYPES;
   if (!allowed.includes(contentType)) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -26,8 +25,7 @@ function validateUpload(type: UploadType, contentType: string): void {
 
 export const profileRouter = router({
   getMyProfile: candidateProcedure.query(async ({ ctx }) => {
-    if (!ctx.user)
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+    if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
     return ctx.prisma.profile.upsert({
       where: { userId: ctx.user.id },
@@ -39,8 +37,7 @@ export const profileRouter = router({
   updateMyProfile: candidateProcedure
     .input(profileUpdateSchema)
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.user)
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
       const profile = await ctx.prisma.profile.upsert({
         where: { userId: ctx.user.id },
@@ -76,11 +73,10 @@ export const profileRouter = router({
       z.object({
         filename: z.string().min(1),
         contentType: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.user)
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
       if (!isStorageConfigured()) {
         throw new TRPCError({
@@ -95,15 +91,14 @@ export const profileRouter = router({
         "resume",
         ctx.user.id,
         input.filename,
-        input.contentType
+        input.contentType,
       );
 
       return result;
     }),
 
   deleteResume: candidateProcedure.mutation(async ({ ctx }) => {
-    if (!ctx.user)
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+    if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
     const profile = await ctx.prisma.profile.upsert({
       where: { userId: ctx.user.id },
@@ -125,11 +120,10 @@ export const profileRouter = router({
       z.object({
         filename: z.string().min(1),
         contentType: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.user)
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
       if (!isStorageConfigured()) {
         throw new TRPCError({
@@ -144,7 +138,7 @@ export const profileRouter = router({
         "avatar",
         ctx.user.id,
         input.filename,
-        input.contentType
+        input.contentType,
       );
 
       return result;
