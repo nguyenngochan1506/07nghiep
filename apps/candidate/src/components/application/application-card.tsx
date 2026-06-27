@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Building2, CalendarDays, MessageSquare, Trash2 } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -183,18 +183,6 @@ export function ApplicationCard({ id, status, appliedAt, job }: ApplicationCardP
 								Chỉ có thể rút đơn ở trạng thái Chờ duyệt hoặc Đã xem
 							</span>
 						)}
-
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							className="h-8 gap-1"
-							disabled
-							title="Tính năng tin nhắn sẽ sớm được kích hoạt"
-						>
-							<MessageSquare className="h-4 w-4" />
-							<span className="hidden sm:inline">Tin nhắn</span>
-						</Button>
 					</div>
 				</div>
 			</CardContent>

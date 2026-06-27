@@ -28,6 +28,7 @@ import {
   AvatarFallback,
 } from "@07nghiep/ui/components/avatar";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
+import { ReportSubmitButton } from "@/components/jobs/report-submit-button";
 import { trpc } from "@/utils/trpc";
 
 type JobDetailView = {
@@ -259,6 +260,13 @@ function JobDetailPage() {
 
               {/* Action buttons */}
               <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+                <ReportSubmitButton 
+                  contentType="JOB" 
+                  contentId={jobId!} 
+                  variant="ghost"
+                  size="sm"
+                />
+                
                 <Button
                   variant={isSaved ? "secondary" : "outline"}
                   onClick={() => toggleSave(job.id)}

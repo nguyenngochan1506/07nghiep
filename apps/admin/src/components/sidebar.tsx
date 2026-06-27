@@ -9,6 +9,8 @@ import {
   Settings,
   Shield,
   Activity,
+  AlertTriangle,
+  History,
 } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
@@ -18,9 +20,11 @@ import UserMenu from "./user-menu";
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Users, label: "Người dùng", href: "/admin/users" },
-  { icon: Briefcase, label: "Việc làm", href: "/" },
-  { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
-  { icon: BarChart3, label: "Báo cáo", href: "/" },
+  { icon: Briefcase, label: "Việc làm chờ duyệt", href: "/admin/jobs/pending" },
+  { icon: History, label: "Lịch sử kiểm duyệt", href: "/admin/jobs/history" },
+  { icon: AlertTriangle, label: "Báo cáo vi phạm", href: "/admin/reports" },
+  // { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
+  // { icon: BarChart3, label: "Báo cáo", href: "/" },
   { icon: Shield, label: "Bảo mật", href: "/" },
   { icon: Settings, label: "Cài đặt", href: "/" },
 ];

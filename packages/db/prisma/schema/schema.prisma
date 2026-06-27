@@ -89,6 +89,36 @@ enum InterviewStatus {
   COMPLETED
 }
 
+enum ModerationAction {
+  APPROVE
+  REJECT
+  REQUEST_CHANGES
+  REMOVE_CONTENT
+  WARN_USER
+  BAN_USER
+  DISMISS_REPORT
+}
+
+enum ReportType {
+  INAPPROPRIATE_CONTENT
+  SPAM
+  SCAM_FRAUD
+  DUPLICATE_POSTING
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+enum ContentType {
+  JOB
+  USER
+  MESSAGE
+}
+
 // ============================================
 // CUSTOM MODELS
 // ============================================
@@ -156,6 +186,7 @@ model Job {
   organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   skills            JobSkill[]
   savedJobs         SavedJob[]
+  moderationHistory ModerationHistory[]
 
   @@index([status, publishedAt])
   @@index([organizationId, status])
@@ -292,4 +323,42 @@ model JobSkill {
   job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@unique([jobId, skill])
+}
+
+model ModerationHistory {
+  id          String           @id @default(cuid())
+  jobId       String?
+  moderatorId String
+  action      ModerationAction
+  reason      String?          @db.Text
+  feedback    String?          @db.Text
+  createdAt   DateTime         @default(now())
+
+  job       Job?  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  moderator User  @relation("ModeratorActions", fields: [moderatorId], references: [id])
+
+  @@index([jobId, createdAt])
+  @@index([moderatorId, createdAt])
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  contentType ContentType
+  contentId   String
+  reporterId  String
+  reportType  ReportType
+  description String?      @db.Text
+  status      ReportStatus @default(PENDING)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  resolution  String?      @db.Text
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  reporter User  @relation("UserReports", fields: [reporterId], references: [id])
+  resolver User? @relation("ResolvedReports", fields: [resolvedBy], references: [id])
+
+  @@index([status, createdAt])
+  @@index([reporterId])
+  @@index([contentType, contentId])
 }

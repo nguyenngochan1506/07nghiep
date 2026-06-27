@@ -70,6 +70,9 @@ function EditJobPage() {
 
   // ── Load Job Data ─────────────────────────────────────────────────────────
   const jobQuery = useQuery(trpc.job.getById.queryOptions({ id: jobId }));
+  
+  // ── Load Moderation Feedback (if any) ────────────────────────────────────
+  const feedbackQuery = useQuery(trpc.job.getModerationFeedback.queryOptions({ jobId }));
 
   useEffect(() => {
     if (jobQuery.data) {
@@ -110,6 +113,16 @@ function EditJobPage() {
     })
   );
 
+  const publishMutation = useMutation(
+    trpc.job.publish.mutationOptions({
+      onSuccess: () => {
+        toast.success("Đã gửi tin tuyển dụng để kiểm duyệt!");
+        navigate({ to: "/my-jobs" });
+      },
+      onError: (err) => toast.error(err.message),
+    })
+  );
+
   function handleSave(status?: "DRAFT" | "OPEN") {
     const payload = {
       id: jobId,
@@ -127,9 +140,23 @@ function EditJobPage() {
       salaryMin: step3.salaryMin ? Number(step3.salaryMin) : undefined,
       salaryMax: step3.salaryMax ? Number(step3.salaryMax) : undefined,
       expiresAt: step4.expiresAt ? new Date(step4.expiresAt) : undefined,
-      ...(status ? { status } : {}),
     };
-    updateMutation.mutate(payload);
+    
+    // If publishing (status = OPEN), first update then publish
+    if (status === "OPEN") {
+      updateMutation.mutate(payload, {
+        onSuccess: () => {
+          // After update success, call publish
+          publishMutation.mutate({ id: jobId });
+        },
+      });
+    } else {
+      // Just update with status if provided
+      updateMutation.mutate({
+        ...payload,
+        ...(status ? { status } : {}),
+      });
+    }
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -175,6 +202,35 @@ function EditJobPage() {
         </div>
 
         <JobFormStepper currentStep={currentStep} />
+
+        {/* Admin Feedback Banner */}
+        {feedbackQuery.data && (feedbackQuery.data.action === "REJECT" || feedbackQuery.data.action === "REQUEST_CHANGES") && (
+          <div className="mb-6 rounded-lg border-2 border-warning bg-warning/10 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-warning text-warning-foreground">
+                {feedbackQuery.data.action === "REJECT" ? "✕" : "!"}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-warning-foreground">
+                  {feedbackQuery.data.action === "REJECT" ? "Tin tuyển dụng bị từ chối" : "Yêu cầu chỉnh sửa"}
+                </h3>
+                {feedbackQuery.data.reason && (
+                  <p className="mt-1 text-sm">
+                    <span className="font-medium">Lý do:</span> {feedbackQuery.data.reason}
+                  </p>
+                )}
+                {feedbackQuery.data.feedback && (
+                  <p className="mt-1 text-sm">
+                    <span className="font-medium">Góp ý:</span> {feedbackQuery.data.feedback}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Vui lòng chỉnh sửa theo góp ý và gửi lại để kiểm duyệt
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Card className="p-6">
           {currentStep === 1 && (
@@ -231,11 +287,11 @@ function EditJobPage() {
             {currentStep === TOTAL_STEPS ? (
               <Button
                 onClick={() => handleSave("OPEN")}
-                disabled={updateMutation.isPending}
+                disabled={updateMutation.isPending || publishMutation.isPending}
                 className="gap-2"
               >
                 <Send className="h-4 w-4" />
-                Cập nhật & Đăng
+                Gửi kiểm duyệt
               </Button>
             ) : (
               <Button onClick={handleNext} className="gap-2">

@@ -455,7 +455,7 @@ function ApplicationDetailPage() {
             <Separator className="my-4" />
 
             {/* Chat placeholder */}
-            <Card>
+            {/* <Card>
               <CardHeader className="border-b pb-4">
                 <CardTitle className="text-lg">Trò chuyện</CardTitle>
               </CardHeader>
@@ -468,7 +468,7 @@ function ApplicationDetailPage() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         ) : null}
       </div>

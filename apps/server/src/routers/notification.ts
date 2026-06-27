@@ -28,6 +28,7 @@ export const notificationRouter = router({
           type: true,
           title: true,
           body: true,
+          data: true,
           read: true,
           createdAt: true,
         },

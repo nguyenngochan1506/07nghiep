@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { NotificationBell } from "@07nghiep/ui/components/notification-bell";
+import type { NotificationItem } from "@07nghiep/ui/components/notification-bell";
 import { trpc } from "../utils/trpc";
 import { env } from "@07nghiep/env/admin";
 
@@ -50,6 +52,7 @@ function createSSEConnection(
 
 export function NotificationBellContainer() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const abortRef = useRef<AbortController | null>(null);
 
   const { data: unreadCount = 0 } = useQuery(trpc.notification.getUnreadCount.queryOptions());
@@ -90,12 +93,36 @@ export function NotificationBellContainer() {
     };
   }, [queryClient]);
 
+  const handleNotificationClick = (notification: NotificationItem) => {
+    // Parse notification data
+    let data: any;
+    if (typeof notification.data === "string") {
+      try {
+        data = JSON.parse(notification.data);
+      } catch {
+        data = {};
+      }
+    } else {
+      data = notification.data || {};
+    }
+    
+    // Navigate based on notification type and data
+    if (data?.reportId) {
+      // Navigate to report detail page
+      navigate({ to: `/admin/reports/${data.reportId}` });
+    } else if (data?.jobId) {
+      // Navigate to pending jobs page (job will be in the list)
+      navigate({ to: "/admin/jobs/pending" });
+    }
+  };
+
   return (
     <NotificationBell
       unreadCount={unreadCount}
       notifications={notifications as any}
       onMarkAsRead={(id) => markAsRead.mutate({ id })}
       onMarkAllAsRead={() => markAllAsRead.mutate()}
+      onNotificationClick={handleNotificationClick}
     />
   );
 }

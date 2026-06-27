@@ -1,6 +1,5 @@
 import { Bell } from "lucide-react";
 
-import { Button } from "./button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +15,7 @@ export interface NotificationItem {
   type: string;
   title: string;
   body: string;
+  data?: any;
   read: boolean;
   createdAt: string;
 }
@@ -25,6 +25,7 @@ interface NotificationBellProps {
   notifications: NotificationItem[];
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
+  onNotificationClick?: (notification: NotificationItem) => void;
 }
 
 function getRelativeTime(dateString: string) {
@@ -48,33 +49,35 @@ export function NotificationBell({
   notifications,
   onMarkAsRead,
   onMarkAllAsRead,
+  onNotificationClick,
 }: NotificationBellProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px]"
-            >
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
+      <DropdownMenuTrigger className="group/button inline-flex shrink-0 items-center justify-center rounded-md text-sm font-medium outline-hidden transition duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-disabled:pointer-events-none data-disabled:opacity-50 group-hover/button:bg-accent group-hover/button:text-accent-foreground h-10 w-10 hover:bg-accent hover:text-accent-foreground relative">
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <Badge
+            variant="destructive"
+            className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px]"
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Badge>
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 p-0">
+      <DropdownMenuContent align="end" className="w-96 p-0">
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm font-semibold">Thông báo</span>
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={onMarkAllAsRead} className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent">
+            <button 
+              onClick={onMarkAllAsRead} 
+              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
               Đánh dấu tất cả đã đọc
-            </Button>
+            </button>
           )}
         </div>
         <DropdownMenuSeparator className="m-0" />
-        <div className="flex max-h-[350px] flex-col overflow-y-auto">
+        <div className="flex max-h-[500px] flex-col overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">Không có thông báo nào</div>
           ) : (
@@ -84,7 +87,10 @@ export function NotificationBell({
                 className={`flex flex-col gap-1 border-b px-4 py-3 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors ${
                   !n.read ? "bg-primary/5" : ""
                 }`}
-                onClick={() => !n.read && onMarkAsRead(n.id)}
+                onClick={() => {
+                  if (!n.read) onMarkAsRead(n.id);
+                  onNotificationClick?.(n);
+                }}
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-sm font-medium leading-tight">{n.title}</span>
