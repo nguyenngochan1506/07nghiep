@@ -39,10 +39,10 @@ const contentTypeLabels: Record<string, string> = {
   MESSAGE: "Tin nhắn",
 };
 
-const statusLabels: Record<string, { label: string; variant: "default" | "success" | "warning" }> = {
-  PENDING: { label: "Chờ xử lý", variant: "warning" },
-  RESOLVED: { label: "Đã xử lý", variant: "success" },
-  DISMISSED: { label: "Đã bác bỏ", variant: "default" },
+const statusLabels: Record<string, { label: string; variant: "default" | "destructive" | "secondary" | "outline" }> = {
+  PENDING: { label: "Chờ xử lý", variant: "destructive" },
+  RESOLVED: { label: "Đã xử lý", variant: "default" },
+  DISMISSED: { label: "Đã bác bỏ", variant: "secondary" },
 };
 
 function ReportDetailPage() {
@@ -65,7 +65,8 @@ function ReportDetailPage() {
         setActionDialog(null);
         setNotes("");
       },
-      onError: (error: Error) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (error: any) => {
         toast.error(error.message || "Có lỗi xảy ra");
       },
     })

@@ -11,8 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@07nghiep/ui/components/dialog";
-import { trpc } from "../../utils/trpc";
+import { trpc, trpcClient } from "../../utils/trpc";
 import { JobModerationActions } from "./job-moderation-actions";
+
+type JobForReview = Awaited<ReturnType<typeof trpcClient.admin.moderation.getJobForReview.query>>;
 
 interface JobReviewPanelProps {
   jobId: string;
@@ -27,7 +29,7 @@ export function JobReviewPanel({ jobId, onClose, mode = "review" }: JobReviewPan
   // Fetch job by ID
   const { data: job, isLoading } = useQuery(
     trpc.admin.moderation.getJobForReview.queryOptions({ jobId })
-  );
+  ) as { data: JobForReview | undefined; isLoading: boolean };
 
   const handleAction = (selectedAction: "approve" | "reject" | "request-changes") => {
     setAction(selectedAction);

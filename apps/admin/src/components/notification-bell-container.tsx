@@ -55,10 +55,11 @@ export function NotificationBellContainer() {
   const { data: unreadCount = 0 } = useQuery(trpc.notification.getUnreadCount.queryOptions());
   const { data: notificationsData } = useQuery(trpc.notification.list.queryOptions({ limit: 10 }));
   const notifications: NotificationItem[] =
-    notificationsData?.items.map((notification) => ({
+    // biome-ignore lint/suspicious/noExplicitAny: tRPC type instantiation too deep
+    ((notificationsData as any)?.items ?? []).map((notification: any) => ({
       ...notification,
       createdAt: String(notification.createdAt),
-    })) ?? [];
+    })) as NotificationItem[];
 
   const markAsRead = useMutation(
     trpc.notification.markAsRead.mutationOptions({
