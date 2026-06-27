@@ -3,8 +3,9 @@ import { Card } from "@07nghiep/ui/components/card";
 import { GoogleIcon } from "@07nghiep/ui/components/google-icon";
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
+import { startGoogleAuthPopup } from "@07nghiep/ui/lib/oauth-popup";
 import { useForm } from "@tanstack/react-form";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -16,20 +17,39 @@ export default function SignInForm() {
   const navigate = useNavigate({
     from: "/",
   });
-  const { isPending } = authClient.useSession();
+  const router = useRouter();
+  const { isPending, refetch: refetchSession } = authClient.useSession();
 
   const signInWithGoogle = async () => {
-    await authClient.signIn.social(
-      {
-        provider: "google",
-        callbackURL: new URL("/dashboard", window.location.origin).toString(),
+    const redirectTo = "/dashboard";
+    await startGoogleAuthPopup({
+      redirectTo,
+      getAuthorizationURL: async (callbackURL) => {
+        const result = await authClient.signIn.social(
+          {
+            provider: "google",
+            callbackURL,
+            newUserCallbackURL: callbackURL,
+            errorCallbackURL: callbackURL,
+            disableRedirect: true,
+          },
+          {
+            onError: (error) => {
+              toast.error(error.error.message || error.error.statusText);
+            },
+          },
+        );
+
+        return result.data?.url;
       },
-      {
-        onError: (error) => {
-          toast.error(error.error.message || error.error.statusText);
-        },
+      onSuccess: async () => {
+        await refetchSession();
+        await router.invalidate();
+        navigate({ to: redirectTo });
+        toast.success("Đăng nhập thành công");
       },
-    );
+      onError: (message) => toast.error(message),
+    });
   };
 
   const form = useForm({

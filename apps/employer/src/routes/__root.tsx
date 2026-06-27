@@ -49,6 +49,7 @@ function RootComponent() {
   const { session } = Route.useRouteContext();
 
   const isLoginPage = location.pathname === "/login";
+  const isOAuthPopupCallback = location.pathname === "/auth/google/callback";
 
   return (
     <>
@@ -59,7 +60,7 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        {isLoginPage || !session.data ? (
+        {isLoginPage || isOAuthPopupCallback || !session.data ? (
           <Outlet />
         ) : (
           <Sidebar>

@@ -18,6 +18,7 @@ import { Route as AdminOrganizationsIndexRouteImport } from './routes/admin/orga
 import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
 import { Route as AdminBusinessApplicationsIndexRouteImport } from './routes/admin/business-applications/index'
 import { Route as AdminBillingIndexRouteImport } from './routes/admin/billing/index'
+import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google/callback'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
 import { Route as AdminBillingPaymentsRouteImport } from './routes/admin/billing/payments'
 
@@ -67,6 +68,11 @@ const AdminBillingIndexRoute = AdminBillingIndexRouteImport.update({
   path: '/billing/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
+  id: '/auth/google/callback',
+  path: '/auth/google/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing/': typeof AdminBillingIndexRoute
   '/admin/business-applications/': typeof AdminBusinessApplicationsIndexRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing': typeof AdminBillingIndexRoute
   '/admin/business-applications': typeof AdminBusinessApplicationsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing/': typeof AdminBillingIndexRoute
   '/admin/business-applications/': typeof AdminBusinessApplicationsIndexRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/billing/payments'
     | '/admin/users/$userId'
+    | '/auth/google/callback'
     | '/admin/billing/'
     | '/admin/business-applications/'
     | '/admin/jobs/'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/billing/payments'
     | '/admin/users/$userId'
+    | '/auth/google/callback'
     | '/admin/billing'
     | '/admin/business-applications'
     | '/admin/jobs'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/billing/payments'
     | '/admin/users/$userId'
+    | '/auth/google/callback'
     | '/admin/billing/'
     | '/admin/business-applications/'
     | '/admin/jobs/'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBillingIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/auth/google/callback': {
+      id: '/auth/google/callback'
+      path: '/auth/google/callback'
+      fullPath: '/auth/google/callback'
+      preLoaderRoute: typeof AuthGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users/$userId': {
       id: '/admin/users/$userId'
       path: '/users/$userId'
@@ -276,6 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

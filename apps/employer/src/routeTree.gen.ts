@@ -23,6 +23,7 @@ import { Route as MessagesConversationIdRouteImport } from './routes/messages.$c
 import { Route as JobsNewRouteImport } from './routes/jobs/new'
 import { Route as ApplicationsApplicationIdRouteImport } from './routes/applications/$applicationId'
 import { Route as MyJobsJobIdEditRouteImport } from './routes/my-jobs/$jobId/edit'
+import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google/callback'
 
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
@@ -95,6 +96,11 @@ const MyJobsJobIdEditRoute = MyJobsJobIdEditRouteImport.update({
   path: '/my-jobs/$jobId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
+  id: '/auth/google/callback',
+  path: '/auth/google/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/settings/organization': typeof SettingsOrganizationRoute
   '/applications/': typeof ApplicationsIndexRoute
   '/my-jobs/': typeof MyJobsIndexRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/settings/organization': typeof SettingsOrganizationRoute
   '/applications': typeof ApplicationsIndexRoute
   '/my-jobs': typeof MyJobsIndexRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
 export interface FileRoutesById {
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/settings/organization': typeof SettingsOrganizationRoute
   '/applications/': typeof ApplicationsIndexRoute
   '/my-jobs/': typeof MyJobsIndexRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/my-jobs/$jobId/edit': typeof MyJobsJobIdEditRoute
 }
 export interface FileRouteTypes {
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/settings/organization'
     | '/applications/'
     | '/my-jobs/'
+    | '/auth/google/callback'
     | '/my-jobs/$jobId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/settings/organization'
     | '/applications'
     | '/my-jobs'
+    | '/auth/google/callback'
     | '/my-jobs/$jobId/edit'
   id:
     | '__root__'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/settings/organization'
     | '/applications/'
     | '/my-jobs/'
+    | '/auth/google/callback'
     | '/my-jobs/$jobId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -209,6 +221,7 @@ export interface RootRouteChildren {
   SettingsOrganizationRoute: typeof SettingsOrganizationRoute
   ApplicationsIndexRoute: typeof ApplicationsIndexRoute
   MyJobsIndexRoute: typeof MyJobsIndexRoute
+  AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
   MyJobsJobIdEditRoute: typeof MyJobsJobIdEditRoute
 }
 
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyJobsJobIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/google/callback': {
+      id: '/auth/google/callback'
+      path: '/auth/google/callback'
+      fullPath: '/auth/google/callback'
+      preLoaderRoute: typeof AuthGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -340,6 +360,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsOrganizationRoute: SettingsOrganizationRoute,
   ApplicationsIndexRoute: ApplicationsIndexRoute,
   MyJobsIndexRoute: MyJobsIndexRoute,
+  AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
   MyJobsJobIdEditRoute: MyJobsJobIdEditRoute,
 }
 export const routeTree = rootRouteImport

@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, HeadContent, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { useLocation } from "@tanstack/react-router";
 import Header from "@/components/header";
 import { authClient } from "@/lib/auth-client";
 import { useSyncLocalSavedJobs } from "@/lib/saved-jobs";
@@ -114,6 +115,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
+  const location = useLocation();
   const { data, isLoading, isError } = useQuery(
     trpc.job.getPublicList.queryOptions({ limit: PUBLIC_JOBS_PREVIEW_LIMIT }),
   );
@@ -122,6 +124,7 @@ function RootComponent() {
     if (!data?.jobs) return [];
     return data.jobs.map((job) => mapJob(job));
   }, [data]);
+  const isOAuthPopupCallback = location.pathname === "/auth/google/callback";
 
   return (
     <>
@@ -133,8 +136,12 @@ function RootComponent() {
         storageKey="vite-ui-theme"
       >
         <div className="grid min-h-svh grid-rows-[auto_1fr] bg-background text-foreground">
-          <SavedJobsSyncGate />
-          <Header />
+          {isOAuthPopupCallback ? null : (
+            <>
+              <SavedJobsSyncGate />
+              <Header />
+            </>
+          )}
           <JobsContext.Provider value={{ jobs, isLoading, isError }}>
             <Outlet />
           </JobsContext.Provider>
