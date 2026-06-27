@@ -1,6 +1,8 @@
 import { createContext } from "./lib/api/context";
+import { handlePayosWebhook } from "./lib/billing/payments";
 import { appRouter } from "./routers";
 import { auth } from "@07nghiep/auth";
+import prisma from "@07nghiep/db";
 import { env } from "@07nghiep/env/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { Hono } from "hono";
@@ -104,6 +106,24 @@ app.use(
 );
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+app.post("/api/payments/payos/webhook", async (c) => {
+  let body: unknown;
+
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ success: false, error: "INVALID_JSON" }, 400);
+  }
+
+  const result = await handlePayosWebhook({ prisma, body });
+
+  if (!result.ok && result.reason === "INVALID_SIGNATURE") {
+    return c.json({ success: false, error: result.reason }, 400);
+  }
+
+  return c.json({ success: true });
+});
 
 app.all("/trpc/:path(*)", async (c) => {
   return fetchRequestHandler({

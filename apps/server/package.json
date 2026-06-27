@@ -14,6 +14,9 @@
     }
   },
   "scripts": {
+    "billing:expire-subscriptions": "tsx src/scripts/expire-subscriptions.ts",
+    "billing:send-renewal-reminders": "tsx src/scripts/send-renewal-reminders.ts",
+    "billing:seed-plans": "tsx src/scripts/seed-billing-plans.ts",
     "build": "tsdown",
     "check-types": "tsc -b",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
@@ -28,6 +31,7 @@
     "@07nghiep/storage": "workspace:*",
     "@hono/node-server": "^1.14.4",
     "@hono/trpc-server": "^0.4.0",
+    "@payos/node": "^2.0.5",
     "@trpc/server": "catalog:",
     "better-auth": "^1.6.5",
     "dotenv": "catalog:",

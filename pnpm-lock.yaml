@@ -438,6 +438,9 @@ importers:
       '@hono/trpc-server':
         specifier: ^0.4.0
         version: 0.4.2(@trpc/server@11.16.0(typescript@5.9.3))(hono@4.12.14)
+      '@payos/node':
+        specifier: ^2.0.5
+        version: 2.0.5
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.16.0(typescript@5.9.3)
@@ -1657,6 +1660,9 @@ packages:
 
   '@oxc-project/types@0.99.0':
     resolution: {integrity: sha512-LLDEhXB7g1m5J+woRSgfKsFPS3LhR9xRhTeIoEBm5WrkwMxn6eZ0Ld0c0K5eHB57ChZX6I3uSmmLjZ8pcjlRcw==}
+
+  '@payos/node@2.0.5':
+    resolution: {integrity: sha512-y2dRfqVMerbBr0gapFqNA+QwzJmhC0Hi0+IaXhOsXEOBRjIe9ZgeFqI3JBF3mXSM3YSf5HAjTAAk2XYtCvMpBQ==}
 
   '@prisma/adapter-pg@7.7.0':
     resolution: {integrity: sha512-q33Ta8sKbgzEpAy0lx45tAq//yMv0qcb+8nj+TCA3P4wiAY+OBFEFk/NDkZncAfHaNJeGo5WJpJdpbL+ijYx8g==}
@@ -5965,6 +5971,8 @@ snapshots:
   '@oxc-project/types@0.126.0': {}
 
   '@oxc-project/types@0.99.0': {}
+
+  '@payos/node@2.0.5': {}
 
   '@prisma/adapter-pg@7.7.0':
     dependencies:

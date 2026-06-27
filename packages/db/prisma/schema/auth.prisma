@@ -22,6 +22,10 @@ model User {
   employerConversations   Conversation[]        @relation("EmployerConversations")
   candidateConversations  Conversation[]        @relation("CandidateConversations")
   sentMessages            Message[]
+  subscriptions           Subscription[]
+  payments                Payment[]
+  businessApplications    BusinessApplication[] @relation("BusinessApplicationUser")
+  reviewedBusinessApplications BusinessApplication[] @relation("BusinessApplicationReviewer")
 
   @@map("user")
 }
