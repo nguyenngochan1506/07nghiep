@@ -32,6 +32,7 @@ export default function Header() {
   type NavLink = { to: string; label: string; hasMessageBadge?: boolean };
 
   const publicLinks: NavLink[] = [
+    { to: "/home", label: "Trang chủ" },
     { to: "/jobs/", label: "Việc làm" },
     { to: "/organizations", label: "Công ty" },
   ];
