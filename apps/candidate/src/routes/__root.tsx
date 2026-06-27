@@ -124,11 +124,11 @@ function RootComponent() {
       <HeadContent />
       <ThemeProvider
         attribute="class"
-        defaultTheme="dark"
+        defaultTheme="system"
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        <div className="grid grid-rows-[auto_1fr] h-svh">
+        <div className="grid min-h-svh grid-rows-[auto_1fr] bg-background text-foreground">
           <Header />
           <JobsContext.Provider value={{ jobs, isLoading, isError }}>
             <Outlet />

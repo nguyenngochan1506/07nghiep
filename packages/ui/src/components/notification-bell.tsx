@@ -1,6 +1,7 @@
 import { Bell } from "lucide-react";
 
 import { Button } from "./button";
+import { cn } from "../lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,18 +58,18 @@ export function NotificationBell({
 }: NotificationBellProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-[10px]"
-            >
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
+      <DropdownMenuTrigger
+        render={<Button type="button" variant="ghost" size="icon" className="relative" />}
+      >
+        <Bell />
+        {unreadCount > 0 && (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Badge>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-4 py-3">
@@ -95,9 +96,10 @@ export function NotificationBell({
               <button
                 type="button"
                 key={n.id}
-                className={`flex flex-col gap-1 border-b px-4 py-3 text-left last:border-0 hover:bg-muted/50 cursor-pointer transition-colors ${
-                  !n.read ? "bg-primary/5" : ""
-                }`}
+                className={cn(
+                  "flex cursor-pointer flex-col gap-1 border-b px-4 py-3 text-left transition-colors last:border-0 hover:bg-muted/50",
+                  !n.read && "bg-primary/5",
+                )}
                 onClick={() => !n.read && onMarkAsRead(n.id)}
               >
                 <div className="flex items-start justify-between gap-2">

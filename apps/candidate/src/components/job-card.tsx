@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+  ArrowRight,
   BriefcaseBusiness,
   Building2,
   CheckCircle2,
@@ -34,7 +35,7 @@ interface JobCardProps {
 
 export function JobCardItem({ job, onSave }: JobCardProps) {
   return (
-    <Card>
+    <Card className="transition-colors hover:border-primary/40">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
@@ -51,17 +52,17 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
               )}
             </div>
             <div className="min-w-0">
-              <CardTitle>
+              <CardTitle className="truncate text-base">
                 <Link
                   to={`/jobs/$jobId`}
                   params={{ jobId: job.id }}
-                  className="text-primary hover:underline"
+                  className="text-foreground transition-colors hover:text-primary"
                 >
                   {job.title}
                 </Link>
               </CardTitle>
-              <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                {job.companyName}
+              <p className="mt-1 flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
+                <span className="truncate">{job.companyName}</span>
                 {job.isVerified ? <CheckCircle2 className="size-4 text-primary" /> : null}
               </p>
             </div>
@@ -111,7 +112,15 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
       </CardContent>
 
       <CardFooter>
-        <div className="text-xs text-muted-foreground">Đăng: {job.postedDate}</div>
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="text-xs text-muted-foreground">Đăng: {job.postedDate}</div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
+              Chi tiết
+              <ArrowRight data-icon="inline-end" />
+            </Link>
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

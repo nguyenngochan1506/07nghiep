@@ -8,8 +8,24 @@ import { queryClient, trpc } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
-import { Card, CardContent } from "@07nghiep/ui/components/card";
-import { ArrowLeft, Building2, Heart } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@07nghiep/ui/components/card";
+import { Separator } from "@07nghiep/ui/components/separator";
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  Building2,
+  Clock3,
+  DollarSign,
+  Heart,
+  MapPin,
+} from "lucide-react";
 
 type JobDetailView = {
   id: string;
@@ -157,49 +173,135 @@ function JobDetailPage() {
 
   const isSaved = savedJobQuery.data?.saved ?? false;
 
+  const jobFacts = [
+    { label: "Địa điểm", value: job.location || "Linh hoạt", icon: MapPin },
+    { label: "Mức lương", value: job.salaryRange, icon: DollarSign },
+    { label: "Hình thức", value: job.workType || "Đang cập nhật", icon: BriefcaseBusiness },
+    { label: "Loại công việc", value: job.jobType || "Đang cập nhật", icon: Clock3 },
+  ];
+
   return (
     <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <Link to="/jobs" className="flex items-center gap-1 text-sm text-primary hover:underline">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
+        <Link
+          to="/jobs"
+          className="flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+        >
           <ArrowLeft className="size-4" />
           Quay lại danh sách
         </Link>
 
-        <Card>
-          <CardContent className="p-6 md:p-8">
-            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
-              <div className="flex items-center gap-4">
+        <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <Card>
+            <CardHeader className="gap-5 p-6 md:p-8">
+              <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
+                <div className="flex items-start gap-4">
+                  {job.companyLogo ? (
+                    <img
+                      src={job.companyLogo}
+                      alt={job.companyName}
+                      className="size-16 shrink-0 rounded-xl border object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-xl border bg-muted">
+                      <Building2 className="size-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <Badge variant="secondary" className="mb-3">
+                      {job.status || "OPEN"}
+                    </Badge>
+                    <CardTitle className="text-2xl font-semibold tracking-tight md:text-3xl">
+                      {job.title}
+                    </CardTitle>
+                    <CardDescription className="mt-2 text-base">{job.companyName}</CardDescription>
+                  </div>
+                </div>
+
+                <div className="flex w-full items-center gap-3 md:w-auto">
+                  <Button
+                    type="button"
+                    onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
+                    disabled={!isLoggedIn || toggleSavedJob.isPending}
+                    variant={isSaved ? "default" : "outline"}
+                    className="flex-1 md:flex-none"
+                  >
+                    <Heart data-icon="inline-start" />
+                    {isSaved ? "Đã lưu" : "Lưu"}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="flex flex-col gap-8 px-6 pb-8 md:px-8">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {jobFacts.map((fact) => (
+                  <div key={fact.label} className="rounded-xl border bg-secondary/40 p-4">
+                    <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-card text-primary">
+                      <fact.icon className="size-4" />
+                    </div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      {fact.label}
+                    </p>
+                    <p className="mt-1 font-semibold text-foreground">{fact.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              <div className="flex flex-col gap-4">
+                <h2 className="text-xl font-semibold text-foreground">Mô tả công việc</h2>
+                <div className="flex flex-col gap-4 leading-7 text-muted-foreground">
+                  <p>{job.description || "Chưa có mô tả chi tiết."}</p>
+                  {job.skills.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                      <p className="font-semibold text-foreground">Yêu cầu kỹ năng</p>
+                      <div className="flex flex-wrap gap-2">
+                        {job.skills.map((skill: string) => (
+                          <Badge key={skill} variant="outline">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Ứng tuyển vị trí này</CardTitle>
+                <CardDescription>
+                  Kiểm tra hồ sơ trước khi gửi để nhà tuyển dụng có đủ thông tin đánh giá.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
                 {job.companyLogo ? (
                   <img
                     src={job.companyLogo}
                     alt={job.companyName}
-                    className="size-16 shrink-0 rounded-lg border object-cover"
+                    className="size-12 shrink-0 rounded-xl border object-cover"
                   />
                 ) : (
-                  <div className="flex size-16 shrink-0 items-center justify-center rounded-lg border bg-muted">
-                    <Building2 className="size-6 text-muted-foreground" />
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border bg-muted">
+                    <Building2 className="size-5 text-muted-foreground" />
                   </div>
                 )}
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">{job.title}</h1>
-                  <p className="mt-1 text-lg text-muted-foreground">{job.companyName}</p>
+                <div className="rounded-xl border bg-secondary/30 p-3 text-sm text-muted-foreground">
+                  {hasApplied
+                    ? `Bạn đã ứng tuyển vị trí này${applicationStatus ? ` (${applicationStatus})` : ""}.`
+                    : isLoggedIn
+                      ? "Bạn có thể gửi hồ sơ ngay khi CV và tóm tắt cá nhân đã sẵn sàng."
+                      : "Đăng nhập để lưu việc và gửi hồ sơ ứng tuyển."}
                 </div>
-              </div>
-
-              <div className="flex w-full items-center gap-3 md:w-auto">
-                <Button
-                  type="button"
-                  onClick={() => toggleSavedJob.mutate({ jobId: job.id })}
-                  disabled={!isLoggedIn || toggleSavedJob.isPending}
-                  variant={isSaved ? "default" : "outline"}
-                  className="flex-1 md:flex-none"
-                >
-                  <Heart data-icon="inline-start" />
-                  {isSaved ? "Đã lưu" : "Lưu công việc"}
-                </Button>
-
+              </CardContent>
+              <CardFooter>
                 {isLoadingTrigger ? (
-                  <Skeleton className="h-10 w-32 md:w-40 rounded-md" />
+                  <Skeleton className="h-10 w-full rounded-md" />
                 ) : isLoggedIn ? (
                   <ApplyJobModal
                     jobId={job.id}
@@ -209,54 +311,14 @@ function JobDetailPage() {
                     applicationStatus={applicationStatus}
                   />
                 ) : (
-                  <Button asChild>
+                  <Button asChild className="w-full">
                     <Link to="/login">Đăng nhập để ứng tuyển</Link>
                   </Button>
                 )}
-              </div>
-            </div>
-
-            <hr className="my-8 border-border" />
-
-            <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="rounded-lg bg-secondary p-4">
-                <p className="mb-1 text-sm text-muted-foreground">Địa điểm</p>
-                <p className="font-semibold text-foreground">{job.location}</p>
-              </div>
-              <div className="rounded-lg bg-secondary p-4">
-                <p className="mb-1 text-sm text-muted-foreground">Mức lương</p>
-                <p className="font-semibold text-foreground">{job.salaryRange}</p>
-              </div>
-              <div className="rounded-lg bg-secondary p-4">
-                <p className="mb-1 text-sm text-muted-foreground">Hình thức</p>
-                <p className="font-semibold text-foreground">{job.workType}</p>
-              </div>
-              <div className="rounded-lg bg-secondary p-4">
-                <p className="mb-1 text-sm text-muted-foreground">Loại công việc</p>
-                <p className="font-semibold text-foreground">{job.jobType}</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <h2 className="text-xl font-bold text-foreground">Mô tả công việc</h2>
-              <div className="flex flex-col gap-2 leading-relaxed text-muted-foreground">
-                <p>{job.description || "Chưa có mô tả chi tiết."}</p>
-                {job.skills.length > 0 && (
-                  <>
-                    <p className="mt-4 font-semibold text-foreground">Yêu cầu kỹ năng:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {job.skills.map((skill: string) => (
-                        <Badge key={skill} variant="outline">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardFooter>
+            </Card>
+          </aside>
+        </section>
       </div>
     </div>
   );

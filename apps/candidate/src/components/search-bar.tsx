@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, X } from "lucide-react";
 import { Button } from "@07nghiep/ui/components/button";
+import { Input } from "@07nghiep/ui/components/input";
 
 interface SearchBarProps {
   onSearch: (keyword: string, location: string) => void;
@@ -11,6 +12,11 @@ interface SearchBarProps {
 export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" }: SearchBarProps) {
   const [keyword, setKeyword] = useState(initialKeyword);
   const [location, setLocation] = useState(initialLocation);
+
+  useEffect(() => {
+    setKeyword(initialKeyword);
+    setLocation(initialLocation);
+  }, [initialKeyword, initialLocation]);
 
   // Dùng useRef để giữ giá trị timeout ID (phục vụ cho Debounce)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -36,13 +42,13 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
   const handleClearLocation = () => setLocation("");
 
   return (
-    <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center gap-2 rounded-2xl border bg-card p-2 shadow-sm md:flex-row">
-      <div className="relative flex h-12 w-full flex-grow items-center md:w-auto">
-        <Search className="absolute left-4 size-5 shrink-0 text-muted-foreground" />
-        <input
+    <div className="mx-auto grid w-full max-w-5xl gap-2 rounded-xl border bg-card p-2 shadow-sm md:grid-cols-[1fr_0.7fr_auto]">
+      <div className="relative flex h-11 w-full items-center">
+        <Search className="absolute left-3 size-4 shrink-0 text-muted-foreground" />
+        <Input
           type="text"
-          placeholder="Job title, keywords, or company..."
-          className="h-full w-full border-0 bg-transparent pl-11 pr-10 text-base text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none"
+          placeholder="Chức danh, kỹ năng hoặc công ty"
+          className="h-11 border-transparent bg-transparent pl-9 pr-9 focus-visible:border-ring"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
@@ -51,21 +57,19 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
             type="button"
             onClick={handleClearKeyword}
             className="absolute right-3 text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Clear search"
+            aria-label="Xóa từ khóa"
           >
             <X className="size-4" />
           </button>
         )}
       </div>
 
-      <div className="hidden h-8 w-px shrink-0 bg-border md:block" />
-
-      <div className="relative flex h-12 w-full flex-grow items-center border-t pt-2 md:w-1/3 md:border-t-0 md:pt-0">
-        <MapPin className="absolute left-4 size-5 shrink-0 text-muted-foreground" />
-        <input
+      <div className="relative flex h-11 w-full items-center">
+        <MapPin className="absolute left-3 size-4 shrink-0 text-muted-foreground" />
+        <Input
           type="text"
-          placeholder="City, state, or 'Remote'"
-          className="h-full w-full border-0 bg-transparent pl-11 pr-10 text-base text-foreground shadow-none placeholder:text-muted-foreground focus:outline-none"
+          placeholder="Thành phố hoặc Remote"
+          className="h-11 border-transparent bg-transparent pl-9 pr-9 focus-visible:border-ring"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
@@ -74,18 +78,16 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
             type="button"
             onClick={handleClearLocation}
             className="absolute right-3 text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Clear location"
+            aria-label="Xóa địa điểm"
           >
             <X className="size-4" />
           </button>
         )}
       </div>
 
-      <Button
-        className="h-12 w-full rounded-xl px-8 font-medium md:w-auto"
-        onClick={() => onSearch(keyword, location)}
-      >
-        Search
+      <Button className="h-11 w-full px-8 md:w-auto" onClick={() => onSearch(keyword, location)}>
+        <Search data-icon="inline-start" />
+        Tìm việc
       </Button>
     </div>
   );
