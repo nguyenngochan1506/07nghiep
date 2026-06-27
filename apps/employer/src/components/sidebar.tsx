@@ -8,6 +8,7 @@ import {
   Settings,
   Calendar,
   Plus,
+  CreditCard,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -29,6 +30,7 @@ const employerNavItems: Array<{
   { icon: FileText, label: "Đơn ứng tuyển", href: "/applications" },
   { icon: MessageSquare, label: "Tin nhắn", href: "/messages", hasMessageBadge: true },
   { icon: Calendar, label: "Lịch phỏng vấn", href: "/interviews" },
+  { icon: CreditCard, label: "Thanh toán", href: "/billing" },
   { icon: Settings, label: "Cài đặt", href: "/settings/organization" },
 ];
 

@@ -11,6 +11,7 @@ import {
   Users,
   Building,
   AlertCircle,
+  CreditCard,
 } from "lucide-react";
 
 import { Button } from "@07nghiep/ui/components/button";
@@ -61,6 +62,8 @@ function DashboardComponent() {
   const { session } = Route.useRouteContext();
   const statsQuery = useQuery(trpc.job.getMyStats.queryOptions());
   const stats = statsQuery.data;
+  const billingQuery = useQuery(trpc.billing.me.queryOptions());
+  const employerActive = billingQuery.data?.entitlements.employer ?? false;
 
   const orgQuery = useQuery({
     ...trpc.organization.getMyOrganization.queryOptions(),
@@ -125,6 +128,28 @@ function DashboardComponent() {
             </div>
           </Card>
         )}
+
+        {!billingQuery.isLoading && !employerActive ? (
+          <Card className="mb-8 border-warning/40 bg-warning/10 p-5">
+            <div className="flex items-start gap-4">
+              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold">Gói nhà tuyển dụng chưa hoạt động</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Gia hạn gói để tiếp tục sử dụng các tính năng tuyển dụng.
+                </p>
+                <Link to="/billing" className="mt-3 inline-block">
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Xem thanh toán
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
+        ) : null}
 
         {/* Stats Grid */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

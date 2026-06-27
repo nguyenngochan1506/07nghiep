@@ -14,6 +14,7 @@ import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InterviewsRouteImport } from './routes/interviews'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BillingRouteImport } from './routes/billing'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MyJobsIndexRouteImport } from './routes/my-jobs/index'
 import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
@@ -46,6 +47,11 @@ const InterviewsRoute = InterviewsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingRoute = BillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -92,6 +98,7 @@ const MyJobsJobIdEditRoute = MyJobsJobIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/billing': typeof BillingRoute
   '/dashboard': typeof DashboardRoute
   '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/billing': typeof BillingRoute
   '/dashboard': typeof DashboardRoute
   '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
@@ -123,6 +131,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/billing': typeof BillingRoute
   '/dashboard': typeof DashboardRoute
   '/interviews': typeof InterviewsRoute
   '/login': typeof LoginRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/billing'
     | '/dashboard'
     | '/interviews'
     | '/login'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/billing'
     | '/dashboard'
     | '/interviews'
     | '/login'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/billing'
     | '/dashboard'
     | '/interviews'
     | '/login'
@@ -186,6 +198,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BillingRoute: typeof BillingRoute
   DashboardRoute: typeof DashboardRoute
   InterviewsRoute: typeof InterviewsRoute
   LoginRoute: typeof LoginRoute
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing': {
+      id: '/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof BillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -309,6 +329,7 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BillingRoute: BillingRoute,
   DashboardRoute: DashboardRoute,
   InterviewsRoute: InterviewsRoute,
   LoginRoute: LoginRoute,
