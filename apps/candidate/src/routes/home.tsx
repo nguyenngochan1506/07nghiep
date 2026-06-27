@@ -27,6 +27,7 @@ import {
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { ProvinceCombobox } from "@/components/province-combobox";
 import { type JobType, useJobs } from "@/routes/__root";
 
 export const Route = createFileRoute("/home")({
@@ -145,13 +146,12 @@ function HomeComponent() {
               <div className="flex flex-col gap-2">
                 <Label htmlFor="home-location">Địa điểm</Label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
+                  <MapPin className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <ProvinceCombobox
                     id="home-location"
                     value={location}
-                    onChange={(event) => setLocation(event.target.value)}
-                    placeholder="TP.HCM, Hà Nội, Remote"
-                    className="h-11 pl-9"
+                    onValueChange={setLocation}
+                    inputClassName="h-11 pl-9"
                   />
                 </div>
               </div>

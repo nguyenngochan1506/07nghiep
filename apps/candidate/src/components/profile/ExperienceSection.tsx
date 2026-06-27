@@ -3,6 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@07nghiep/
 import { Label } from "@07nghiep/ui/components/label";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
+import { ProvinceCombobox } from "@/components/province-combobox";
 import type { ProfileFormValues } from "@/utils/profile-schema";
 
 type ExperienceSectionProps = {
@@ -84,13 +85,18 @@ export default function ExperienceSection({ form }: ExperienceSectionProps) {
 
                 <div className="flex flex-col gap-2">
                   <Label htmlFor={`experience.${index}.location`}>Địa điểm</Label>
-                  <input
+                  <ProvinceCombobox
                     id={`experience.${index}.location`}
-                    placeholder="Hà Nội"
-                    data-invalid={Boolean(errors?.location)}
-                    aria-invalid={Boolean(errors?.location)}
-                    className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20"
-                    {...form.register(`experience.${index}.location`)}
+                    value={form.watch(`experience.${index}.location`) ?? ""}
+                    onValueChange={(value) =>
+                      form.setValue(`experience.${index}.location`, value, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    inputClassName="px-3 py-1.5 text-sm shadow-sm"
+                    invalid={Boolean(errors?.location)}
                   />
                   <FieldError message={errors?.location?.message} />
                 </div>

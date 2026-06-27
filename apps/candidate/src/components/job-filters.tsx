@@ -2,6 +2,7 @@ import type React from "react";
 import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
 import { Label } from "@07nghiep/ui/components/label";
+import { useVietnamProvinces } from "@/lib/vietnam-provinces";
 
 export type JobFiltersValue = {
   location: string;
@@ -14,6 +15,8 @@ interface JobFiltersProps {
 }
 
 export function JobFilters({ filters, setFilters }: JobFiltersProps) {
+  const { provinces, isLoading } = useVietnamProvinces();
+
   const handleFilterChange = (key: keyof JobFiltersValue, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -44,9 +47,12 @@ export function JobFilters({ filters, setFilters }: JobFiltersProps) {
             value={filters.location}
           >
             <option value="">Tất cả địa điểm</option>
-            <option value="HCM">Hồ Chí Minh</option>
-            <option value="HN">Hà Nội</option>
-            <option value="DN">Đà Nẵng</option>
+            {isLoading ? <option disabled>Đang tải tỉnh/thành...</option> : null}
+            {provinces.map((province) => (
+              <option key={province.code} value={province.displayName}>
+                {province.displayName}
+              </option>
+            ))}
           </select>
         </div>
 

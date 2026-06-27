@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, X } from "lucide-react";
 import { Button } from "@07nghiep/ui/components/button";
 import { Input } from "@07nghiep/ui/components/input";
+import { ProvinceCombobox } from "@/components/province-combobox";
 
 interface SearchBarProps {
   onSearch: (keyword: string, location: string) => void;
@@ -65,19 +66,17 @@ export function SearchBar({ onSearch, initialKeyword = "", initialLocation = "" 
       </div>
 
       <div className="relative flex h-11 w-full items-center">
-        <MapPin className="absolute left-3 size-4 shrink-0 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Thành phố hoặc Remote"
-          className="h-11 border-transparent bg-transparent pl-9 pr-9 focus-visible:border-ring"
+        <MapPin className="pointer-events-none absolute left-3 z-10 size-4 shrink-0 text-muted-foreground" />
+        <ProvinceCombobox
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
+          onValueChange={setLocation}
+          inputClassName="h-11 border-transparent bg-transparent pl-9 pr-16 focus-visible:border-ring"
         />
         {location && (
           <button
             type="button"
             onClick={handleClearLocation}
-            className="absolute right-3 text-muted-foreground transition-colors hover:text-foreground"
+            className="absolute right-9 z-10 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Xóa địa điểm"
           >
             <X className="size-4" />
