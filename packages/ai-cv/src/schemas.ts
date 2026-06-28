@@ -42,6 +42,7 @@ export const candidateCvAnalysisInputSchema = z.object({
 export const applicationFitScoreInputSchema = z.object({
   resumeText: z.string().min(50),
   coverLetter: z.string().nullable(),
+  answers: z.unknown().nullable(),
   profile: candidateProfileForAiSchema,
   job: jobForMatchingSchema,
 });

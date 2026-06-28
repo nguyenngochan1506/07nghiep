@@ -137,6 +137,7 @@ export async function handleScoreApplicationFit(
     const result = await provider.scoreApplicationFit({
       resumeText: resume.text,
       coverLetter: application.coverLetter,
+      answers: application.answers,
       profile: {
         headline: application.candidate.profile?.headline ?? null,
         summary: application.candidate.profile?.summary ?? null,

@@ -46,7 +46,7 @@ export function buildApplicationFitScorePrompt(input: ApplicationFitScoreInput) 
     JSON.stringify(input.profile, null, 2),
     "",
     "Untrusted application context data:",
-    JSON.stringify({ coverLetter: input.coverLetter }, null, 2),
+    JSON.stringify({ coverLetter: input.coverLetter, answers: input.answers }, null, 2),
     "",
     "Untrusted resume text data:",
     input.resumeText,

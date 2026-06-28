@@ -5,6 +5,7 @@ import {
   buildCandidateCvAnalysisPrompt,
 } from "./prompts";
 import {
+  applicationFitScoreInputSchema,
   applicationFitScoreResultSchema,
   candidateCvAnalysisInputSchema,
   candidateCvAnalysisResultSchema,
@@ -250,6 +251,47 @@ describe("AI CV result schemas", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts application fit input with answers and richer context", () => {
+    const parsed = applicationFitScoreInputSchema.parse({
+      resumeText: "Readable resume text with enough content for validation to pass.",
+      coverLetter: "I want this job.",
+      answers: [{ question: "Notice period", answer: "Immediately" }],
+      profile: {
+        headline: "Backend Engineer",
+        summary: "Builds APIs",
+        skills: ["TypeScript"],
+        experience: [{ title: "Engineer" }],
+        education: [{ school: "NLU" }],
+        location: "Ho Chi Minh",
+        portfolioUrl: "https://example.com",
+      },
+      job: {
+        id: "job_1",
+        title: "Backend Developer",
+        organizationName: "Acme",
+        description: "Build APIs",
+        requirements: "TypeScript",
+        benefits: "Remote",
+        skills: ["TypeScript"],
+        location: "Ho Chi Minh",
+        workType: "REMOTE",
+        jobType: "FULL_TIME",
+        experienceLevel: "MID",
+        industry: "Software",
+        salaryMin: "1000.00",
+        salaryMax: "2000.00",
+        salaryCurrency: "USD",
+        salaryUnit: "MONTH",
+        salaryNegotiable: true,
+        experienceMonths: 24,
+        applicantLocation: "Vietnam",
+        sourceSite: "internal",
+      },
+    });
+
+    expect(parsed.answers).toEqual([{ question: "Notice period", answer: "Immediately" }]);
+  });
 });
 
 describe("AI CV prompt builders", () => {
@@ -285,6 +327,7 @@ describe("AI CV prompt builders", () => {
     const prompt = buildApplicationFitScorePrompt({
       job: matchingJob,
       coverLetter: "I have shipped React and TypeScript dashboards for recruitment workflows.",
+      answers: [{ question: "Notice period", answer: "Immediately" }],
       profile: candidateAnalysisInput.profile,
       resumeText: candidateAnalysisInput.resumeText,
     });
@@ -297,5 +340,6 @@ describe("AI CV prompt builders", () => {
     expect(prompt).toContain("STRONG_FIT");
     expect(prompt).toContain("POTENTIAL_FIT");
     expect(prompt).toContain("WEAK_FIT");
+    expect(prompt).toContain("Notice period");
   });
 });
