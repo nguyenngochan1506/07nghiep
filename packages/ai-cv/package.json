@@ -1,0 +1,25 @@
+{
+  "name": "@07nghiep/ai-cv",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./provider": "./src/provider.ts"
+  },
+  "scripts": {
+    "check-types": "tsc -b",
+    "test": "vitest run src"
+  },
+  "dependencies": {
+    "@07nghiep/env": "workspace:*",
+    "@anthropic-ai/sdk": "^0.106.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@07nghiep/config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  }
+}
