@@ -1,13 +1,10 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Users,
   Briefcase,
   Building2,
-  FileText,
-  BarChart3,
-  Settings,
   Shield,
   Activity,
   CreditCard,
@@ -17,6 +14,7 @@ import {
 import { ModeToggle } from "./mode-toggle";
 import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
+import { cn } from "@07nghiep/ui/lib/utils";
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
@@ -26,16 +24,30 @@ const adminNavItems = [
   { icon: Briefcase, label: "Duyệt việc làm", href: "/admin/jobs" },
   { icon: CreditCard, label: "Gói thanh toán", href: "/admin/billing" },
   { icon: ReceiptText, label: "Giao dịch", href: "/admin/billing/payments" },
-  { icon: FileText, label: "Đơn ứng tuyển", href: "/" },
-  { icon: BarChart3, label: "Báo cáo", href: "/" },
-  { icon: Settings, label: "Cài đặt", href: "/" },
 ];
 
 interface SidebarProps {
   children?: ReactNode;
 }
 
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getActiveHref(pathname: string) {
+  return adminNavItems
+    .filter((item) => isActiveRoute(pathname, item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+}
+
 export default function Sidebar({ children }: SidebarProps) {
+  const location = useLocation();
+  const activeHref = getActiveHref(location.pathname);
+
   return (
     <div className="flex h-svh">
       {/* Sidebar */}
@@ -52,18 +64,28 @@ export default function Sidebar({ children }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3">
-          <ul className="space-y-1">
-            {adminNavItems.map((item) => (
-              <li key={item.label}>
-                <Link
-                  to={item.href}
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+          <ul className="flex flex-col gap-1">
+            {adminNavItems.map((item) => {
+              const active = item.href === activeHref;
+
+              return (
+                <li key={item.label}>
+                  <Link
+                    to={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 

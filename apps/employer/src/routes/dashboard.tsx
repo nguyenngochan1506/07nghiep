@@ -1,23 +1,33 @@
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
-  Plus,
-  FileText,
-  Eye,
-  Briefcase,
-  TrendingUp,
-  Calendar,
-  Users,
-  Building,
   AlertCircle,
+  ArrowRight,
+  Briefcase,
+  Building,
+  CheckCircle2,
   CreditCard,
+  Eye,
+  FileText,
+  MessageSquare,
+  Plus,
+  Users,
 } from "lucide-react";
 
+import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
-import { Card } from "@07nghiep/ui/components/card";
-import { authorizedRoles } from "@/lib/role-guard";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@07nghiep/ui/components/card";
+import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { authClient } from "@/lib/auth-client";
+import { authorizedRoles } from "@/lib/role-guard";
 import { trpc } from "@/utils/trpc";
 
 export const Route = createFileRoute("/dashboard")({
@@ -38,30 +48,29 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardComponent,
 });
 
-const _STATS = [
-  { icon: Briefcase, label: "Việc đang tuyển", value: "12", change: "+2 tuần này" },
-  { icon: FileText, label: "Đơn ứng tuyển", value: "45", change: "+8 mới" },
-  { icon: Eye, label: "Tổng lượt xem", value: "1.2K", change: "+15%" },
-  { icon: Users, label: "Ứng viên đã lưu", value: "28", change: "+5" },
-];
-
-const RECENT_ACTIVITY = [
-  { text: "5 đơn ứng tuyển mới cho Senior Developer", time: "2 giờ trước" },
-  { text: "Job 'Frontend Engineer' được xem 150 lần", time: "5 giờ trước" },
-  { text: "3 việc hết hạn trong 7 ngày tới", time: "1 ngày trước" },
-  { text: "Đánh giá mới từ ứng viên John D.", time: "2 ngày trước" },
-];
-
 type ErrorWithTRPCCode = {
   data?: {
     code?: string;
   };
 };
 
+const formatter = new Intl.NumberFormat("vi-VN");
+
+function formatNumber(value?: number) {
+  return formatter.format(value ?? 0);
+}
+
+function formatDate(value: Date | string) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 function DashboardComponent() {
   const { session } = Route.useRouteContext();
   const statsQuery = useQuery(trpc.job.getMyStats.queryOptions());
-  const stats = statsQuery.data;
   const billingQuery = useQuery(trpc.billing.me.queryOptions());
   const employerActive = billingQuery.data?.entitlements.employer ?? false;
 
@@ -72,164 +81,286 @@ function DashboardComponent() {
   const isOrgMissing =
     orgQuery.isError && (orgQuery.error as unknown as ErrorWithTRPCCode).data?.code === "NOT_FOUND";
 
-  const STAT_CARDS = [
+  const recentJobsQuery = useQuery({
+    ...trpc.job.getMyJobs.queryOptions({ page: 1, pageSize: 4 }),
+    enabled: Boolean(orgQuery.data),
+  });
+
+  const stats = statsQuery.data;
+  const organization = orgQuery.data;
+  const profileComplete = Boolean(
+    organization?.name && organization.description && organization.location,
+  );
+
+  const statCards = [
     {
       icon: Briefcase,
       label: "Đang tuyển",
-      value: stats?.openJobs ?? 0,
-      change: `${stats?.draftJobs ?? 0} nháp`,
+      value: stats?.openJobs,
+      detail: `${formatNumber(stats?.draftJobs)} bản nháp cần hoàn thiện`,
+      href: "/my-jobs",
     },
     {
       icon: FileText,
       label: "Đơn ứng tuyển",
-      value: stats?.totalApplications ?? 0,
-      change: "Tất cả tin",
+      value: stats?.totalApplications,
+      detail: "Tổng số hồ sơ từ các tin đăng",
+      href: "/applications",
     },
-    { icon: Eye, label: "Tổng lượt xem", value: stats?.totalViews ?? 0, change: "Tất cả tin" },
+    {
+      icon: Eye,
+      label: "Lượt xem",
+      value: stats?.totalViews,
+      detail: `${formatNumber(stats?.totalJobs)} tin tuyển dụng đã tạo`,
+      href: "/my-jobs",
+    },
     {
       icon: Users,
-      label: "Tổng tin đăng",
-      value: stats?.totalJobs ?? 0,
-      change: `${stats?.closedJobs ?? 0} đã đóng`,
+      label: "Tin đã đóng",
+      value: stats?.closedJobs,
+      detail: "Theo dõi để tái đăng khi cần",
+      href: "/my-jobs",
     },
-  ];
+  ] as const;
+
+  const readinessItems = [
+    {
+      icon: CreditCard,
+      label: "Gói nhà tuyển dụng",
+      ready: employerActive,
+      detail: employerActive ? "Đang hoạt động" : "Cần kích hoạt để dùng đầy đủ tính năng",
+      href: "/billing",
+      action: employerActive ? "Xem gói" : "Kích hoạt",
+    },
+    {
+      icon: Building,
+      label: "Hồ sơ công ty",
+      ready: !isOrgMissing && profileComplete,
+      detail: isOrgMissing
+        ? "Chưa tạo hồ sơ công ty"
+        : profileComplete
+          ? "Đủ thông tin cơ bản"
+          : "Thiếu mô tả hoặc địa điểm công ty",
+      href: "/settings/organization",
+      action: isOrgMissing ? "Tạo hồ sơ" : "Cập nhật",
+    },
+    {
+      icon: CheckCircle2,
+      label: "Xác minh công ty",
+      ready: organization?.verified ?? false,
+      detail: organization?.verified
+        ? "Công ty đã được xác minh"
+        : `Trạng thái: ${organization?.verificationStatus ?? "chưa có hồ sơ"}`,
+      href: "/settings/organization",
+      action: "Kiểm tra",
+    },
+    {
+      icon: Briefcase,
+      label: "Tin đang hiển thị",
+      ready: (stats?.openJobs ?? 0) > 0,
+      detail:
+        (stats?.openJobs ?? 0) > 0
+          ? `${formatNumber(stats?.openJobs)} tin đang mở`
+          : "Chưa có tin tuyển dụng đang mở",
+      href: "/jobs/new",
+      action: "Đăng tin",
+    },
+  ] as const;
 
   return (
-    <div className="min-h-screen bg-secondary/30 px-4 py-8">
-      <div className="container mx-auto max-w-6xl">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Chào mừng, {session.data?.user.name}</h1>
-          <p className="text-muted-foreground">Cập nhật tình trạng tin tuyển dụng của bạn</p>
-        </div>
-
-        {/* Missing Org Alert */}
-        {isOrgMissing && (
-          <Card className="mb-8 border-destructive/50 bg-destructive/10 p-5">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/20 text-destructive">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-destructive">
-                  Chưa có thông tin công ty
-                </h3>
-                <p className="mt-1 text-sm text-destructive/90">
-                  Bạn cần thiết lập hồ sơ công ty (Tên, Logo, Giới thiệu,...) trước khi có thể đăng
-                  tin tuyển dụng.
-                </p>
-                <Link to="/settings/organization" className="mt-3 inline-block">
-                  <Button size="sm" variant="destructive" className="gap-2">
-                    <Building className="h-4 w-4" />
-                    Tạo hồ sơ công ty ngay
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 py-6 lg:px-8">
+        <section className="grid gap-4 xl:grid-cols-[1fr_24rem]">
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader className="gap-4 p-6">
+              <Badge variant={employerActive ? "secondary" : "destructive"} className="w-fit">
+                {employerActive ? "Employer active" : "Cần kích hoạt gói"}
+              </Badge>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-3xl">
+                  <h1 className="text-3xl font-semibold tracking-tight text-balance md:text-4xl">
+                    Chào {session.data?.user.name}, đây là tình hình tuyển dụng của bạn
+                  </h1>
+                  <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                    Dashboard tập trung vào những việc cần xử lý trước: kích hoạt gói, hoàn thiện
+                    công ty, mở tin tuyển dụng và theo dõi hồ sơ ứng viên.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="lg">
+                    <Link to="/jobs/new">
+                      <Plus data-icon="inline-start" />
+                      Đăng tin mới
+                    </Link>
                   </Button>
-                </Link>
+                  <Button asChild size="lg" variant="outline">
+                    <Link to="/applications">
+                      <FileText data-icon="inline-start" />
+                      Xem ứng viên
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </div>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>Việc cần làm</CardTitle>
+              <CardDescription>Hoàn thiện các bước để tuyển dụng ổn định</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {readinessItems.slice(0, 3).map((item) => (
+                <Link key={item.label} to={item.href} className="rounded-lg border p-3">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={
+                        item.ready
+                          ? "flex size-8 items-center justify-center rounded-md bg-success/10 text-success"
+                          : "flex size-8 items-center justify-center rounded-md bg-warning/10 text-warning"
+                      }
+                    >
+                      {item.ready ? (
+                        <CheckCircle2 className="size-4" />
+                      ) : (
+                        <AlertCircle className="size-4" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">{item.detail}</p>
+                    </div>
+                    <ArrowRight className="size-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {statCards.map((stat) => (
+            <Card key={stat.label} className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-muted-foreground">
+                  <stat.icon className="size-4 text-primary" />
+                  {stat.label}
+                </CardTitle>
+                <CardAction>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to={stat.href}>Mở</Link>
+                  </Button>
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                {statsQuery.isLoading ? (
+                  <Skeleton className="h-8 w-20" />
+                ) : (
+                  <p className="text-3xl font-semibold tabular-nums">{formatNumber(stat.value)}</p>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">{stat.detail}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+
+        {(isOrgMissing || (!billingQuery.isLoading && !employerActive)) && (
+          <Card className="border-warning/40 bg-warning/10 shadow-sm">
+            <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 size-5 text-warning" />
+                <div>
+                  <p className="font-medium">Tài khoản chưa sẵn sàng để tuyển dụng đầy đủ</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isOrgMissing
+                      ? "Bạn cần tạo hồ sơ công ty trước khi đăng tin tuyển dụng."
+                      : "Gói nhà tuyển dụng chưa hoạt động hoặc đã hết hạn."}
+                  </p>
+                </div>
+              </div>
+              <Button asChild variant="outline">
+                <Link to={isOrgMissing ? "/settings/organization" : "/billing"}>
+                  {isOrgMissing ? "Tạo hồ sơ công ty" : "Xem thanh toán"}
+                </Link>
+              </Button>
+            </CardContent>
           </Card>
         )}
 
-        {!billingQuery.isLoading && !employerActive ? (
-          <Card className="mb-8 border-warning/40 bg-warning/10 p-5">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">Gói nhà tuyển dụng chưa hoạt động</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Gia hạn gói để tiếp tục sử dụng các tính năng tuyển dụng.
-                </p>
-                <Link to="/billing" className="mt-3 inline-block">
-                  <Button size="sm" variant="outline" className="gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    Xem thanh toán
+        <section className="grid gap-6 xl:grid-cols-[1fr_24rem]">
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>Tin tuyển dụng gần đây</CardTitle>
+              <CardDescription>Theo dõi trạng thái và hiệu quả từng tin</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {recentJobsQuery.isLoading ? (
+                Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton key={index} className="h-16 w-full" />
+                ))
+              ) : recentJobsQuery.data?.jobs.length ? (
+                recentJobsQuery.data.jobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    to="/my-jobs/$jobId/edit"
+                    params={{ jobId: job.id }}
+                    className="grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_auto]"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate font-medium">{job.title}</p>
+                        <Badge variant="outline">{job.status}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Cập nhật {formatDate(job.updatedAt)} · {formatNumber(job.applicationsCount)}{" "}
+                        hồ sơ · {formatNumber(job.views)} lượt xem
+                      </p>
+                    </div>
+                    <ArrowRight className="size-4 self-center text-muted-foreground" />
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-lg border border-dashed p-6 text-center">
+                  <p className="font-medium">Chưa có tin tuyển dụng</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Tạo tin đầu tiên để bắt đầu nhận hồ sơ ứng viên.
+                  </p>
+                  <Button asChild className="mt-4">
+                    <Link to="/jobs/new">
+                      <Plus data-icon="inline-start" />
+                      Đăng tin mới
+                    </Link>
                   </Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
-        ) : null}
-
-        {/* Stats Grid */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STAT_CARDS.map((stat) => (
-            <Card key={stat.label} className="p-5">
-              <div className="flex items-center justify-between">
-                <stat.icon className="h-5 w-5 text-primary" />
-              </div>
-              <p className="mt-3 text-2xl font-bold">{stat.value.toLocaleString("vi-VN")}</p>
-              <p className="text-sm text-muted-foreground">{stat.label}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{stat.change}</p>
-            </Card>
-          ))}
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Recent Activity */}
-          <Card className="p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Hoạt động gần đây
-            </h2>
-            <div className="space-y-4">
-              {RECENT_ACTIVITY.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                  <div>
-                    <p className="text-sm">{activity.text}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>Lối tắt vận hành</CardTitle>
+              <CardDescription>Các màn hình dùng hằng ngày</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {[
+                { icon: Plus, label: "Đăng tin tuyển dụng", href: "/jobs/new" },
+                { icon: Briefcase, label: "Quản lý tin đăng", href: "/my-jobs" },
+                { icon: FileText, label: "Xử lý đơn ứng tuyển", href: "/applications" },
+                { icon: MessageSquare, label: "Tin nhắn ứng viên", href: "/messages" },
+                { icon: CreditCard, label: "Thanh toán và gói", href: "/billing" },
+                { icon: Building, label: "Hồ sơ công ty", href: "/settings/organization" },
+              ].map((action) => (
+                <Button key={action.label} asChild variant="outline" className="justify-start">
+                  <Link to={action.href}>
+                    <action.icon data-icon="inline-start" />
+                    {action.label}
+                  </Link>
+                </Button>
               ))}
-            </div>
+            </CardContent>
           </Card>
-
-          {/* Quick Actions */}
-          <Card className="p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-              <Calendar className="h-5 w-5 text-primary" />
-              Thao tác nhanh
-            </h2>
-            <div className="space-y-3">
-              <Link to="/jobs/new">
-                <Button className="w-full justify-start gap-3">
-                  <Plus className="h-4 w-4" />
-                  Đăng tin mới
-                </Button>
-              </Link>
-              <Link to="/my-jobs">
-                <Button variant="outline" className="w-full justify-start gap-3">
-                  <Briefcase className="h-4 w-4" />
-                  Quản lý tin đăng
-                </Button>
-              </Link>
-              <Button variant="outline" className="w-full justify-start gap-3">
-                <Users className="h-4 w-4" />
-                Tìm kiếm CV
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3">
-                <TrendingUp className="h-4 w-4" />
-                Xem thống kê
-              </Button>
-            </div>
-          </Card>
-        </div>
-
-        {/* CTA */}
-        <Card className="mt-6 p-6 text-center">
-          <h3 className="mb-2 text-lg font-semibold">Sẵn sàng tuyển dụng?</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Tiếp cận nhiều ứng viên hơn với tin tuyển dụng nổi bật
-          </p>
-          <Link to="/jobs/new">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Đăng tin tuyển dụng
-            </Button>
-          </Link>
-        </Card>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

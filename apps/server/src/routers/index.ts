@@ -9,6 +9,7 @@ import { adminOrganizationRouter } from "./admin/organization";
 import { adminUserRouter } from "./admin/user";
 import { adminBillingRouter } from "./admin/billing";
 import { adminBusinessApplicationRouter } from "./admin/businessApplication";
+import { adminSummaryRouter } from "./admin/summary";
 import { organizationRouter } from "./organization";
 import { notificationRouter } from "./notification";
 import { profileRouter } from "./profile";
@@ -39,6 +40,7 @@ export const appRouter = router({
   billing: billingRouter,
   businessApplication: businessApplicationRouter,
   admin: router({
+    summary: adminSummaryRouter,
     users: adminUserRouter,
     organizations: adminOrganizationRouter,
     jobs: adminJobRouter,

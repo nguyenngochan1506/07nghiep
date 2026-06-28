@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Briefcase,
@@ -16,6 +16,7 @@ import { ModeToggle } from "./mode-toggle";
 import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
 import { Badge } from "@07nghiep/ui/components/badge";
+import { cn } from "@07nghiep/ui/lib/utils";
 import { trpc } from "@/utils/trpc";
 
 const employerNavItems: Array<{
@@ -38,7 +39,23 @@ interface SidebarProps {
   children?: ReactNode;
 }
 
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getActiveHref(pathname: string) {
+  return employerNavItems
+    .filter((item) => isActiveRoute(pathname, item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+}
+
 export default function Sidebar({ children }: SidebarProps) {
+  const location = useLocation();
+  const activeHref = getActiveHref(location.pathname);
   const { data: unreadCount } = useQuery(
     trpc.conversation.getUnreadCount.queryOptions(undefined, {
       refetchInterval: 15000,
@@ -61,26 +78,36 @@ export default function Sidebar({ children }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3">
-          <ul className="space-y-1">
-            {employerNavItems.map((item) => (
-              <li key={item.label}>
-                <Link
-                  to={item.href}
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span className="flex-1">{item.label}</span>
-                  {item.hasMessageBadge && unreadCount && unreadCount > 0 ? (
-                    <Badge
-                      variant="destructive"
-                      className="h-4 min-w-4 rounded-full px-1 text-[10px]"
-                    >
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </Badge>
-                  ) : null}
-                </Link>
-              </li>
-            ))}
+          <ul className="flex flex-col gap-1">
+            {employerNavItems.map((item) => {
+              const active = item.href === activeHref;
+
+              return (
+                <li key={item.label}>
+                  <Link
+                    to={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                    <span className="flex-1">{item.label}</span>
+                    {item.hasMessageBadge && unreadCount && unreadCount > 0 ? (
+                      <Badge
+                        variant="destructive"
+                        className="h-4 min-w-4 rounded-full px-1 text-[10px]"
+                      >
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </Badge>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
