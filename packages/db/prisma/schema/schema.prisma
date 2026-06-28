@@ -125,6 +125,19 @@ enum BusinessApplicationStatus {
   REJECTED
 }
 
+enum AiJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ApplicationFitRecommendation {
+  STRONG_FIT
+  POTENTIAL_FIT
+  WEAK_FIT
+}
+
 // ============================================
 // CUSTOM MODELS
 // ============================================
@@ -250,12 +263,65 @@ model Application {
 
   candidate   User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  aiScore     ApplicationAiScore?
 
   @@index([jobId, status])
   @@index([candidateId, status])
   @@index([appliedAt])
   @@unique([jobId, candidateId])
 }
+
+model CandidateCvAnalysis {
+  id                 String      @id @default(cuid())
+  userId             String
+  resumeUrl          String
+  resumeTextHash     String
+  status             AiJobStatus @default(PENDING)
+  queueJobId         String?
+  overallScore       Int?
+  summary            String?     @db.Text
+  strengths          Json?
+  weaknesses         Json?
+  suggestions        Json?
+  extractedSkills    String[]
+  recommendedMatches Json?
+  errorMessage       String?     @db.Text
+  quotaReservedAt    DateTime?
+  quotaRefundedAt    DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@index([resumeTextHash])
+}
+
+model ApplicationAiScore {
+  id             String                    @id @default(cuid())
+  applicationId  String                    @unique
+  status         AiJobStatus               @default(PENDING)
+  queueJobId     String?
+  score          Int?
+  recommendation ApplicationFitRecommendation?
+  summary        String?                   @db.Text
+  matchedSkills  String[]
+  missingSkills  String[]
+  risks          Json?
+  reasoning      String?                   @db.Text
+  errorMessage   String?                   @db.Text
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
 model ApplicationHistory {
   id            String             @id @default(cuid())
   applicationId String
