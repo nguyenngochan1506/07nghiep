@@ -8,12 +8,10 @@ import {
   CardTitle,
 } from "@07nghiep/ui/components/card";
 import { Progress } from "@07nghiep/ui/components/progress";
-import { Separator } from "@07nghiep/ui/components/separator";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  AlertCircle,
   ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
@@ -21,7 +19,6 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
@@ -66,9 +63,7 @@ const statusLabels: Record<string, string> = {
 
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.filter(
-    (item): item is string => typeof item === "string" && item.trim().length > 0,
-  );
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
 function getStatusVariant(status?: string | null) {
@@ -154,8 +149,11 @@ function CvAnalysisPage() {
   const isPlus = entitlements?.candidatePlus ?? false;
   const remaining = entitlements?.aiCvRemaining ?? 0;
   const hasResume = Boolean(profile?.resumeUrl);
-  const canAnalyze = isPlus && remaining > 0 && hasResume && !createAnalysisMutation.isPending;
   const status = latest?.status ?? null;
+  const isAnalysisRunning = status === "PENDING" || status === "PROCESSING";
+  const isAnalyzeButtonLoading = createAnalysisMutation.isPending || isAnalysisRunning;
+  const canAnalyze =
+    isPlus && remaining > 0 && hasResume && !createAnalysisMutation.isPending && !isAnalysisRunning;
   const strengths = asStringArray(latest?.strengths);
   const weaknesses = asStringArray(latest?.weaknesses);
   const suggestions = asStringArray(latest?.suggestions);
@@ -181,7 +179,11 @@ function CvAnalysisPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Quyền sử dụng</CardTitle>
               <CardDescription>
-                {isPlus ? `${remaining} lượt còn lại trong kỳ hiện tại` : "Cần Candidate Plus"}
+                {isAnalysisRunning
+                  ? "AI đang phân tích CV hiện tại. Vui lòng chờ kết quả trước khi gửi lượt mới."
+                  : isPlus
+                    ? `${remaining} lượt còn lại trong kỳ hiện tại`
+                    : "Cần Candidate Plus"}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
@@ -190,12 +192,12 @@ function CvAnalysisPage() {
                 onClick={() => createAnalysisMutation.mutate()}
                 className="w-full"
               >
-                {createAnalysisMutation.isPending ? (
+                {isAnalyzeButtonLoading ? (
                   <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
                   <Sparkles data-icon="inline-start" />
                 )}
-                Phân tích CV hiện tại
+                {isAnalysisRunning ? "AI đang phân tích" : "Phân tích CV hiện tại"}
               </Button>
               {!isPlus ? (
                 <Button asChild variant="outline" className="w-full">
@@ -211,43 +213,8 @@ function CvAnalysisPage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:grid-cols-[380px_1fr]">
-        <aside className="flex flex-col gap-5">
-          <ScoreCard latest={latest} loading={latestQuery.isLoading} />
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileSearch className="size-4 text-primary" />
-                Trạng thái
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Phân tích gần nhất</span>
-                <Badge variant={getStatusVariant(status)}>
-                  {statusLabels[status ?? ""] ?? "Chưa có"}
-                </Badge>
-              </div>
-              {latest?.errorMessage ? (
-                <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {latest.errorMessage}
-                </p>
-              ) : null}
-              <Separator />
-              <div className="grid gap-2 text-sm">
-                <StatusLine
-                  icon={isPlus ? CheckCircle2 : AlertCircle}
-                  label={isPlus ? "Plus đang hoạt động" : "Chưa có Candidate Plus"}
-                />
-                <StatusLine
-                  icon={hasResume ? CheckCircle2 : AlertCircle}
-                  label={hasResume ? "Đã có CV trong hồ sơ" : "Chưa có CV trong hồ sơ"}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
-
+      <section className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6">
+        <AnalysisOverview latest={latest} loading={latestQuery.isLoading} status={status} />
         <div className="flex flex-col gap-5">
           <InsightGrid strengths={strengths} weaknesses={weaknesses} suggestions={suggestions} />
           <SkillsCard skills={latest?.extractedSkills ?? []} />
@@ -258,7 +225,15 @@ function CvAnalysisPage() {
   );
 }
 
-function ScoreCard({ latest, loading }: { latest?: LatestAnalysis | null; loading: boolean }) {
+function AnalysisOverview({
+  latest,
+  loading,
+  status,
+}: {
+  latest?: LatestAnalysis | null;
+  loading: boolean;
+  status?: string | null;
+}) {
   if (loading) {
     return <Skeleton className="h-56 rounded-xl" />;
   }
@@ -267,16 +242,44 @@ function ScoreCard({ latest, loading }: { latest?: LatestAnalysis | null; loadin
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Điểm CV</CardTitle>
-        <CardDescription>{latest?.summary ?? "Chưa có bản phân tích nào."}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-end gap-2">
-          <span className="text-5xl font-semibold tabular-nums">{score}</span>
-          <span className="pb-2 text-sm text-muted-foreground">/ 100</span>
+      <CardHeader className="border-b">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileSearch className="size-4 text-primary" />
+              Tổng quan phân tích
+            </CardTitle>
+            <CardDescription className="mt-1">
+              CV hiện tại được chấm theo mức độ sẵn sàng ứng tuyển và chất lượng trình bày.
+            </CardDescription>
+          </div>
+          <Badge variant={getStatusVariant(status)}>
+            {statusLabels[status ?? ""] ?? "Chưa có"}
+          </Badge>
         </div>
-        <Progress value={score} />
+      </CardHeader>
+      <CardContent className="grid gap-5 md:grid-cols-[220px_1fr]">
+        <div className="rounded-xl border bg-muted/20 p-4">
+          <div className="flex items-end gap-2">
+            <span className="text-5xl font-semibold leading-none tabular-nums">{score}</span>
+            <span className="pb-2 text-sm text-muted-foreground">/ 100</span>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">Điểm CV</p>
+          <Progress value={score} className="mt-4" />
+        </div>
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-sm font-medium">Nhận định</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {latest?.summary ?? "Chưa có bản phân tích nào."}
+            </p>
+          </div>
+          {latest?.errorMessage ? (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {latest.errorMessage}
+            </p>
+          ) : null}
+        </div>
       </CardContent>
     </Card>
   );
@@ -292,35 +295,40 @@ function InsightGrid({
   suggestions: string[];
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <InsightCard title="Điểm mạnh" items={strengths} empty="Chưa có dữ liệu" />
-      <InsightCard title="Cần cải thiện" items={weaknesses} empty="Chưa có dữ liệu" />
-      <InsightCard title="Gợi ý chỉnh CV" items={suggestions} empty="Chưa có dữ liệu" />
-    </div>
+    <Card>
+      <CardHeader className="border-b">
+        <CardTitle className="text-base">Chi tiết phân tích CV</CardTitle>
+        <CardDescription>Đọc theo thứ tự từ điểm mạnh đến các thay đổi nên làm.</CardDescription>
+      </CardHeader>
+      <CardContent className="divide-y p-0">
+        <InsightCard title="Điểm mạnh" items={strengths} empty="Chưa có dữ liệu" />
+        <InsightCard title="Cần cải thiện" items={weaknesses} empty="Chưa có dữ liệu" />
+        <InsightCard title="Gợi ý chỉnh CV" items={suggestions} empty="Chưa có dữ liệu" />
+      </CardContent>
+    </Card>
   );
 }
 
 function InsightCard({ title, items, empty }: { title: string; items: string[]; empty: string }) {
   return (
-    <Card>
-      <CardHeader>
+    <section className="p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {items.length > 0 ? (
-          <ul className="flex flex-col gap-2 text-sm leading-6 text-muted-foreground">
-            {items.slice(0, 5).map((item) => (
-              <li key={item} className="flex gap-2">
-                <CheckCircle2 className="mt-1 size-4 shrink-0 text-primary" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">{empty}</p>
-        )}
-      </CardContent>
-    </Card>
+        <span className="text-xs tabular-nums text-muted-foreground">{items.length}</span>
+      </div>
+      {items.length > 0 ? (
+        <ul className="flex flex-col gap-2 text-sm leading-6 text-muted-foreground">
+          {items.map((item) => (
+            <li key={item} className="flex gap-2">
+              <CheckCircle2 className="mt-1 size-4 shrink-0 text-primary" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">{empty}</p>
+      )}
+    </section>
   );
 }
 
@@ -345,13 +353,7 @@ function SkillsCard({ skills }: { skills: string[] }) {
   );
 }
 
-function RecommendedJobsCard({
-  jobs,
-  loading,
-}: {
-  jobs: RecommendedJobs;
-  loading: boolean;
-}) {
+function RecommendedJobsCard({ jobs, loading }: { jobs: RecommendedJobs; loading: boolean }) {
   return (
     <Card>
       <CardHeader>
@@ -400,15 +402,6 @@ function RecommendedJobRow({ item }: { item: RecommendedJob }) {
           <ArrowRight data-icon="inline-end" />
         </Link>
       </Button>
-    </div>
-  );
-}
-
-function StatusLine({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Icon className="size-4 text-primary" />
-      <span>{label}</span>
     </div>
   );
 }

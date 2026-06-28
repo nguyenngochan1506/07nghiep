@@ -55,6 +55,7 @@ describe("cvAnalysisRouter", () => {
         findUnique: vi.fn().mockResolvedValue({ resumeUrl: "https://example.com/resume.pdf" }),
       },
       candidateCvAnalysis: {
+        findFirst: vi.fn().mockResolvedValue(null),
         create: vi.fn().mockResolvedValue(analysis),
       },
     };
@@ -73,6 +74,34 @@ describe("cvAnalysisRouter", () => {
       },
     });
     expect(enqueueCandidateAnalysisSafely).toHaveBeenCalledWith(prisma, "analysis_1");
+  });
+
+  it("returns an active analysis without reserving more quota", async () => {
+    const activeAnalysis = {
+      id: "analysis_1",
+      userId: "user_1",
+      resumeUrl: "https://example.com/resume.pdf",
+      status: "PROCESSING",
+    };
+    const prisma = {
+      profile: {
+        findUnique: vi.fn().mockResolvedValue({ resumeUrl: "https://example.com/resume.pdf" }),
+      },
+      candidateCvAnalysis: {
+        findFirst: vi.fn().mockResolvedValue(activeAnalysis),
+        create: vi.fn(),
+      },
+    };
+    const caller = cvAnalysisRouter.createCaller(createCandidateCtx(prisma));
+
+    await expect(caller.createFromCurrentResume()).resolves.toEqual(activeAnalysis);
+    expect(prisma.candidateCvAnalysis.findFirst).toHaveBeenCalledWith({
+      where: { userId: "user_1", status: { in: ["PENDING", "PROCESSING"] } },
+      orderBy: { createdAt: "desc" },
+    });
+    expect(reserveCandidateCvQuota).not.toHaveBeenCalled();
+    expect(prisma.candidateCvAnalysis.create).not.toHaveBeenCalled();
+    expect(enqueueCandidateAnalysisSafely).not.toHaveBeenCalled();
   });
 
   it("returns the latest analysis for the current user", async () => {

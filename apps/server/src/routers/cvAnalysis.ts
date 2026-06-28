@@ -26,6 +26,15 @@ export const cvAnalysisRouter = router({
       });
     }
 
+    const activeAnalysis = await ctx.prisma.candidateCvAnalysis.findFirst({
+      where: { userId: ctx.user.id, status: { in: ["PENDING", "PROCESSING"] } },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (activeAnalysis) {
+      return activeAnalysis;
+    }
+
     await reserveCandidateCvQuota(ctx.prisma, ctx.user.id);
 
     const analysis = await ctx.prisma.candidateCvAnalysis.create({
