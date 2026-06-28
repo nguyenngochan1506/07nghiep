@@ -27,6 +27,7 @@ services:
     restart: unless-stopped
 
   migrate:
+    image: 07nghiep-server:prod
     build:
       context: ..
       dockerfile: deploy/Dockerfile.app
@@ -52,6 +53,7 @@ services:
     restart: "no"
 
   server:
+    image: 07nghiep-server:prod
     build:
       context: ..
       dockerfile: deploy/Dockerfile.app
@@ -74,6 +76,7 @@ services:
     restart: unless-stopped
 
   worker:
+    image: 07nghiep-worker:prod
     build:
       context: ..
       dockerfile: deploy/Dockerfile.app
@@ -94,6 +97,7 @@ services:
     restart: unless-stopped
 
   web:
+    image: 07nghiep-web:prod
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
