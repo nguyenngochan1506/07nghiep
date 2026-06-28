@@ -1,0 +1,25 @@
+{
+  "name": "@07nghiep/queue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc -b",
+    "test": "vitest run src"
+  },
+  "dependencies": {
+    "@07nghiep/env": "workspace:*",
+    "bullmq": "^5.65.1",
+    "ioredis": "5.10.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@07nghiep/config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  }
+}
