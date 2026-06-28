@@ -38,30 +38,37 @@ type SubscriptionRow = {
   plan: { name: string; code: string; priceVnd: number };
 };
 
+type BillingPlanRow = {
+  name: string;
+  code: string;
+  priceVnd: number;
+  durationDays: number;
+};
+
 const EMPLOYER_FALLBACK_PRICE = 299000;
 
 const employerFeatures = [
-  "Đăng và quản lý tin tuyển dụng đang mở",
-  "Xem, cập nhật trạng thái và lọc đơn ứng tuyển",
-  "Lên lịch phỏng vấn với ứng viên",
-  "Nhắn tin trực tiếp trong hệ thống",
+  "Đăng và quản lý tin tuyển dụng cho doanh nghiệp",
+  "AI phân tích mức độ phù hợp của CV ứng viên với từng tin tuyển dụng",
+  "Xem hồ sơ, lọc đơn và cập nhật trạng thái tuyển dụng",
+  "Nhắn tin trực tiếp và lên lịch phỏng vấn với ứng viên",
 ];
 
 const workflowItems = [
   {
     icon: Briefcase,
-    title: "Đăng tin nhanh",
-    description: "Tạo tin tuyển dụng có đầy đủ thông tin vị trí, địa điểm, mức lương và kỹ năng.",
+    title: "Đăng tin tuyển dụng",
+    description: "Tạo và quản lý tin với vị trí, mức lương, kỹ năng, địa điểm và yêu cầu công việc.",
   },
   {
     icon: UsersRound,
-    title: "Quản lý quy trình",
-    description: "Theo dõi ứng viên theo từng trạng thái để không bỏ sót hồ sơ cần xử lý.",
+    title: "Chấm phù hợp bằng AI",
+    description: "AI đối chiếu CV, hồ sơ ứng viên và mô tả công việc để đưa ra điểm, nhận định, điểm khớp và rủi ro.",
   },
   {
     icon: CalendarClock,
-    title: "Điều phối phỏng vấn",
-    description: "Tạo lịch phỏng vấn và giữ mọi trao đổi trong cùng một luồng làm việc.",
+    title: "Vận hành tuyển dụng",
+    description: "Theo dõi trạng thái ứng tuyển, nhắn tin với ứng viên và điều phối lịch phỏng vấn trong một nơi.",
   },
 ];
 
@@ -91,6 +98,7 @@ function formatVnd(value: number) {
 }
 
 function EmployerBillingRoute() {
+  const plansQuery = useQuery(trpc.billing.plans.queryOptions());
   const billingQuery = useQuery(trpc.billing.me.queryOptions());
   const checkoutMutation = useMutation({
     mutationFn: () => trpcClient.billing.createEmployerCheckout.mutate(),
@@ -102,13 +110,16 @@ function EmployerBillingRoute() {
 
   const entitlements = billingQuery.data?.entitlements;
   const subscriptions = (billingQuery.data?.subscriptions ?? []) as SubscriptionRow[];
+  const plans = (plansQuery.data ?? []) as BillingPlanRow[];
+  const employerPlan = plans.find((plan) => plan.code === "EMPLOYER_MONTHLY");
   const employerSubscription = subscriptions.find(
     (subscription) => subscription.plan.code === "EMPLOYER_MONTHLY",
   );
   const employerActive = entitlements?.employer ?? false;
-  const employerPrice = employerSubscription?.plan.priceVnd ?? EMPLOYER_FALLBACK_PRICE;
+  const employerPrice =
+    employerPlan?.priceVnd ?? employerSubscription?.plan.priceVnd ?? EMPLOYER_FALLBACK_PRICE;
 
-  if (billingQuery.isLoading) {
+  if (plansQuery.isLoading || billingQuery.isLoading) {
     return (
       <main className="min-h-screen bg-background px-4 py-8">
         <div className="mx-auto max-w-6xl">
@@ -127,15 +138,15 @@ function EmployerBillingRoute() {
               {employerActive ? "Gói đang hoạt động" : "Bảng giá nhà tuyển dụng"}
             </Badge>
             <h1 className="text-4xl font-semibold tracking-normal text-foreground md:text-5xl">
-              Một gói để vận hành tuyển dụng từ tin đăng đến phỏng vấn
+              Gói nhà tuyển dụng với AI hỗ trợ sàng lọc hồ sơ
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-              Kích hoạt quyền nhà tuyển dụng để đăng tin, quản lý hồ sơ, trao đổi với ứng viên và
-              điều phối lịch phỏng vấn trong cùng một cổng tuyển dụng.
+              Kích hoạt quyền nhà tuyển dụng để đăng tin, xem phân tích AI về độ phù hợp của ứng
+              viên, quản lý hồ sơ, trao đổi và điều phối lịch phỏng vấn trong cùng một nơi.
             </p>
             <div className="mt-6 grid max-w-2xl gap-3 sm:grid-cols-3">
               <Metric value="30" label="ngày mỗi chu kỳ" />
-              <Metric value="4" label="nhóm quyền tuyển dụng" />
+              <Metric value="AI" label="chấm phù hợp CV theo job" />
               <Metric value="1" label="không gian làm việc doanh nghiệp" />
             </div>
           </div>
@@ -171,7 +182,7 @@ function EmployerBillingRoute() {
                 Quyền lợi chính
               </CardTitle>
               <CardDescription>
-                Gói này tập trung vào các bước vận hành tuyển dụng hằng ngày của doanh nghiệp.
+                Những quyền lợi người dùng nhận được sau khi gói nhà tuyển dụng được kích hoạt.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-3">
@@ -281,7 +292,7 @@ function PlanCard({
           <span className="text-3xl font-semibold text-foreground">{price}</span>
           <span className="ml-1 text-sm text-muted-foreground">{period}</span>
           <p className="mt-2 text-xs text-muted-foreground">
-            Giá hiển thị theo dữ liệu mặc định; phiên thanh toán sẽ xác nhận giá hiện hành.
+            Giá lấy từ gói đang hoạt động trong hệ thống.
           </p>
         </div>
         <ul className="space-y-3">

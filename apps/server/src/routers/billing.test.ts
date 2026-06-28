@@ -20,6 +20,12 @@ describe("billingRouter", () => {
         priceVnd: 79000,
         durationDays: 30,
       },
+      {
+        code: "EMPLOYER_MONTHLY",
+        name: "Employer Monthly",
+        priceVnd: 299000,
+        durationDays: 30,
+      },
     ];
     const prisma = {
       billingPlan: {
