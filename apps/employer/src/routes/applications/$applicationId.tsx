@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@07nghiep/ui/components/ava
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
+import { Progress } from "@07nghiep/ui/components/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@07nghiep/ui/components/tabs";
 import {
   Select,
@@ -28,6 +29,9 @@ import {
   MapPin as MapPinIcon,
   Link as LinkIcon,
   X,
+  Loader2,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { getStatusColor, getStatusLabel } from "../../components/applications/application-card";
@@ -75,6 +79,19 @@ type ApplicationDetail = {
   job: {
     title: string;
   };
+  aiScore: ApplicationAiScore | null;
+};
+type ApplicationAiScore = {
+  id: string;
+  status: string;
+  score: number | null;
+  recommendation: string | null;
+  summary: string | null;
+  matchedSkills: string[];
+  missingSkills: string[];
+  risks: unknown;
+  reasoning: string | null;
+  errorMessage: string | null;
 };
 type InterviewItem = {
   id: string;
@@ -122,6 +139,111 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function readProfileEntries<T extends object>(value: unknown): T[] {
   if (!Array.isArray(value)) return [];
   return value.filter(isRecord) as T[];
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0,
+  );
+}
+
+function AiFitScoreCard({
+  aiScore,
+  retrying,
+  onRetry,
+}: {
+  aiScore: ApplicationAiScore | null;
+  retrying: boolean;
+  onRetry: () => void;
+}) {
+  const score = aiScore?.score ?? 0;
+  const risks = asStringArray(aiScore?.risks);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Sparkles className="size-4 text-primary" />
+          AI Fit Score
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Badge variant={aiScore?.status === "FAILED" ? "destructive" : "secondary"}>
+            {getAiStatusLabel(aiScore?.status)}
+          </Badge>
+          <Badge variant="outline">{getRecommendationLabel(aiScore?.recommendation)}</Badge>
+        </div>
+
+        {aiScore?.status === "COMPLETED" ? (
+          <>
+            <div className="flex items-end gap-2">
+              <span className="text-4xl font-semibold tabular-nums">{score}</span>
+              <span className="pb-1 text-sm text-muted-foreground">/ 100</span>
+            </div>
+            <Progress value={score} />
+            {aiScore.summary ? (
+              <p className="text-sm leading-6 text-muted-foreground">{aiScore.summary}</p>
+            ) : null}
+            <SkillList title="Matched skills" items={aiScore.matchedSkills} />
+            <SkillList title="Missing skills" items={aiScore.missingSkills} />
+            <SkillList title="Risks" items={risks} />
+          </>
+        ) : aiScore?.status === "FAILED" ? (
+          <div className="space-y-3">
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {aiScore.errorMessage || "AI scoring failed."}
+            </p>
+            <Button onClick={onRetry} disabled={retrying} className="w-full">
+              {retrying ? (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              ) : (
+                <RefreshCw data-icon="inline-start" />
+              )}
+              Retry scoring
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm leading-6 text-muted-foreground">
+            {aiScore ? "AI scoring is queued for this application." : "No AI score has been queued."}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SkillList({ title, items }: { title: string; items: string[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">{title}</p>
+      <div className="flex flex-wrap gap-2">
+        {items.slice(0, 10).map((item) => (
+          <Badge key={item} variant="secondary">
+            {item}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function getRecommendationLabel(value?: string | null) {
+  if (value === "STRONG_FIT") return "Strong fit";
+  if (value === "POTENTIAL_FIT") return "Potential fit";
+  if (value === "WEAK_FIT") return "Weak fit";
+  return "No recommendation";
+}
+
+function getAiStatusLabel(value?: string | null) {
+  if (value === "COMPLETED") return "Completed";
+  if (value === "FAILED") return "Failed";
+  if (value === "PROCESSING") return "Scoring";
+  if (value === "PENDING") return "Pending";
+  return "Not queued";
 }
 
 function ApplicationDetailPage() {
@@ -216,6 +338,17 @@ function ApplicationDetailPage() {
     },
     onError: (err) => {
       toast.error(err.message || "Failed to save notes");
+    },
+  });
+
+  const retryAiScoreMutation = useMutation({
+    mutationFn: () => trpcClient.application.retryAiScore.mutate({ applicationId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast.success("AI scoring queued");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to retry AI scoring");
     },
   });
 
@@ -657,6 +790,12 @@ function ApplicationDetailPage() {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
+          <AiFitScoreCard
+            aiScore={application.aiScore}
+            retrying={retryAiScoreMutation.isPending}
+            onRetry={() => retryAiScoreMutation.mutate()}
+          />
+
           {/* Contact Info */}
           <Card>
             <CardHeader>

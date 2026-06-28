@@ -48,6 +48,20 @@ export const getStatusLabel = (status: ApplicationStatus) => {
   }
 };
 
+type AiScoreSummary = {
+  status: string;
+  score: number | null;
+  recommendation: string | null;
+} | null;
+
+export function getAiScoreLabel(aiScore?: AiScoreSummary) {
+  if (!aiScore) return "No score";
+  if (aiScore.status === "COMPLETED") return `${aiScore.score ?? 0}%`;
+  if (aiScore.status === "FAILED") return "Failed";
+  if (aiScore.status === "PROCESSING") return "Scoring";
+  return "Pending";
+}
+
 interface ApplicationCardProps {
   application: {
     id: string;
@@ -60,6 +74,7 @@ interface ApplicationCardProps {
     job?: {
       title: string;
     };
+    aiScore?: AiScoreSummary;
   };
   compact?: boolean;
 }
@@ -97,6 +112,11 @@ export function ApplicationCard({ application, compact = false }: ApplicationCar
           <div className="flex flex-col items-end gap-2 shrink-0">
             <Badge variant="outline" className={getStatusColor(application.status)}>
               {getStatusLabel(application.status)}
+            </Badge>
+            <Badge
+              variant={application.aiScore?.status === "FAILED" ? "destructive" : "secondary"}
+            >
+              {getAiScoreLabel(application.aiScore)}
             </Badge>
             <Button
               variant="ghost"

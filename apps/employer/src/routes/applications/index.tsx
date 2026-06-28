@@ -38,6 +38,11 @@ type ApplicationListItem = {
   job?: {
     title: string;
   };
+  aiScore?: {
+    status: string;
+    score: number | null;
+    recommendation: string | null;
+  } | null;
 };
 
 function isApplicationStatus(value: string): value is ApplicationStatus {

@@ -14,7 +14,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { User } from "lucide-react";
-import { getStatusColor, getStatusLabel } from "./application-card";
+import { getAiScoreLabel, getStatusColor, getStatusLabel } from "./application-card";
 
 interface ApplicationListProps {
   applications: Array<{
@@ -28,6 +28,11 @@ interface ApplicationListProps {
     job?: {
       title: string;
     };
+    aiScore?: {
+      status: string;
+      score: number | null;
+      recommendation: string | null;
+    } | null;
   }>;
   selectedIds: string[];
   onToggleSelect: (id: string) => void;
@@ -59,13 +64,14 @@ export function ApplicationList({
             <TableHead>Job</TableHead>
             <TableHead>Applied Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>AI Fit</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {applications.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                 No applications found.
               </TableCell>
             </TableRow>
@@ -97,6 +103,11 @@ export function ApplicationList({
                 <TableCell>
                   <Badge variant="outline" className={getStatusColor(app.status)}>
                     {getStatusLabel(app.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={app.aiScore?.status === "FAILED" ? "destructive" : "secondary"}>
+                    {getAiScoreLabel(app.aiScore)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">

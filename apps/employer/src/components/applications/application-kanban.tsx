@@ -28,6 +28,11 @@ interface ApplicationKanbanProps {
     job?: {
       title: string;
     };
+    aiScore?: {
+      status: string;
+      score: number | null;
+      recommendation: string | null;
+    } | null;
   }>;
 }
 
