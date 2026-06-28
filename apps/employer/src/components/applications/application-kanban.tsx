@@ -8,12 +8,12 @@ import { toast } from "sonner";
 import { ScrollArea } from "@07nghiep/ui/components/scroll-area";
 
 const KANBAN_COLUMNS = [
-  { id: ApplicationStatus.PENDING, title: "Pending" },
-  { id: ApplicationStatus.VIEWED, title: "Viewed" },
-  { id: ApplicationStatus.SHORTLISTED, title: "Shortlisted" },
-  { id: ApplicationStatus.INTERVIEWING, title: "Interviewing" },
-  { id: ApplicationStatus.OFFERED, title: "Offered" },
-  { id: ApplicationStatus.REJECTED, title: "Rejected" },
+  { id: ApplicationStatus.PENDING, title: "Chờ xử lý" },
+  { id: ApplicationStatus.VIEWED, title: "Đã xem" },
+  { id: ApplicationStatus.SHORTLISTED, title: "Đã lọc hồ sơ" },
+  { id: ApplicationStatus.INTERVIEWING, title: "Đang phỏng vấn" },
+  { id: ApplicationStatus.OFFERED, title: "Đã gửi đề nghị" },
+  { id: ApplicationStatus.REJECTED, title: "Từ chối" },
 ];
 
 interface ApplicationKanbanProps {
@@ -46,10 +46,10 @@ export function ApplicationKanban({ applications }: ApplicationKanbanProps) {
     mutationFn: (input: UpdateStatusInput) => trpcClient.application.updateStatus.mutate(input),
     onSuccess: () => {
       queryClient.invalidateQueries();
-      toast.success("Application status updated");
+      toast.success("Đã cập nhật trạng thái hồ sơ");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update status");
+      toast.error(error.message || "Không thể cập nhật trạng thái");
       queryClient.invalidateQueries();
     },
   });

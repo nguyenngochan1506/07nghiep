@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApplicationStatus } from "@/types/application";
 import { ApplicationList } from "../../components/applications/application-list";
 import { ApplicationKanban } from "../../components/applications/application-kanban";
+import { getStatusLabel } from "../../components/applications/application-card";
 import { trpc, queryClient } from "../../utils/trpc";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -76,10 +77,10 @@ function ApplicationsPage() {
       onSuccess: () => {
         queryClient.invalidateQueries();
         setSelectedIds([]);
-        toast.success("Applications updated successfully");
+        toast.success("Đã cập nhật hồ sơ ứng tuyển");
       },
       onError: (err) => {
-        toast.error(err.message || "Failed to update applications");
+        toast.error(err.message || "Không thể cập nhật hồ sơ ứng tuyển");
       },
     }),
   );
@@ -104,9 +105,9 @@ function ApplicationsPage() {
     <div className="flex flex-col gap-6 p-8 max-w-[1600px] mx-auto w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Hồ sơ ứng tuyển</h1>
           <p className="text-muted-foreground">
-            Manage and track candidate applications across your job postings.
+            Quản lý và theo dõi hồ sơ ứng viên theo từng tin tuyển dụng.
           </p>
         </div>
         <div className="flex items-center bg-muted/50 p-1 rounded-lg">
@@ -117,7 +118,7 @@ function ApplicationsPage() {
             onClick={() => setViewMode("list")}
           >
             <ListIcon className="h-4 w-4 mr-2" />
-            List
+            Danh sách
           </Button>
           <Button
             variant={viewMode === "kanban" ? "secondary" : "ghost"}
@@ -126,7 +127,7 @@ function ApplicationsPage() {
             onClick={() => setViewMode("kanban")}
           >
             <LayoutGrid className="h-4 w-4 mr-2" />
-            Kanban
+            Bảng Kanban
           </Button>
         </div>
       </div>
@@ -135,7 +136,7 @@ function ApplicationsPage() {
         <div className="relative flex-1 w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search candidates..."
+            placeholder="Tìm ứng viên..."
             className="pl-9 bg-background"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -144,10 +145,10 @@ function ApplicationsPage() {
 
         <Select value={jobFilter} onValueChange={(value) => setJobFilter(value ?? "ALL")}>
           <SelectTrigger className="w-full sm:w-[250px] bg-background">
-            <SelectValue placeholder="All Jobs" />
+            <SelectValue placeholder="Tất cả tin tuyển dụng" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Jobs</SelectItem>
+            <SelectItem value="ALL">Tất cả tin tuyển dụng</SelectItem>
             {jobs.map((job) => (
               <SelectItem key={job.id} value={job.id}>
                 {job.title}
@@ -163,13 +164,13 @@ function ApplicationsPage() {
           }
         >
           <SelectTrigger className="w-full sm:w-[200px] bg-background">
-            <SelectValue placeholder="All Statuses" />
+            <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Statuses</SelectItem>
+            <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
             {(Object.values(ApplicationStatus) as ApplicationStatus[]).map((status) => (
               <SelectItem key={status} value={status}>
-                {status.charAt(0) + status.slice(1).toLowerCase()}
+                {getStatusLabel(status)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -178,9 +179,9 @@ function ApplicationsPage() {
 
       {viewMode === "list" && selectedIds.length > 0 && (
         <div className="flex items-center gap-4 p-4 bg-primary/5 text-primary border-primary/20 border rounded-xl">
-          <span className="font-medium text-sm">{selectedIds.length} application(s) selected</span>
+          <span className="font-medium text-sm">{selectedIds.length} hồ sơ đã chọn</span>
           <div className="flex-1" />
-          <span className="text-sm">Change status to:</span>
+          <span className="text-sm">Đổi trạng thái thành:</span>
           <Select
             onValueChange={(value) => {
               if (typeof value === "string" && isApplicationStatus(value)) {
@@ -189,12 +190,12 @@ function ApplicationsPage() {
             }}
           >
             <SelectTrigger className="w-[180px] h-8 bg-background">
-              <SelectValue placeholder="Select status..." />
+              <SelectValue placeholder="Chọn trạng thái..." />
             </SelectTrigger>
             <SelectContent>
               {(Object.values(ApplicationStatus) as ApplicationStatus[]).map((status) => (
                 <SelectItem key={status} value={status}>
-                  {status}
+                  {getStatusLabel(status)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -204,7 +205,7 @@ function ApplicationsPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center h-64 text-muted-foreground">
-          Loading applications...
+          Đang tải hồ sơ ứng tuyển...
         </div>
       ) : viewMode === "list" ? (
         <ApplicationList

@@ -73,7 +73,7 @@ const statusLabels: Record<string, string> = {
   VIEWED: "Đã xem",
   SHORTLISTED: "Tiềm năng",
   INTERVIEWING: "Phỏng vấn",
-  OFFERED: "Đã offer",
+  OFFERED: "Đã gửi đề nghị",
   REJECTED: "Từ chối",
   WITHDRAWN: "Rút lui",
 };

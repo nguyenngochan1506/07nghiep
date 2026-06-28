@@ -80,7 +80,7 @@ const JOB_TYPE_LABELS: Record<string, string> = {
   PARTIME: "Bán thời gian",
   CONTRACT: "Hợp đồng",
   INTERNSHIP: "Thực tập",
-  FREELANCE: "Freelance",
+  FREELANCE: "Làm tự do",
 };
 
 export function JobsTable({

@@ -76,7 +76,7 @@ export function JobStep3({ data, errors, onChange }: JobStep3Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="salary-min">
-                Lương tối thiểu <span className="text-muted-foreground text-xs">(VND)</span>
+                Lương tối thiểu <span className="text-muted-foreground text-xs">(VNĐ)</span>
               </Label>
               <Input
                 id="salary-min"
@@ -92,7 +92,7 @@ export function JobStep3({ data, errors, onChange }: JobStep3Props) {
 
             <div className="space-y-2">
               <Label htmlFor="salary-max">
-                Lương tối đa <span className="text-muted-foreground text-xs">(VND)</span>
+                Lương tối đa <span className="text-muted-foreground text-xs">(VNĐ)</span>
               </Label>
               <Input
                 id="salary-max"

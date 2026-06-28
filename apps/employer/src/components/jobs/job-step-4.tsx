@@ -68,7 +68,7 @@ export function JobStep4({ data, errors, onChange }: JobStep4Props) {
           <ul className="mt-1 list-inside list-disc space-y-1 text-xs">
             <li>Tin tuyển dụng sẽ tự động đóng sau ngày hết hạn</li>
             <li>Bạn có thể đăng lại hoặc gia hạn tin trong phần Quản lý tin đăng</li>
-            <li>Draft sẽ được tự động lưu mỗi 30 giây</li>
+            <li>Bản nháp sẽ được tự động lưu mỗi 30 giây</li>
           </ul>
         </div>
       </div>

@@ -108,7 +108,7 @@ export default function SignInForm() {
             {(field) => (
               <div className="space-y-2">
                 <Label htmlFor={field.name} className="text-sm font-medium">
-                  Email
+                  Địa chỉ email
                 </Label>
                 <Input
                   id={field.name}

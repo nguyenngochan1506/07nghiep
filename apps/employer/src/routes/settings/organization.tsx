@@ -129,7 +129,7 @@ function OrganizationSettingsPage() {
       onSubmit: z.object({
         name: z.string().min(2, "Tên công ty phải có ít nhất 2 ký tự"),
         description: z.string(),
-        website: z.union([z.literal(""), z.string().url("Website không hợp lệ")]),
+        website: z.union([z.literal(""), z.string().url("Trang web không hợp lệ")]),
         industry: z.string(),
         companySize: z.string(),
         foundedYear: z.union([
@@ -284,7 +284,7 @@ function OrganizationSettingsPage() {
                   {(field) => (
                     <div className="space-y-2">
                       <Label htmlFor={field.name} className="flex items-center gap-2">
-                        Website
+                        Trang web
                       </Label>
                       <Input
                         id={field.name}
@@ -359,7 +359,7 @@ function OrganizationSettingsPage() {
                       <div className="flex justify-center">
                         <img
                           src={field.state.value}
-                          alt="Company logo preview"
+                          alt="Xem trước logo công ty"
                           className="h-24 w-24 object-contain rounded-md border p-1"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
@@ -373,7 +373,7 @@ function OrganizationSettingsPage() {
                       </div>
                     )}
                     <div className="space-y-2">
-                      <Label htmlFor={field.name}>URL Logo</Label>
+                      <Label htmlFor={field.name}>Đường dẫn logo</Label>
                       <Input
                         id={field.name}
                         placeholder="https://..."

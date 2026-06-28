@@ -20,21 +20,21 @@ const JOB_TYPE_LABELS: Record<string, string> = {
   PARTIME: "Bán thời gian",
   CONTRACT: "Hợp đồng",
   INTERNSHIP: "Thực tập",
-  FREELANCE: "Freelance",
+  FREELANCE: "Làm tự do",
 };
 
 const WORK_TYPE_LABELS: Record<string, string> = {
   ONSITE: "Tại văn phòng",
   REMOTE: "Làm từ xa",
-  HYBRID: "Hybrid",
+  HYBRID: "Kết hợp",
 };
 
 const EXPERIENCE_LABELS: Record<string, string> = {
   ENTRY: "Không yêu cầu kinh nghiệm",
-  JUNIOR: "Junior (1-2 năm)",
-  MIDDLE: "Middle (2-4 năm)",
-  SENIOR: "Senior (4-7 năm)",
-  LEAD: "Lead (7+ năm)",
+  JUNIOR: "Nhân sự mới (1-2 năm)",
+  MIDDLE: "Chuyên viên (2-4 năm)",
+  SENIOR: "Chuyên viên cao cấp (4-7 năm)",
+  LEAD: "Trưởng nhóm (7+ năm)",
   EXECUTIVE: "Cấp điều hành",
 };
 

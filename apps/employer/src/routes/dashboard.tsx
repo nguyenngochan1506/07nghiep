@@ -174,7 +174,7 @@ function DashboardComponent() {
           <Card className="border-border/70 shadow-sm">
             <CardHeader className="gap-4 p-6">
               <Badge variant={employerActive ? "secondary" : "destructive"} className="w-fit">
-                {employerActive ? "Employer active" : "Cần kích hoạt gói"}
+                {employerActive ? "Nhà tuyển dụng đang hoạt động" : "Cần kích hoạt gói"}
               </Badge>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-3xl">
@@ -182,8 +182,8 @@ function DashboardComponent() {
                     Chào {session.data?.user.name}, đây là tình hình tuyển dụng của bạn
                   </h1>
                   <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-                    Dashboard tập trung vào những việc cần xử lý trước: kích hoạt gói, hoàn thiện
-                    công ty, mở tin tuyển dụng và theo dõi hồ sơ ứng viên.
+                    Bảng điều khiển tập trung vào những việc cần xử lý trước: kích hoạt gói, hoàn
+                    thiện công ty, mở tin tuyển dụng và theo dõi hồ sơ ứng viên.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

@@ -27,21 +27,21 @@ const JOB_TYPES = [
   { value: "PARTIME", label: "Bán thời gian" },
   { value: "CONTRACT", label: "Hợp đồng" },
   { value: "INTERNSHIP", label: "Thực tập" },
-  { value: "FREELANCE", label: "Freelance" },
+  { value: "FREELANCE", label: "Làm tự do" },
 ];
 
 const WORK_TYPES = [
   { value: "ONSITE", label: "Tại văn phòng" },
   { value: "REMOTE", label: "Làm từ xa" },
-  { value: "HYBRID", label: "Hybrid" },
+  { value: "HYBRID", label: "Kết hợp" },
 ];
 
 const EXPERIENCE_LEVELS = [
   { value: "ENTRY", label: "Mới tốt nghiệp / Không kinh nghiệm" },
-  { value: "JUNIOR", label: "Junior (1-2 năm)" },
-  { value: "MIDDLE", label: "Middle (2-4 năm)" },
-  { value: "SENIOR", label: "Senior (4-7 năm)" },
-  { value: "LEAD", label: "Lead / Principal (7+ năm)" },
+  { value: "JUNIOR", label: "Nhân sự mới (1-2 năm)" },
+  { value: "MIDDLE", label: "Chuyên viên (2-4 năm)" },
+  { value: "SENIOR", label: "Chuyên viên cao cấp (4-7 năm)" },
+  { value: "LEAD", label: "Trưởng nhóm / Chuyên gia chính (7+ năm)" },
   { value: "EXECUTIVE", label: "Cấp điều hành" },
 ];
 
@@ -62,7 +62,7 @@ export function JobStep1({ data, errors, onChange }: JobStep1Props) {
         </Label>
         <Input
           id="job-title"
-          placeholder="Ví dụ: Senior Frontend Developer"
+          placeholder="Ví dụ: Lập trình viên giao diện cao cấp"
           value={data.title}
           onChange={(e) => onChange("title", e.target.value)}
           className={errors.title ? "border-destructive" : ""}

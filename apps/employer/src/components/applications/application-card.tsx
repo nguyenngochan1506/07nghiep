@@ -5,7 +5,6 @@ import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent } from "@07nghiep/ui/components/card";
 import { Link } from "@tanstack/react-router";
 import { Calendar, User } from "lucide-react";
-import { format } from "date-fns";
 
 export const getStatusColor = (status: ApplicationStatus) => {
   switch (status) {
@@ -30,19 +29,19 @@ export const getStatusColor = (status: ApplicationStatus) => {
 export const getStatusLabel = (status: ApplicationStatus) => {
   switch (status) {
     case ApplicationStatus.PENDING:
-      return "Pending";
+      return "Chờ xử lý";
     case ApplicationStatus.VIEWED:
-      return "Viewed";
+      return "Đã xem";
     case ApplicationStatus.SHORTLISTED:
-      return "Shortlisted";
+      return "Đã lọc hồ sơ";
     case ApplicationStatus.INTERVIEWING:
-      return "Interviewing";
+      return "Đang phỏng vấn";
     case ApplicationStatus.OFFERED:
-      return "Offered";
+      return "Đã gửi đề nghị";
     case ApplicationStatus.REJECTED:
-      return "Rejected";
+      return "Từ chối";
     case ApplicationStatus.WITHDRAWN:
-      return "Withdrawn";
+      return "Ứng viên đã rút";
     default:
       return status;
   }
@@ -55,11 +54,11 @@ type AiScoreSummary = {
 } | null;
 
 export function getAiScoreLabel(aiScore?: AiScoreSummary) {
-  if (!aiScore) return "No score";
+  if (!aiScore) return "Chưa chấm";
   if (aiScore.status === "COMPLETED") return `${aiScore.score ?? 0}%`;
-  if (aiScore.status === "FAILED") return "Failed";
-  if (aiScore.status === "PROCESSING") return "Scoring";
-  return "Pending";
+  if (aiScore.status === "FAILED") return "Lỗi";
+  if (aiScore.status === "PROCESSING") return "Đang chấm";
+  return "Đang chờ";
 }
 
 interface ApplicationCardProps {
@@ -98,14 +97,14 @@ export function ApplicationCard({ application, compact = false }: ApplicationCar
             </Avatar>
             <div className="min-w-0">
               <h4 className="font-medium text-sm truncate">
-                {application.candidate.name || "Unknown Candidate"}
+                {application.candidate.name || "Ứng viên chưa rõ"}
               </h4>
               {!compact && application.job && (
                 <p className="text-xs text-muted-foreground truncate">{application.job.title}</p>
               )}
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                 <Calendar className="h-3 w-3" />
-                <span>{format(appliedDate, "MMM d, yyyy")}</span>
+                <span>{appliedDate.toLocaleDateString("vi-VN")}</span>
               </div>
             </div>
           </div>
@@ -113,9 +112,7 @@ export function ApplicationCard({ application, compact = false }: ApplicationCar
             <Badge variant="outline" className={getStatusColor(application.status)}>
               {getStatusLabel(application.status)}
             </Badge>
-            <Badge
-              variant={application.aiScore?.status === "FAILED" ? "destructive" : "secondary"}
-            >
+            <Badge variant={application.aiScore?.status === "FAILED" ? "destructive" : "secondary"}>
               {getAiScoreLabel(application.aiScore)}
             </Badge>
             <Button
@@ -125,7 +122,7 @@ export function ApplicationCard({ application, compact = false }: ApplicationCar
               asChild
             >
               <Link to="/applications/$applicationId" params={{ applicationId: application.id }}>
-                View
+                Xem
               </Link>
             </Button>
           </div>

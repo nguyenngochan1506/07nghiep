@@ -33,7 +33,6 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
-import { format } from "date-fns";
 import { getStatusColor, getStatusLabel } from "../../components/applications/application-card";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
@@ -143,9 +142,7 @@ function readProfileEntries<T extends object>(value: unknown): T[] {
 
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.filter(
-    (item): item is string => typeof item === "string" && item.trim().length > 0,
-  );
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
 function AiFitScoreCard({
@@ -165,7 +162,7 @@ function AiFitScoreCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Sparkles className="size-4 text-primary" />
-          AI Fit Score
+          Điểm phù hợp AI
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -186,14 +183,14 @@ function AiFitScoreCard({
             {aiScore.summary ? (
               <p className="text-sm leading-6 text-muted-foreground">{aiScore.summary}</p>
             ) : null}
-            <SkillList title="Matched skills" items={aiScore.matchedSkills} />
-            <SkillList title="Missing skills" items={aiScore.missingSkills} />
-            <SkillList title="Risks" items={risks} />
+            <SkillList title="Kỹ năng phù hợp" items={aiScore.matchedSkills} />
+            <SkillList title="Kỹ năng còn thiếu" items={aiScore.missingSkills} />
+            <SkillList title="Rủi ro" items={risks} />
           </>
         ) : aiScore?.status === "FAILED" ? (
           <div className="space-y-3">
             <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {aiScore.errorMessage || "AI scoring failed."}
+              {aiScore.errorMessage || "AI chấm điểm thất bại."}
             </p>
             <Button onClick={onRetry} disabled={retrying} className="w-full">
               {retrying ? (
@@ -201,12 +198,14 @@ function AiFitScoreCard({
               ) : (
                 <RefreshCw data-icon="inline-start" />
               )}
-              Retry scoring
+              Chấm lại
             </Button>
           </div>
         ) : (
           <p className="text-sm leading-6 text-muted-foreground">
-            {aiScore ? "AI scoring is queued for this application." : "No AI score has been queued."}
+            {aiScore
+              ? "Hồ sơ này đang chờ AI chấm điểm."
+              : "Hồ sơ này chưa được đưa vào hàng chờ AI."}
           </p>
         )}
       </CardContent>
@@ -232,18 +231,18 @@ function SkillList({ title, items }: { title: string; items: string[] }) {
 }
 
 function getRecommendationLabel(value?: string | null) {
-  if (value === "STRONG_FIT") return "Strong fit";
-  if (value === "POTENTIAL_FIT") return "Potential fit";
-  if (value === "WEAK_FIT") return "Weak fit";
-  return "No recommendation";
+  if (value === "STRONG_FIT") return "Rất phù hợp";
+  if (value === "POTENTIAL_FIT") return "Có tiềm năng";
+  if (value === "WEAK_FIT") return "Ít phù hợp";
+  return "Chưa có đề xuất";
 }
 
 function getAiStatusLabel(value?: string | null) {
-  if (value === "COMPLETED") return "Completed";
-  if (value === "FAILED") return "Failed";
-  if (value === "PROCESSING") return "Scoring";
-  if (value === "PENDING") return "Pending";
-  return "Not queued";
+  if (value === "COMPLETED") return "Đã chấm";
+  if (value === "FAILED") return "Lỗi";
+  if (value === "PROCESSING") return "Đang chấm";
+  if (value === "PENDING") return "Đang chờ";
+  return "Chưa xếp hàng";
 }
 
 function ApplicationDetailPage() {
@@ -323,10 +322,10 @@ function ApplicationDetailPage() {
     mutationFn: (input: UpdateStatusInput) => trpcClient.application.updateStatus.mutate(input),
     onSuccess: () => {
       queryClient.invalidateQueries();
-      toast.success("Application status updated");
+      toast.success("Đã cập nhật trạng thái hồ sơ");
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to update status");
+      toast.error(err.message || "Không thể cập nhật trạng thái");
     },
   });
 
@@ -334,10 +333,10 @@ function ApplicationDetailPage() {
     mutationFn: (input: UpdateNotesInput) => trpcClient.application.updateNotes.mutate(input),
     onSuccess: () => {
       queryClient.invalidateQueries();
-      toast.success("Notes saved successfully");
+      toast.success("Đã lưu ghi chú");
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to save notes");
+      toast.error(err.message || "Không thể lưu ghi chú");
     },
   });
 
@@ -345,10 +344,10 @@ function ApplicationDetailPage() {
     mutationFn: () => trpcClient.application.retryAiScore.mutate({ applicationId }),
     onSuccess: () => {
       queryClient.invalidateQueries();
-      toast.success("AI scoring queued");
+      toast.success("Đã đưa vào hàng chờ AI chấm điểm");
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to retry AI scoring");
+      toast.error(err.message || "Không thể chấm lại bằng AI");
     },
   });
 
@@ -367,11 +366,13 @@ function ApplicationDetailPage() {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Loading application...</div>;
+    return <div className="p-8 text-center text-muted-foreground">Đang tải hồ sơ ứng tuyển...</div>;
   }
 
   if (!rawApplication) {
-    return <div className="p-8 text-center text-muted-foreground">Application not found</div>;
+    return (
+      <div className="p-8 text-center text-muted-foreground">Không tìm thấy hồ sơ ứng tuyển</div>
+    );
   }
 
   const application = rawApplication as unknown as ApplicationDetail;
@@ -399,15 +400,15 @@ function ApplicationDetailPage() {
           </Avatar>
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight">
-              {application.candidate.name || "Unknown Candidate"}
+              {application.candidate.name || "Ứng viên chưa rõ"}
             </h1>
             <p className="text-muted-foreground font-medium">
-              Applied for: <span className="text-foreground">{application.job.title}</span>
+              Ứng tuyển vị trí: <span className="text-foreground">{application.job.title}</span>
             </p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground pt-1">
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
-                <span>{format(new Date(application.appliedAt), "MMMM d, yyyy")}</span>
+                <span>{new Date(application.appliedAt).toLocaleDateString("vi-VN")}</span>
               </div>
               <Badge variant="outline" className={getStatusColor(application.status)}>
                 {getStatusLabel(application.status)}
@@ -424,7 +425,7 @@ function ApplicationDetailPage() {
             }}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Update Status" />
+              <SelectValue placeholder="Cập nhật trạng thái" />
             </SelectTrigger>
             <SelectContent>
               {(Object.values(ApplicationStatus) as ApplicationStatus[]).map((status) => (
@@ -438,13 +439,13 @@ function ApplicationDetailPage() {
           <div className="flex gap-2 w-full sm:w-auto">
             <Button variant="outline" className="flex-1 sm:flex-none">
               <Mail className="h-4 w-4 mr-2" />
-              Message
+              Nhắn tin
             </Button>
             {application.resumeUrl && (
               <Button className="flex-1 sm:flex-none" asChild>
                 <a href={application.resumeUrl} target="_blank" rel="noopener noreferrer">
                   <Download className="h-4 w-4 mr-2" />
-                  Resume
+                  CV ứng tuyển
                 </a>
               </Button>
             )}
@@ -462,20 +463,20 @@ function ApplicationDetailPage() {
                 value="profile"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
               >
-                Candidate Profile
+                Hồ sơ ứng viên
               </TabsTrigger>
               <TabsTrigger
                 value="cover-letter"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
               >
-                Cover Letter
+                Thư ứng tuyển
               </TabsTrigger>
               {!!answers && (
                 <TabsTrigger
                   value="questions"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
                 >
-                  Screening Questions
+                  Câu hỏi sàng lọc
                 </TabsTrigger>
               )}
               <TabsTrigger
@@ -491,7 +492,7 @@ function ApplicationDetailPage() {
                 <Card>
                   <CardContent className="p-12 text-center text-muted-foreground flex flex-col items-center">
                     <User className="h-12 w-12 mb-4 opacity-20" />
-                    <p>This candidate has not set up their profile yet.</p>
+                    <p>Ứng viên chưa thiết lập hồ sơ cá nhân.</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -500,7 +501,7 @@ function ApplicationDetailPage() {
                   {profile.summary && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">About</CardTitle>
+                        <CardTitle className="text-lg">Giới thiệu</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-muted-foreground whitespace-pre-wrap">
@@ -514,7 +515,7 @@ function ApplicationDetailPage() {
                   {Array.isArray(profile.skills) && profile.skills.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Skills</CardTitle>
+                        <CardTitle className="text-lg">Kỹ năng</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="flex flex-wrap gap-2">
@@ -532,20 +533,20 @@ function ApplicationDetailPage() {
                   {profileExperience.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Experience</CardTitle>
+                        <CardTitle className="text-lg">Kinh nghiệm</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
                           {profileExperience.map((exp, i) => (
                             <div key={i} className="border-l-2 border-muted pl-4">
-                              <h4 className="font-semibold">{exp.title || "Untitled"}</h4>
+                              <h4 className="font-semibold">{exp.title || "Chưa có tiêu đề"}</h4>
                               <p className="text-sm text-muted-foreground">
                                 {exp.company}
                                 {exp.location ? ` · ${exp.location}` : ""}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {exp.startDate || "?"} —{" "}
-                                {exp.endDate || exp.current ? "Present" : "?"}
+                                {exp.endDate || exp.current ? "Hiện tại" : "?"}
                               </p>
                               {exp.description && (
                                 <p className="text-sm text-muted-foreground mt-1">
@@ -563,19 +564,19 @@ function ApplicationDetailPage() {
                   {profileEducation.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Education</CardTitle>
+                        <CardTitle className="text-lg">Học vấn</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
                           {profileEducation.map((edu, i) => (
                             <div key={i} className="border-l-2 border-muted pl-4">
-                              <h4 className="font-semibold">{edu.degree || "Untitled"}</h4>
+                              <h4 className="font-semibold">{edu.degree || "Chưa có tiêu đề"}</h4>
                               <p className="text-sm text-muted-foreground">
                                 {edu.school}
                                 {edu.location ? ` · ${edu.location}` : ""}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {edu.startYear || "?"} — {edu.endYear || "Present"}
+                                {edu.startYear || "?"} — {edu.endYear || "Hiện tại"}
                                 {edu.gpa ? ` · GPA: ${edu.gpa}` : ""}
                               </p>
                             </div>
@@ -597,7 +598,7 @@ function ApplicationDetailPage() {
                     </div>
                   ) : (
                     <div className="text-center text-muted-foreground py-8">
-                      No cover letter provided.
+                      Ứng viên chưa gửi thư ứng tuyển.
                     </div>
                   )}
                 </CardContent>
@@ -662,13 +663,13 @@ function ApplicationDetailPage() {
                         <div className="flex flex-col gap-2">
                           <Label>Địa điểm</Label>
                           <Input
-                            placeholder="Văn phòng, Online..."
+                            placeholder="Văn phòng, trực tuyến..."
                             value={interviewLocation}
                             onChange={(e) => setInterviewLocation(e.target.value)}
                           />
                         </div>
                         <div className="flex flex-col gap-2">
-                          <Label>Link họp (Google Meet, Zoom...)</Label>
+                          <Label>Liên kết họp (Google Meet, Zoom...)</Label>
                           <Input
                             placeholder="https://meet.google.com/..."
                             value={interviewLink}
@@ -799,7 +800,7 @@ function ApplicationDetailPage() {
           {/* Contact Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Contact Information</CardTitle>
+              <CardTitle className="text-lg">Thông tin liên hệ</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 text-sm">
@@ -832,14 +833,14 @@ function ApplicationDetailPage() {
           {(profile?.portfolioUrl || profile?.resumeUrl || application.resumeUrl) && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Links & Files</CardTitle>
+                <CardTitle className="text-lg">Liên kết & tệp</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {application.resumeUrl && (
                   <Button variant="outline" className="w-full justify-start" asChild>
                     <a href={application.resumeUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="h-4 w-4 mr-2" />
-                      Application Resume
+                      CV trong hồ sơ ứng tuyển
                     </a>
                   </Button>
                 )}
@@ -847,7 +848,7 @@ function ApplicationDetailPage() {
                   <Button variant="outline" className="w-full justify-start" asChild>
                     <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="h-4 w-4 mr-2" />
-                      Profile Resume
+                      CV trong hồ sơ cá nhân
                     </a>
                   </Button>
                 )}
@@ -855,7 +856,7 @@ function ApplicationDetailPage() {
                   <Button variant="outline" className="w-full justify-start" asChild>
                     <a href={profile.portfolioUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Portfolio / Website
+                      Hồ sơ năng lực / Trang web
                     </a>
                   </Button>
                 )}
@@ -867,12 +868,12 @@ function ApplicationDetailPage() {
           <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-900/10">
             <CardHeader>
               <CardTitle className="text-lg text-amber-900 dark:text-amber-500">
-                Employer Notes (Private)
+                Ghi chú nội bộ
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Add notes about this candidate... Only visible to your team."
+                placeholder="Thêm ghi chú về ứng viên này... Chỉ đội của bạn nhìn thấy."
                 className="min-h-[150px] bg-background resize-none"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -882,7 +883,7 @@ function ApplicationDetailPage() {
                 onClick={handleSaveNotes}
                 disabled={notes === application.notes || updateNotesMutation.isPending}
               >
-                {updateNotesMutation.isPending ? "Saving..." : "Save Notes"}
+                {updateNotesMutation.isPending ? "Đang lưu..." : "Lưu ghi chú"}
               </Button>
             </CardContent>
           </Card>

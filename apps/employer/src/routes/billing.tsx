@@ -55,7 +55,7 @@ const workflowItems = [
   },
   {
     icon: UsersRound,
-    title: "Quản lý pipeline",
+    title: "Quản lý quy trình",
     description: "Theo dõi ứng viên theo từng trạng thái để không bỏ sót hồ sơ cần xử lý.",
   },
   {
@@ -78,7 +78,7 @@ const faqs = [
   {
     question: "Thanh toán có kích hoạt ngay không?",
     answer:
-      "Sau khi payOS gửi xác nhận thành công, hệ thống sẽ kích hoạt hoặc gia hạn subscription.",
+      "Sau khi payOS gửi xác nhận thành công, hệ thống sẽ kích hoạt hoặc gia hạn gói đăng ký.",
   },
 ];
 
@@ -124,19 +124,19 @@ function EmployerBillingRoute() {
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_360px] lg:items-end">
           <div className="max-w-3xl">
             <Badge className="mb-4" variant={employerActive ? "default" : "secondary"}>
-              {employerActive ? "Gói đang hoạt động" : "Pricing nhà tuyển dụng"}
+              {employerActive ? "Gói đang hoạt động" : "Bảng giá nhà tuyển dụng"}
             </Badge>
             <h1 className="text-4xl font-semibold tracking-normal text-foreground md:text-5xl">
               Một gói để vận hành tuyển dụng từ tin đăng đến phỏng vấn
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
               Kích hoạt quyền nhà tuyển dụng để đăng tin, quản lý hồ sơ, trao đổi với ứng viên và
-              điều phối lịch phỏng vấn trong cùng một portal.
+              điều phối lịch phỏng vấn trong cùng một cổng tuyển dụng.
             </p>
             <div className="mt-6 grid max-w-2xl gap-3 sm:grid-cols-3">
               <Metric value="30" label="ngày mỗi chu kỳ" />
               <Metric value="4" label="nhóm quyền tuyển dụng" />
-              <Metric value="1" label="workspace doanh nghiệp" />
+              <Metric value="1" label="không gian làm việc doanh nghiệp" />
             </div>
           </div>
 
@@ -188,7 +188,7 @@ function EmployerBillingRoute() {
                 Trước khi thanh toán
               </CardTitle>
               <CardDescription>
-                Tài khoản cần được duyệt vai trò doanh nghiệp trước khi checkout được tạo.
+                Tài khoản cần được duyệt vai trò doanh nghiệp trước khi tạo phiên thanh toán.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
@@ -266,7 +266,7 @@ function PlanCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-xl">Employer Monthly</CardTitle>
+            <CardTitle className="text-xl">Gói nhà tuyển dụng hằng tháng</CardTitle>
             <CardDescription className="mt-1">
               Gói tuyển dụng theo tháng cho doanh nghiệp đã được duyệt.
             </CardDescription>
@@ -281,7 +281,7 @@ function PlanCard({
           <span className="text-3xl font-semibold text-foreground">{price}</span>
           <span className="ml-1 text-sm text-muted-foreground">{period}</span>
           <p className="mt-2 text-xs text-muted-foreground">
-            Giá hiển thị theo seed mặc định; checkout sẽ xác nhận giá hiện hành.
+            Giá hiển thị theo dữ liệu mặc định; phiên thanh toán sẽ xác nhận giá hiện hành.
           </p>
         </div>
         <ul className="space-y-3">

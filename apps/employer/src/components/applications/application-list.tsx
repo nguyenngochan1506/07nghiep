@@ -12,7 +12,6 @@ import {
   TableRow,
 } from "@07nghiep/ui/components/table";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
 import { User } from "lucide-react";
 import { getAiScoreLabel, getStatusColor, getStatusLabel } from "./application-card";
 
@@ -57,22 +56,22 @@ export function ApplicationList({
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={(checked) => onToggleAll(checked === true)}
-                aria-label="Select all"
+                aria-label="Chọn tất cả"
               />
             </TableHead>
-            <TableHead>Candidate</TableHead>
-            <TableHead>Job</TableHead>
-            <TableHead>Applied Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>AI Fit</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>Ứng viên</TableHead>
+            <TableHead>Tin tuyển dụng</TableHead>
+            <TableHead>Ngày ứng tuyển</TableHead>
+            <TableHead>Trạng thái</TableHead>
+            <TableHead>AI chấm điểm</TableHead>
+            <TableHead className="text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {applications.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                No applications found.
+                Chưa có hồ sơ ứng tuyển phù hợp.
               </TableCell>
             </TableRow>
           ) : (
@@ -82,7 +81,7 @@ export function ApplicationList({
                   <Checkbox
                     checked={selectedIds.includes(app.id)}
                     onCheckedChange={() => onToggleSelect(app.id)}
-                    aria-label={`Select ${app.candidate.name}`}
+                    aria-label={`Chọn ${app.candidate.name ?? "ứng viên"}`}
                   />
                 </TableCell>
                 <TableCell>
@@ -93,12 +92,14 @@ export function ApplicationList({
                         <User className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{app.candidate.name || "Unknown Candidate"}</span>
+                    <span className="font-medium">{app.candidate.name || "Ứng viên chưa rõ"}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{app.job?.title || "N/A"}</TableCell>
                 <TableCell className="text-muted-foreground">
-                  {format(new Date(app.appliedAt), "MMM d, yyyy")}
+                  {app.job?.title || "Chưa có dữ liệu"}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {new Date(app.appliedAt).toLocaleDateString("vi-VN")}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className={getStatusColor(app.status)}>
@@ -113,7 +114,7 @@ export function ApplicationList({
                 <TableCell className="text-right">
                   <Button variant="ghost" size="sm" asChild>
                     <Link to="/applications/$applicationId" params={{ applicationId: app.id }}>
-                      View Details
+                      Xem chi tiết
                     </Link>
                   </Button>
                 </TableCell>
