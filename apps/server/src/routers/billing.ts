@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { env } from "@07nghiep/env/server";
 
 import { protectedProcedure, publicProcedure, router } from "../lib/api";
+import { BILLING_CHECKOUT_URLS } from "../lib/billing/checkout-urls";
 import { getActiveEntitlements } from "../lib/billing/entitlements";
 import { BILLING_PLAN_CODES } from "../lib/billing/plans";
 import { createCheckoutPayment } from "../lib/billing/payments";
@@ -34,8 +34,8 @@ export const billingRouter = router({
       prisma: ctx.prisma,
       userId: ctx.session.user.id,
       planCode: BILLING_PLAN_CODES.candidatePlusMonthly,
-      returnUrl: env.PAYOS_RETURN_URL ?? "http://localhost:3001/billing/return",
-      cancelUrl: env.PAYOS_CANCEL_URL ?? "http://localhost:3001/billing/return",
+      returnUrl: BILLING_CHECKOUT_URLS.candidateBillingReturn,
+      cancelUrl: BILLING_CHECKOUT_URLS.candidateBillingReturn,
     });
 
     return {
@@ -63,8 +63,8 @@ export const billingRouter = router({
       prisma: ctx.prisma,
       userId: ctx.session.user.id,
       planCode: BILLING_PLAN_CODES.candidateAiCvCredits,
-      returnUrl: "http://localhost:3001/cv-analysis",
-      cancelUrl: "http://localhost:3001/cv-analysis",
+      returnUrl: BILLING_CHECKOUT_URLS.candidateCvAnalysis,
+      cancelUrl: BILLING_CHECKOUT_URLS.candidateCvAnalysis,
     });
 
     return {
@@ -86,8 +86,8 @@ export const billingRouter = router({
       prisma: ctx.prisma,
       userId: ctx.session.user.id,
       planCode: BILLING_PLAN_CODES.employerMonthly,
-      returnUrl: env.PAYOS_RETURN_URL ?? "http://localhost:3003/billing",
-      cancelUrl: env.PAYOS_CANCEL_URL ?? "http://localhost:3003/billing",
+      returnUrl: BILLING_CHECKOUT_URLS.employerBilling,
+      cancelUrl: BILLING_CHECKOUT_URLS.employerBilling,
     });
 
     return {

@@ -18,11 +18,11 @@ function createCtx(prisma: unknown) {
   } as never;
 }
 
-function createAuthedCtx(prisma: unknown) {
+function createAuthedCtx(prisma: unknown, role: "CANDIDATE" | "EMPLOYER" = "CANDIDATE") {
   return {
     session: { user: { id: "user_1" } },
     user: { id: "user_1" },
-    role: "CANDIDATE",
+    role,
     prisma,
   } as never;
 }
@@ -69,6 +69,26 @@ describe("billingRouter", () => {
     });
   });
 
+  it("creates a Candidate Plus checkout that returns to the candidate app", async () => {
+    mockedCreateCheckoutPayment.mockResolvedValue({
+      id: "payment_plus",
+      checkoutUrl: "https://pay.payos.vn/checkout/plus",
+      orderCode: 123456789012345n,
+      status: "PENDING",
+    });
+
+    const result = await billingRouter.createCaller(createAuthedCtx({})).createCandidatePlusCheckout();
+
+    expect(mockedCreateCheckoutPayment).toHaveBeenCalledWith({
+      prisma: {},
+      userId: "user_1",
+      planCode: "CANDIDATE_PLUS_MONTHLY",
+      returnUrl: "http://localhost:3003/billing/return",
+      cancelUrl: "http://localhost:3003/billing/return",
+    });
+    expect(result.checkoutUrl).toBe("https://pay.payos.vn/checkout/plus");
+  });
+
   it("creates a checkout for Candidate AI CV credit add-ons", async () => {
     const prisma = {
       subscription: {
@@ -103,13 +123,35 @@ describe("billingRouter", () => {
       prisma,
       userId: "user_1",
       planCode: "CANDIDATE_AI_CV_CREDITS",
-      returnUrl: "http://localhost:3001/cv-analysis",
-      cancelUrl: "http://localhost:3001/cv-analysis",
+      returnUrl: "http://localhost:3003/cv-analysis",
+      cancelUrl: "http://localhost:3003/cv-analysis",
     });
     expect(result).toEqual({
       paymentId: "payment_credits",
       checkoutUrl: "https://pay.payos.vn/checkout/credits",
       orderCode: "123456789012345",
     });
+  });
+
+  it("creates an employer checkout that returns to the employer app", async () => {
+    mockedCreateCheckoutPayment.mockResolvedValue({
+      id: "payment_employer",
+      checkoutUrl: "https://pay.payos.vn/checkout/employer",
+      orderCode: 123456789012345n,
+      status: "PENDING",
+    });
+
+    const result = await billingRouter
+      .createCaller(createAuthedCtx({}, "EMPLOYER"))
+      .createEmployerCheckout();
+
+    expect(mockedCreateCheckoutPayment).toHaveBeenCalledWith({
+      prisma: {},
+      userId: "user_1",
+      planCode: "EMPLOYER_MONTHLY",
+      returnUrl: "http://localhost:3002/billing",
+      cancelUrl: "http://localhost:3002/billing",
+    });
+    expect(result.checkoutUrl).toBe("https://pay.payos.vn/checkout/employer");
   });
 });

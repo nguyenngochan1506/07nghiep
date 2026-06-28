@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { env } from "@07nghiep/env/server";
 
 import { adminProcedure, router } from "../../lib/api";
+import { BILLING_CHECKOUT_URLS } from "../../lib/billing/checkout-urls";
 import {
   sendBusinessApplicationApprovedEmail,
   sendBusinessApplicationRejectedEmail,
@@ -54,8 +54,8 @@ export const adminBusinessApplicationRouter = router({
         userId: application.userId,
         planCode: BILLING_PLAN_CODES.employerMonthly,
         businessApplicationId: application.id,
-        returnUrl: env.PAYOS_RETURN_URL ?? "http://localhost:3003/billing",
-        cancelUrl: env.PAYOS_CANCEL_URL ?? "http://localhost:3003/billing",
+        returnUrl: BILLING_CHECKOUT_URLS.employerBilling,
+        cancelUrl: BILLING_CHECKOUT_URLS.employerBilling,
       });
 
       const updated = await ctx.prisma.businessApplication.update({
