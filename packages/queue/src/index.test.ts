@@ -3,12 +3,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const queueMock = vi.hoisted(() => ({
   add: vi.fn(),
   constructors: [] as Array<{ name: string; options: unknown; close: ReturnType<typeof vi.fn> }>,
-  redisInstances: [] as Array<{ url: string; options: unknown; quit: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> }>,
+  redisInstances: [] as Array<{
+    url: string;
+    options: unknown;
+    quit: ReturnType<typeof vi.fn>;
+    disconnect: ReturnType<typeof vi.fn>;
+  }>,
 }));
 
 vi.mock("ioredis", () => ({
   default: vi.fn(function Redis(
-    this: { url: string; options: unknown; quit: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> },
+    this: {
+      url: string;
+      options: unknown;
+      quit: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+    },
     url: string,
     options: unknown,
   ) {
@@ -22,7 +32,12 @@ vi.mock("ioredis", () => ({
 
 vi.mock("bullmq", () => ({
   Queue: vi.fn(function Queue(
-    this: { name: string; options: unknown; add: typeof queueMock.add; close: ReturnType<typeof vi.fn> },
+    this: {
+      name: string;
+      options: unknown;
+      add: typeof queueMock.add;
+      close: ReturnType<typeof vi.fn>;
+    },
     name: string,
     options: unknown,
   ) {
@@ -66,7 +81,9 @@ describe("queue payload schemas", () => {
   it("parses repair payloads with ISO datetimes", async () => {
     const { repairPendingAiJobsPayloadSchema } = await importQueueModule();
 
-    expect(repairPendingAiJobsPayloadSchema.parse({ requestedAt: "2026-06-28T10:00:00.000Z" })).toEqual({
+    expect(
+      repairPendingAiJobsPayloadSchema.parse({ requestedAt: "2026-06-28T10:00:00.000Z" }),
+    ).toEqual({
       requestedAt: "2026-06-28T10:00:00.000Z",
     });
     expect(() => repairPendingAiJobsPayloadSchema.parse({ requestedAt: "2026-06-28" })).toThrow();
@@ -111,11 +128,8 @@ describe("enqueue helpers", () => {
   });
 
   it("uses required queue names, job names, and stable job IDs", async () => {
-    const {
-      enqueueApplicationFitScore,
-      enqueueCandidateCvAnalysis,
-      enqueuePendingAiRepair,
-    } = await importQueueModule();
+    const { enqueueApplicationFitScore, enqueueCandidateCvAnalysis, enqueuePendingAiRepair } =
+      await importQueueModule();
 
     await enqueueCandidateCvAnalysis({ analysisId: "analysis_123" });
     await enqueueApplicationFitScore({ applicationAiScoreId: "score_123" });
@@ -145,6 +159,55 @@ describe("enqueue helpers", () => {
       expect.objectContaining({
         jobId: "pending-ai-repair",
         removeOnComplete: true,
+      }),
+    );
+  });
+
+  it("uses unique repair job IDs without changing normal deterministic IDs", async () => {
+    const {
+      enqueueApplicationFitScore,
+      enqueueApplicationFitScoreRepair,
+      enqueueCandidateCvAnalysis,
+      enqueueCandidateCvAnalysisRepair,
+    } = await importQueueModule();
+
+    await enqueueCandidateCvAnalysis({ analysisId: "analysis_123" });
+    await enqueueCandidateCvAnalysisRepair(
+      { analysisId: "analysis_123" },
+      { repairRunId: "2026-06-28T10:10:00.000Z" },
+    );
+    await enqueueApplicationFitScore({ applicationAiScoreId: "score_123" });
+    await enqueueApplicationFitScoreRepair(
+      { applicationAiScoreId: "score_123" },
+      { repairRunId: "2026-06-28T10:10:00.000Z" },
+    );
+
+    expect(queueMock.add).toHaveBeenNthCalledWith(
+      1,
+      "analyze-candidate-cv",
+      { analysisId: "analysis_123" },
+      expect.objectContaining({ jobId: "candidate-cv-analysis:analysis_123" }),
+    );
+    expect(queueMock.add).toHaveBeenNthCalledWith(
+      2,
+      "analyze-candidate-cv",
+      { analysisId: "analysis_123" },
+      expect.objectContaining({
+        jobId: "candidate-cv-analysis-repair:analysis_123:2026-06-28T10:10:00.000Z",
+      }),
+    );
+    expect(queueMock.add).toHaveBeenNthCalledWith(
+      3,
+      "score-application-fit",
+      { applicationAiScoreId: "score_123" },
+      expect.objectContaining({ jobId: "application-fit-score:score_123" }),
+    );
+    expect(queueMock.add).toHaveBeenNthCalledWith(
+      4,
+      "score-application-fit",
+      { applicationAiScoreId: "score_123" },
+      expect.objectContaining({
+        jobId: "application-fit-score-repair:score_123:2026-06-28T10:10:00.000Z",
       }),
     );
   });

@@ -1,0 +1,32 @@
+{
+  "name": "@07nghiep/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "check-types": "tsc -b",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run src"
+  },
+  "dependencies": {
+    "@07nghiep/ai-cv": "workspace:*",
+    "@07nghiep/db": "workspace:*",
+    "@07nghiep/env": "workspace:*",
+    "@07nghiep/queue": "workspace:*",
+    "bullmq": "^5.65.1",
+    "dotenv": "catalog:",
+    "pdf-parse": "^1.1.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@07nghiep/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/pdf-parse": "^1.1.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  }
+}

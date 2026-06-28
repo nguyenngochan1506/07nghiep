@@ -18,6 +18,8 @@
     "dev:candidate": "turbo -F candidate dev",
     "dev:employer": "turbo -F employer dev",
     "dev:server": "turbo -F server dev",
+    "dev:worker": "turbo -F @07nghiep/worker dev",
+    "worker:start": "turbo -F @07nghiep/worker start",
     "db:push": "turbo -F @07nghiep/db db:push",
     "db:studio": "turbo -F @07nghiep/db db:studio",
     "db:generate": "turbo -F @07nghiep/db db:generate",

@@ -1,7 +1,7 @@
-import { Queue, type JobsOptions } from "bullmq";
+import { env } from "@07nghiep/env/server";
+import { type JobsOptions, Queue } from "bullmq";
 import IORedis from "ioredis";
 import { z } from "zod";
-import { env } from "@07nghiep/env/server";
 
 const ONE_DAY_SECONDS = 24 * 60 * 60;
 
@@ -127,6 +127,22 @@ export async function enqueueCandidateCvAnalysis(payload: AnalyzeCandidateCvPayl
   );
 }
 
+export async function enqueueCandidateCvAnalysisRepair(
+  payload: AnalyzeCandidateCvPayload,
+  options: { repairRunId: string },
+) {
+  const parsedPayload = analyzeCandidateCvPayloadSchema.parse(payload);
+  const queue = createAiCvQueue();
+
+  return queue.add(
+    "analyze-candidate-cv",
+    parsedPayload,
+    getAiJobOptions(
+      `candidate-cv-analysis-repair:${parsedPayload.analysisId}:${options.repairRunId}`,
+    ),
+  );
+}
+
 export async function enqueueApplicationFitScore(payload: ScoreApplicationFitPayload) {
   const parsedPayload = scoreApplicationFitPayloadSchema.parse(payload);
   const queue = createApplicationFitQueue();
@@ -135,6 +151,22 @@ export async function enqueueApplicationFitScore(payload: ScoreApplicationFitPay
     "score-application-fit",
     parsedPayload,
     getAiJobOptions(`application-fit-score:${parsedPayload.applicationAiScoreId}`),
+  );
+}
+
+export async function enqueueApplicationFitScoreRepair(
+  payload: ScoreApplicationFitPayload,
+  options: { repairRunId: string },
+) {
+  const parsedPayload = scoreApplicationFitPayloadSchema.parse(payload);
+  const queue = createApplicationFitQueue();
+
+  return queue.add(
+    "score-application-fit",
+    parsedPayload,
+    getAiJobOptions(
+      `application-fit-score-repair:${parsedPayload.applicationAiScoreId}:${options.repairRunId}`,
+    ),
   );
 }
 
