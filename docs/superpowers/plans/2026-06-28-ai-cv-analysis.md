@@ -28,7 +28,7 @@ Create or modify these files:
 - Create `packages/ai-cv/src/schemas.ts`: input/result Zod schemas and exported types.
 - Create `packages/ai-cv/src/prompts.ts`: prompt builders.
 - Create `packages/ai-cv/src/provider.ts`: provider interface and factory.
-- Create `packages/ai-cv/src/providers/anthropic.ts`: Anthropic API implementation.
+- Create `packages/ai-cv/src/providers/anthropic.ts`: Anthropic API implementation using optional `ANTHROPIC_URL` as the SDK base URL.
 - Create `packages/ai-cv/src/index.ts`: exports.
 - Create `packages/ai-cv/src/schemas.test.ts`: result validation tests.
 - Create `apps/worker/package.json`: separate worker app.
@@ -302,6 +302,7 @@ Modify `packages/env/src/server.ts` and add these keys inside `server`:
 REDIS_URL: z.string().url().default("redis://localhost:6379"),
 AI_PROVIDER: z.enum(["anthropic"]).default("anthropic"),
 ANTHROPIC_API_KEY: z.string().min(1).optional(),
+ANTHROPIC_URL: z.string().url().optional(),
 ANTHROPIC_MODEL: z.string().min(1).default("claude-3-5-sonnet-latest"),
 AI_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(20).default(2),
 AI_JOB_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(3),
@@ -777,7 +778,10 @@ export class AnthropicCvProvider implements AiCvProvider {
       throw new Error("ANTHROPIC_API_KEY is required for AnthropicCvProvider");
     }
 
-    this.client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+    this.client = new Anthropic({
+      apiKey: env.ANTHROPIC_API_KEY,
+      baseURL: env.ANTHROPIC_URL,
+    });
   }
 
   async analyzeCandidateCv(input: CandidateCvAnalysisInput): Promise<CandidateCvAnalysisResult> {
@@ -2333,6 +2337,7 @@ Add to `apps/server/.env.example`:
 REDIS_URL="redis://localhost:6379"
 AI_PROVIDER="anthropic"
 ANTHROPIC_API_KEY=""
+ANTHROPIC_URL=""
 ANTHROPIC_MODEL="claude-3-5-sonnet-latest"
 AI_WORKER_CONCURRENCY="2"
 AI_JOB_MAX_ATTEMPTS="3"

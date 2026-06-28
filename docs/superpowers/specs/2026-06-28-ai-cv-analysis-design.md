@@ -294,13 +294,14 @@ Add server/worker env vars:
 
 - `REDIS_URL`
 - `AI_PROVIDER=anthropic`
+- `ANTHROPIC_URL`
 - `ANTHROPIC_API_KEY`
 - `ANTHROPIC_MODEL`
 - `AI_WORKER_CONCURRENCY`
 - `AI_JOB_MAX_ATTEMPTS`
 - `AI_JOB_TIMEOUT_MS`
 
-`ANTHROPIC_API_KEY` and Redis config are required for worker runtime. The server can still start without the worker, but enqueue operations should return controlled pending states if Redis is unavailable.
+`ANTHROPIC_API_KEY` and Redis config are required for worker runtime. `ANTHROPIC_URL` is optional and should be passed as the Anthropic SDK base URL when present. The server can still start without the worker, but enqueue operations should return controlled pending states if Redis is unavailable.
 
 ## Testing
 
