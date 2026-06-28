@@ -43,6 +43,7 @@ Then run the services you need:
 
 ```bash
 pnpm dev:server
+pnpm dev:worker
 pnpm dev:candidate
 pnpm dev:employer
 pnpm dev:admin
@@ -50,6 +51,31 @@ pnpm dev:admin
 
 The API is running at [http://localhost:3000](http://localhost:3000).
 The Vite apps run on their configured dev-server ports.
+
+## AI CV Analysis
+
+Candidate Plus CV analysis and employer application fit scoring use Redis-backed BullMQ queues and a separate worker process.
+
+Required server environment variables are documented in `apps/server/.env.example`:
+
+```env
+REDIS_URL="redis://localhost:6379"
+AI_PROVIDER="anthropic"
+ANTHROPIC_API_KEY=""
+ANTHROPIC_URL=""
+ANTHROPIC_MODEL="claude-3-5-sonnet-latest"
+AI_WORKER_CONCURRENCY="2"
+AI_JOB_MAX_ATTEMPTS="3"
+AI_JOB_TIMEOUT_MS="120000"
+```
+
+Run the API and worker together while testing AI flows:
+
+```bash
+pnpm db:start
+pnpm dev:server
+pnpm dev:worker
+```
 
 ## UI Customization
 
