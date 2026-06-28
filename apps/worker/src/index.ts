@@ -60,10 +60,7 @@ function createWorkers() {
       AI_REPAIR_QUEUE,
       async (job) => {
         const payload = repairPendingAiJobsPayloadSchema.parse(job.data);
-        await repairPendingAiJobs(
-          prisma as Parameters<typeof repairPendingAiJobs>[0],
-          new Date(payload.requestedAt),
-        );
+        await repairPendingAiJobs(prisma, new Date(payload.requestedAt));
       },
       { connection, concurrency: 1 },
     ),

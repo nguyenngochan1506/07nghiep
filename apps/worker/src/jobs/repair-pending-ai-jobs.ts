@@ -2,17 +2,12 @@ import {
   enqueueApplicationFitScoreRepair,
   enqueueCandidateCvAnalysisRepair,
 } from "@07nghiep/queue";
+import type { Prisma, PrismaClient } from "@07nghiep/db";
 
-type WorkerPrisma = {
-  applicationAiScore: {
-    findMany(args: unknown): Promise<unknown>;
-    update(args: unknown): Promise<unknown>;
-  };
-  candidateCvAnalysis: {
-    findMany(args: unknown): Promise<unknown>;
-    update(args: unknown): Promise<unknown>;
-  };
-};
+const repairRecordSelect = { id: true } satisfies Prisma.CandidateCvAnalysisSelect;
+const applicationScoreRepairSelect = { id: true } satisfies Prisma.ApplicationAiScoreSelect;
+
+type WorkerPrisma = Pick<PrismaClient, "applicationAiScore" | "candidateCvAnalysis">;
 
 const STALE_PENDING_MS = 5 * 60 * 1000;
 const REPAIR_BATCH_SIZE = 50;
@@ -20,7 +15,7 @@ const REPAIR_BATCH_SIZE = 50;
 export async function repairPendingAiJobs(prisma: WorkerPrisma, now = new Date()) {
   const staleBefore = new Date(now.getTime() - STALE_PENDING_MS);
   const repairRunId = now.toISOString();
-  const [candidateAnalyses, applicationScores] = (await Promise.all([
+  const [candidateAnalyses, applicationScores] = await Promise.all([
     prisma.candidateCvAnalysis.findMany({
       where: {
         status: "PENDING",
@@ -28,7 +23,7 @@ export async function repairPendingAiJobs(prisma: WorkerPrisma, now = new Date()
       },
       orderBy: { createdAt: "asc" },
       take: REPAIR_BATCH_SIZE,
-      select: { id: true },
+      select: repairRecordSelect,
     }),
     prisma.applicationAiScore.findMany({
       where: {
@@ -37,9 +32,9 @@ export async function repairPendingAiJobs(prisma: WorkerPrisma, now = new Date()
       },
       orderBy: { createdAt: "asc" },
       take: REPAIR_BATCH_SIZE,
-      select: { id: true },
+      select: applicationScoreRepairSelect,
     }),
-  ])) as [Array<{ id: string }>, Array<{ id: string }>];
+  ]);
 
   for (const analysis of candidateAnalyses) {
     const job = await enqueueCandidateCvAnalysisRepair(
@@ -48,7 +43,7 @@ export async function repairPendingAiJobs(prisma: WorkerPrisma, now = new Date()
     );
     await prisma.candidateCvAnalysis.update({
       where: { id: analysis.id },
-      data: { queueJobId: job.id ?? `candidate-cv-analysis:${analysis.id}` },
+      data: { queueJobId: job.id ?? `candidate-cv-analysis-${analysis.id}` },
     });
   }
 
@@ -59,7 +54,7 @@ export async function repairPendingAiJobs(prisma: WorkerPrisma, now = new Date()
     );
     await prisma.applicationAiScore.update({
       where: { id: score.id },
-      data: { queueJobId: job.id ?? `application-fit-score:${score.id}` },
+      data: { queueJobId: job.id ?? `application-fit-score-${score.id}` },
     });
   }
 

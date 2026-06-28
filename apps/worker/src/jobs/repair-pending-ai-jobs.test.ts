@@ -33,7 +33,10 @@ describe("repairPendingAiJobs", () => {
     } as never);
     vi.mocked(enqueueApplicationFitScoreRepair).mockResolvedValue({ id: "fit-job-1" } as never);
 
-    const result = await repairPendingAiJobs(prisma, new Date("2026-06-28T10:10:00.000Z"));
+    const result = await repairPendingAiJobs(
+      prisma as never,
+      new Date("2026-06-28T10:10:00.000Z"),
+    );
 
     expect(result).toEqual({ candidateCvAnalyses: 1, applicationFitScores: 1 });
     expect(prisma.candidateCvAnalysis.findMany).toHaveBeenCalledWith(

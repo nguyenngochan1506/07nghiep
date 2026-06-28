@@ -101,8 +101,8 @@ describe("getAiJobOptions", () => {
   it("builds stable BullMQ options from env", async () => {
     const { getAiJobOptions } = await importQueueModule();
 
-    expect(getAiJobOptions("candidate-cv-analysis:analysis_123")).toEqual({
-      jobId: "candidate-cv-analysis:analysis_123",
+    expect(getAiJobOptions("candidate-cv-analysis-analysis_123")).toEqual({
+      jobId: "candidate-cv-analysis-analysis_123",
       attempts: 4,
       backoff: {
         type: "exponential",
@@ -116,6 +116,14 @@ describe("getAiJobOptions", () => {
         age: 14 * 24 * 60 * 60,
       },
     });
+  });
+
+  it("rejects BullMQ-unsafe job IDs", async () => {
+    const { getAiJobOptions } = await importQueueModule();
+
+    expect(() => getAiJobOptions("candidate-cv-analysis:analysis_123")).toThrow(
+      "BullMQ jobId cannot contain ':'",
+    );
   });
 });
 
@@ -144,13 +152,13 @@ describe("enqueue helpers", () => {
       1,
       "analyze-candidate-cv",
       { analysisId: "analysis_123" },
-      expect.objectContaining({ jobId: "candidate-cv-analysis:analysis_123" }),
+      expect.objectContaining({ jobId: "candidate-cv-analysis-analysis_123" }),
     );
     expect(queueMock.add).toHaveBeenNthCalledWith(
       2,
       "score-application-fit",
       { applicationAiScoreId: "score_123" },
-      expect.objectContaining({ jobId: "application-fit-score:score_123" }),
+      expect.objectContaining({ jobId: "application-fit-score-score_123" }),
     );
     expect(queueMock.add).toHaveBeenNthCalledWith(
       3,
@@ -186,30 +194,32 @@ describe("enqueue helpers", () => {
       1,
       "analyze-candidate-cv",
       { analysisId: "analysis_123" },
-      expect.objectContaining({ jobId: "candidate-cv-analysis:analysis_123" }),
+      expect.objectContaining({ jobId: "candidate-cv-analysis-analysis_123" }),
     );
     expect(queueMock.add).toHaveBeenNthCalledWith(
       2,
       "analyze-candidate-cv",
       { analysisId: "analysis_123" },
       expect.objectContaining({
-        jobId: "candidate-cv-analysis-repair:analysis_123:2026-06-28T10:10:00.000Z",
+        jobId: "candidate-cv-analysis-repair-analysis_123-2026-06-28T10_10_00_000Z",
       }),
     );
+    expect(queueMock.add.mock.calls[1]?.[2]?.jobId).not.toContain(":");
     expect(queueMock.add).toHaveBeenNthCalledWith(
       3,
       "score-application-fit",
       { applicationAiScoreId: "score_123" },
-      expect.objectContaining({ jobId: "application-fit-score:score_123" }),
+      expect.objectContaining({ jobId: "application-fit-score-score_123" }),
     );
     expect(queueMock.add).toHaveBeenNthCalledWith(
       4,
       "score-application-fit",
       { applicationAiScoreId: "score_123" },
       expect.objectContaining({
-        jobId: "application-fit-score-repair:score_123:2026-06-28T10:10:00.000Z",
+        jobId: "application-fit-score-repair-score_123-2026-06-28T10_10_00_000Z",
       }),
     );
+    expect(queueMock.add.mock.calls[3]?.[2]?.jobId).not.toContain(":");
   });
 
   it("reuses queue instances between enqueue calls", async () => {

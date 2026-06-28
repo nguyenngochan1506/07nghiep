@@ -4,6 +4,7 @@ import IORedis from "ioredis";
 import { z } from "zod";
 
 const ONE_DAY_SECONDS = 24 * 60 * 60;
+const BULLMQ_JOB_ID_UNSAFE_CHARS = /[^A-Za-z0-9_-]/g;
 
 export const AI_CV_QUEUE = "ai-cv";
 export const AI_APPLICATION_FIT_QUEUE = "ai-application-fit";
@@ -30,6 +31,14 @@ let aiCvQueue: Queue<AnalyzeCandidateCvPayload> | null = null;
 let applicationFitQueue: Queue<ScoreApplicationFitPayload> | null = null;
 let aiRepairQueue: Queue<RepairPendingAiJobsPayload> | null = null;
 
+function sanitizeJobIdPart(value: string): string {
+  return value.replace(BULLMQ_JOB_ID_UNSAFE_CHARS, "_");
+}
+
+export function createAiJobId(prefix: string, ...parts: string[]): string {
+  return [prefix, ...parts.map(sanitizeJobIdPart)].join("-");
+}
+
 export function getQueueConnection(): IORedis {
   queueConnection ??= new IORedis(env.REDIS_URL, {
     maxRetriesPerRequest: null,
@@ -40,6 +49,10 @@ export function getQueueConnection(): IORedis {
 }
 
 export function getAiJobOptions(jobId: string): JobsOptions {
+  if (jobId.includes(":")) {
+    throw new Error("BullMQ jobId cannot contain ':'");
+  }
+
   return {
     jobId,
     attempts: env.AI_JOB_MAX_ATTEMPTS,
@@ -123,7 +136,7 @@ export async function enqueueCandidateCvAnalysis(payload: AnalyzeCandidateCvPayl
   return queue.add(
     "analyze-candidate-cv",
     parsedPayload,
-    getAiJobOptions(`candidate-cv-analysis:${parsedPayload.analysisId}`),
+    getAiJobOptions(createAiJobId("candidate-cv-analysis", parsedPayload.analysisId)),
   );
 }
 
@@ -138,7 +151,7 @@ export async function enqueueCandidateCvAnalysisRepair(
     "analyze-candidate-cv",
     parsedPayload,
     getAiJobOptions(
-      `candidate-cv-analysis-repair:${parsedPayload.analysisId}:${options.repairRunId}`,
+      createAiJobId("candidate-cv-analysis-repair", parsedPayload.analysisId, options.repairRunId),
     ),
   );
 }
@@ -150,7 +163,7 @@ export async function enqueueApplicationFitScore(payload: ScoreApplicationFitPay
   return queue.add(
     "score-application-fit",
     parsedPayload,
-    getAiJobOptions(`application-fit-score:${parsedPayload.applicationAiScoreId}`),
+    getAiJobOptions(createAiJobId("application-fit-score", parsedPayload.applicationAiScoreId)),
   );
 }
 
@@ -165,7 +178,11 @@ export async function enqueueApplicationFitScoreRepair(
     "score-application-fit",
     parsedPayload,
     getAiJobOptions(
-      `application-fit-score-repair:${parsedPayload.applicationAiScoreId}:${options.repairRunId}`,
+      createAiJobId(
+        "application-fit-score-repair",
+        parsedPayload.applicationAiScoreId,
+        options.repairRunId,
+      ),
     ),
   );
 }
