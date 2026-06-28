@@ -1,6 +1,10 @@
 import { randomInt } from "node:crypto";
 import type { BillingPlanCode, Prisma } from "@07nghiep/db";
-import { BILLING_PLAN_AI_CV_QUOTA } from "./plans";
+import {
+  backfillEmployerApplicationFitScores,
+  type BackfillPrisma,
+} from "../ai-cv/backfill";
+import { BILLING_PLAN_AI_CV_QUOTA, BILLING_PLAN_CODES } from "./plans";
 import { createPayosCheckout, verifyPayosWebhookSignature } from "./payos";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -77,7 +81,7 @@ type BillingTransaction = {
   };
 };
 
-type BillingPrisma = {
+type BillingPrisma = BackfillPrisma & {
   billingPlan: {
     findFirst(args: { where: { code: BillingPlanCode; active: true } }): Promise<BillingPlanRecord | null>;
   };
@@ -464,6 +468,18 @@ export async function handlePayosWebhook({
     });
 
     if (payment) {
+      if (payment.plan.code === BILLING_PLAN_CODES.employerMonthly) {
+        try {
+          await backfillEmployerApplicationFitScores(prisma, payment.userId);
+        } catch (error) {
+          console.error("Failed to backfill employer application fit scores", {
+            userId: payment.userId,
+            paymentId: payment.id,
+            error,
+          });
+        }
+      }
+
       await createNotification({
         userId: payment.userId,
         type: "SYSTEM",

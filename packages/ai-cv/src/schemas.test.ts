@@ -157,6 +157,53 @@ describe("AI CV result schemas", () => {
     });
   });
 
+  it("normalizes candidate CV result singular aliases returned by AI", () => {
+    expect(
+      candidateCvAnalysisResultSchema.parse({
+        overallScore: 84,
+        summary: "Hồ sơ frontend có kinh nghiệm sản phẩm phù hợp.",
+        strengths: ["Có kinh nghiệm React và TypeScript"],
+        weakness: ["Chưa có nhiều bằng chứng về backend"],
+        suggestions: ["Bổ sung kết quả dự án đo lường được"],
+        extractedSkills: ["React", "TypeScript", "Accessibility"],
+        recommendedMatches: [
+          {
+            jobId: "job_1",
+            matchScore: 88,
+            reason: ["Phù hợp tốt với kỹ năng frontend bắt buộc"],
+            missingSkill: ["Thiết kế API backend"],
+          },
+        ],
+      }),
+    ).toMatchObject({
+      weaknesses: ["Chưa có nhiều bằng chứng về backend"],
+      recommendedMatches: [
+        {
+          reasons: ["Phù hợp tốt với kỹ năng frontend bắt buộc"],
+          missingSkills: ["Thiết kế API backend"],
+        },
+      ],
+    });
+  });
+
+  it("normalizes application fit result singular aliases returned by AI", () => {
+    expect(
+      applicationFitScoreResultSchema.parse({
+        score: 82,
+        recommendation: "POTENTIAL_FIT",
+        summary: "Ứng viên phù hợp với frontend nhưng còn thiếu một kỹ năng.",
+        matchedSkill: ["React"],
+        missingSkill: ["GraphQL"],
+        risk: ["Chưa thấy kinh nghiệm GraphQL rõ ràng"],
+        reasoning: "Ứng viên có nền tảng React tốt nhưng thiếu một yêu cầu chính.",
+      }),
+    ).toMatchObject({
+      matchedSkills: ["React"],
+      missingSkills: ["GraphQL"],
+      risks: ["Chưa thấy kinh nghiệm GraphQL rõ ràng"],
+    });
+  });
+
   it("rejects scores outside the 0-100 range", () => {
     expect(() =>
       applicationFitScoreResultSchema.parse({

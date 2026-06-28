@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@07nghiep/db";
+import type { Prisma, PrismaClient } from "@07nghiep/db";
 import {
   enqueueApplicationFitScore,
   enqueueApplicationFitScoreRepair,
@@ -18,7 +18,11 @@ export async function enqueueCandidateAnalysisSafely(prisma: PrismaClient, analy
 }
 
 export async function enqueueApplicationFitSafely(
-  prisma: PrismaClient,
+  prisma: {
+    applicationAiScore: {
+      update(args: Prisma.ApplicationAiScoreUpdateArgs): Promise<unknown>;
+    };
+  },
   applicationAiScoreId: string,
 ) {
   try {

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { backfillEmployerApplicationFitScores } from "../ai-cv/backfill";
 import { createPayosCheckout, verifyPayosWebhookSignature } from "./payos";
 import { createCheckoutPayment, createPayosOrderCode, getNextBillingPeriod, handlePayosWebhook } from "./payments";
 
@@ -17,8 +18,13 @@ vi.mock("../notifications/service", () => ({
   escapeHtml: (value: string) => value,
 }));
 
+vi.mock("../ai-cv/backfill", () => ({
+  backfillEmployerApplicationFitScores: vi.fn().mockResolvedValue({ created: 0 }),
+}));
+
 const mockedCreatePayosCheckout = vi.mocked(createPayosCheckout);
 const mockedVerifyPayosWebhookSignature = vi.mocked(verifyPayosWebhookSignature);
+const mockedBackfillEmployerApplicationFitScores = vi.mocked(backfillEmployerApplicationFitScores);
 
 const fixedNow = new Date("2026-06-27T10:00:00.000Z");
 
@@ -105,6 +111,13 @@ function createMockPrisma(paymentOverrides: Record<string, unknown> = {}) {
       create: vi.fn(),
     },
     user: {
+      update: vi.fn(),
+    },
+    application: {
+      findMany: vi.fn(),
+    },
+    applicationAiScore: {
+      create: vi.fn(),
       update: vi.fn(),
     },
     $transaction: vi.fn(async (callback) => callback(tx)),
@@ -262,6 +275,7 @@ describe("handlePayosWebhook", () => {
       where: { id: "user_1" },
       data: { role: "EMPLOYER" },
     });
+    expect(mockedBackfillEmployerApplicationFitScores).toHaveBeenCalledWith(prisma, "user_1");
   });
 
   it("creates a verified organization profile from the approved business application after employer payment", async () => {
@@ -339,5 +353,6 @@ describe("handlePayosWebhook", () => {
       },
     });
     expect(tx.user.update).not.toHaveBeenCalled();
+    expect(mockedBackfillEmployerApplicationFitScores).not.toHaveBeenCalled();
   });
 });

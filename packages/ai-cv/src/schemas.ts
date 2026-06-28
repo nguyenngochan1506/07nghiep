@@ -1,5 +1,34 @@
 import { z } from "zod";
 
+type JsonRecord = Record<string, unknown>;
+type ArrayAlias = readonly [alias: string, target: string];
+
+function isJsonRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeArrayAliases(value: unknown, aliases: readonly ArrayAlias[]) {
+  if (!isJsonRecord(value)) {
+    return value;
+  }
+
+  let normalized: JsonRecord | undefined;
+
+  for (const [alias, target] of aliases) {
+    if (!(alias in value) || !Array.isArray(value[alias])) {
+      continue;
+    }
+
+    normalized ??= { ...value };
+    if (!(target in normalized)) {
+      normalized[target] = normalized[alias];
+    }
+    delete normalized[alias];
+  }
+
+  return normalized ?? value;
+}
+
 export const jobForMatchingSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -47,26 +76,44 @@ export const applicationFitScoreInputSchema = z.object({
   job: jobForMatchingSchema,
 });
 
-export const candidateJobMatchSchema = z
-  .object({
-    jobId: z.string(),
-    matchScore: z.number().int().min(0).max(100),
-    reasons: z.array(z.string()).max(5),
-    missingSkills: z.array(z.string()).max(10),
-  })
-  .strict();
+const candidateJobMatchArrayAliases = [
+  ["reason", "reasons"],
+  ["missingSkill", "missingSkills"],
+] as const satisfies readonly ArrayAlias[];
 
-export const candidateCvAnalysisResultSchema = z
-  .object({
-    overallScore: z.number().int().min(0).max(100),
-    summary: z.string().min(1),
-    strengths: z.array(z.string()).max(10),
-    weaknesses: z.array(z.string()).max(10),
-    suggestions: z.array(z.string()).max(12),
-    extractedSkills: z.array(z.string()).max(50),
-    recommendedMatches: z.array(candidateJobMatchSchema).max(20),
-  })
-  .strict();
+export const candidateJobMatchSchema = z.preprocess(
+  (value) => normalizeArrayAliases(value, candidateJobMatchArrayAliases),
+  z
+    .object({
+      jobId: z.string(),
+      matchScore: z.number().int().min(0).max(100),
+      reasons: z.array(z.string()).max(5),
+      missingSkills: z.array(z.string()).max(10),
+    })
+    .strict(),
+);
+
+const candidateCvAnalysisArrayAliases = [
+  ["strength", "strengths"],
+  ["weakness", "weaknesses"],
+  ["suggestion", "suggestions"],
+  ["extractedSkill", "extractedSkills"],
+] as const satisfies readonly ArrayAlias[];
+
+export const candidateCvAnalysisResultSchema = z.preprocess(
+  (value) => normalizeArrayAliases(value, candidateCvAnalysisArrayAliases),
+  z
+    .object({
+      overallScore: z.number().int().min(0).max(100),
+      summary: z.string().min(1),
+      strengths: z.array(z.string()).max(10),
+      weaknesses: z.array(z.string()).max(10),
+      suggestions: z.array(z.string()).max(12),
+      extractedSkills: z.array(z.string()).max(50),
+      recommendedMatches: z.array(candidateJobMatchSchema).max(20),
+    })
+    .strict(),
+);
 
 function normalizeApplicationRecommendation(value: unknown) {
   if (typeof value !== "string") {
@@ -79,20 +126,29 @@ function normalizeApplicationRecommendation(value: unknown) {
     .replace(/[\s-]+/g, "_");
 }
 
-export const applicationFitScoreResultSchema = z
-  .object({
-    score: z.number().int().min(0).max(100),
-    recommendation: z.preprocess(
-      normalizeApplicationRecommendation,
-      z.enum(["STRONG_FIT", "POTENTIAL_FIT", "WEAK_FIT"]),
-    ),
-    summary: z.string().min(1),
-    matchedSkills: z.array(z.string()).max(30),
-    missingSkills: z.array(z.string()).max(30),
-    risks: z.array(z.string()).max(10),
-    reasoning: z.string().min(1),
-  })
-  .strict();
+const applicationFitScoreArrayAliases = [
+  ["matchedSkill", "matchedSkills"],
+  ["missingSkill", "missingSkills"],
+  ["risk", "risks"],
+] as const satisfies readonly ArrayAlias[];
+
+export const applicationFitScoreResultSchema = z.preprocess(
+  (value) => normalizeArrayAliases(value, applicationFitScoreArrayAliases),
+  z
+    .object({
+      score: z.number().int().min(0).max(100),
+      recommendation: z.preprocess(
+        normalizeApplicationRecommendation,
+        z.enum(["STRONG_FIT", "POTENTIAL_FIT", "WEAK_FIT"]),
+      ),
+      summary: z.string().min(1),
+      matchedSkills: z.array(z.string()).max(30),
+      missingSkills: z.array(z.string()).max(30),
+      risks: z.array(z.string()).max(10),
+      reasoning: z.string().min(1),
+    })
+    .strict(),
+);
 
 export type CandidateCvAnalysisInput = z.infer<typeof candidateCvAnalysisInputSchema>;
 export type ApplicationFitScoreInput = z.infer<typeof applicationFitScoreInputSchema>;
