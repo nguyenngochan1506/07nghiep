@@ -414,6 +414,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@07nghiep/ai-cv':
+        specifier: workspace:*
+        version: link:../../packages/ai-cv
       '@07nghiep/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -423,6 +426,9 @@ importers:
       '@07nghiep/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@07nghiep/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@07nghiep/storage':
         specifier: workspace:*
         version: link:../../packages/storage

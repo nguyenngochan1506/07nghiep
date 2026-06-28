@@ -26,8 +26,10 @@
   },
   "dependencies": {
     "@07nghiep/auth": "workspace:*",
+    "@07nghiep/ai-cv": "workspace:*",
     "@07nghiep/db": "workspace:*",
     "@07nghiep/env": "workspace:*",
+    "@07nghiep/queue": "workspace:*",
     "@07nghiep/storage": "workspace:*",
     "@hono/node-server": "^1.14.4",
     "@hono/trpc-server": "^0.4.0",
