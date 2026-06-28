@@ -1,6 +1,7 @@
 import type { AiCvProvider } from "@07nghiep/ai-cv/provider";
 import type { Prisma } from "@07nghiep/db";
 
+import { errorWorker, logWorker, warnWorker } from "../lib/log";
 import { extractPdfTextFromUrl } from "../lib/resume-text";
 
 type WorkerPrisma = {
@@ -44,6 +45,9 @@ export async function handleScoreApplicationFit(
   applicationAiScoreId: string,
   options: AiJobHandlerOptions = {},
 ) {
+  const startedAt = Date.now();
+  logWorker("application fit score lookup started", { applicationAiScoreId });
+
   const score = await prisma.applicationAiScore.findUnique({
     where: { id: applicationAiScoreId },
     include: {
@@ -61,13 +65,27 @@ export async function handleScoreApplicationFit(
     },
   });
 
-  if (!score || score.status === "COMPLETED") {
+  if (!score) {
+    warnWorker("application fit score skipped because record is missing", {
+      applicationAiScoreId,
+    });
+    return;
+  }
+
+  if (score.status === "COMPLETED") {
+    logWorker("application fit score skipped because it is already completed", {
+      applicationAiScoreId,
+    });
     return;
   }
 
   const resumeUrl = score.application.resumeUrl ?? score.application.candidate.profile?.resumeUrl;
 
   if (!resumeUrl) {
+    warnWorker("application fit score failed because resume URL is missing", {
+      applicationAiScoreId,
+      applicationId: score.applicationId,
+    });
     await prisma.applicationAiScore.update({
       where: { id: applicationAiScoreId },
       data: {
@@ -79,6 +97,12 @@ export async function handleScoreApplicationFit(
     return;
   }
 
+  logWorker("application fit score marked processing", {
+    applicationAiScoreId,
+    applicationId: score.applicationId,
+    jobId: score.application.jobId,
+    previousStatus: score.status,
+  });
   await prisma.applicationAiScore.update({
     where: { id: applicationAiScoreId },
     data: {
@@ -90,8 +114,22 @@ export async function handleScoreApplicationFit(
   });
 
   try {
+    logWorker("application fit resume extraction started", {
+      applicationAiScoreId,
+      applicationId: score.applicationId,
+    });
     const resume = await extractPdfTextFromUrl(resumeUrl);
+    logWorker("application fit resume extraction completed", {
+      applicationAiScoreId,
+      textLength: resume.text.length,
+    });
+
     const { application } = score;
+    logWorker("application fit AI scoring started", {
+      applicationAiScoreId,
+      applicationId: application.id,
+      jobId: application.job.id,
+    });
     const result = await provider.scoreApplicationFit({
       resumeText: resume.text,
       coverLetter: application.coverLetter,
@@ -115,6 +153,11 @@ export async function handleScoreApplicationFit(
         experienceLevel: application.job.experienceLevel,
       },
     });
+    logWorker("application fit AI scoring completed", {
+      applicationAiScoreId,
+      score: result.score,
+      recommendation: result.recommendation,
+    });
 
     await prisma.applicationAiScore.update({
       where: { id: applicationAiScoreId },
@@ -131,8 +174,15 @@ export async function handleScoreApplicationFit(
         completedAt: new Date(),
       },
     });
+    logWorker("application fit score persisted", {
+      applicationAiScoreId,
+      durationMs: Date.now() - startedAt,
+    });
   } catch (error) {
     if (!options.finalAttempt) {
+      errorWorker("application fit score attempt failed; BullMQ will retry", error, {
+        applicationAiScoreId,
+      });
       await prisma.applicationAiScore.update({
         where: { id: applicationAiScoreId },
         data: {
@@ -143,6 +193,9 @@ export async function handleScoreApplicationFit(
       throw error;
     }
 
+    errorWorker("application fit score final attempt failed", error, {
+      applicationAiScoreId,
+    });
     await prisma.applicationAiScore.update({
       where: { id: applicationAiScoreId },
       data: {
@@ -150,6 +203,10 @@ export async function handleScoreApplicationFit(
         errorMessage: getErrorMessage(error),
         completedAt: new Date(),
       },
+    });
+    logWorker("application fit score marked failed", {
+      applicationAiScoreId,
+      durationMs: Date.now() - startedAt,
     });
     throw error;
   }

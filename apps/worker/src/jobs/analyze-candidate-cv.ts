@@ -2,6 +2,7 @@ import type { AiCvProvider } from "@07nghiep/ai-cv/provider";
 import type { Prisma, PrismaClient } from "@07nghiep/db";
 
 import { refundCandidateCvQuota } from "../lib/quota";
+import { errorWorker, logWorker, warnWorker } from "../lib/log";
 import { extractPdfTextFromUrl } from "../lib/resume-text";
 
 type WorkerPrisma = {
@@ -41,6 +42,9 @@ export async function handleAnalyzeCandidateCv(
   analysisId: string,
   options: AiJobHandlerOptions = {},
 ) {
+  const startedAt = Date.now();
+  logWorker("candidate CV analysis lookup started", { analysisId });
+
   const analysis = await prisma.candidateCvAnalysis.findUnique({
     where: { id: analysisId },
     include: {
@@ -50,10 +54,20 @@ export async function handleAnalyzeCandidateCv(
     },
   });
 
-  if (!analysis || analysis.status === "COMPLETED") {
+  if (!analysis) {
+    warnWorker("candidate CV analysis skipped because record is missing", { analysisId });
     return;
   }
 
+  if (analysis.status === "COMPLETED") {
+    logWorker("candidate CV analysis skipped because it is already completed", { analysisId });
+    return;
+  }
+
+  logWorker("candidate CV analysis marked processing", {
+    analysisId,
+    previousStatus: analysis.status,
+  });
   await prisma.candidateCvAnalysis.update({
     where: { id: analysisId },
     data: {
@@ -65,7 +79,14 @@ export async function handleAnalyzeCandidateCv(
   });
 
   try {
+    logWorker("candidate CV resume extraction started", { analysisId });
     const resume = await extractPdfTextFromUrl(analysis.resumeUrl);
+    logWorker("candidate CV resume extraction completed", {
+      analysisId,
+      textLength: resume.text.length,
+    });
+
+    logWorker("candidate CV open jobs lookup started", { analysisId, limit: 30 });
     const jobs = await prisma.job.findMany({
       where: { status: "OPEN" },
       orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
@@ -74,6 +95,12 @@ export async function handleAnalyzeCandidateCv(
         organization: { select: { name: true } },
         skills: { select: { skill: true } },
       },
+    });
+    logWorker("candidate CV open jobs lookup completed", { analysisId, jobsCount: jobs.length });
+
+    logWorker("candidate CV AI analysis started", {
+      analysisId,
+      jobsCount: jobs.length,
     });
     const result = await provider.analyzeCandidateCv({
       resumeText: resume.text,
@@ -97,6 +124,11 @@ export async function handleAnalyzeCandidateCv(
         experienceLevel: job.experienceLevel,
       })),
     });
+    logWorker("candidate CV AI analysis completed", {
+      analysisId,
+      overallScore: result.overallScore,
+      recommendedMatchesCount: result.recommendedMatches.length,
+    });
 
     await prisma.candidateCvAnalysis.update({
       where: { id: analysisId },
@@ -114,8 +146,15 @@ export async function handleAnalyzeCandidateCv(
         completedAt: new Date(),
       },
     });
+    logWorker("candidate CV analysis persisted", {
+      analysisId,
+      durationMs: Date.now() - startedAt,
+    });
   } catch (error) {
     if (!options.finalAttempt) {
+      errorWorker("candidate CV analysis attempt failed; BullMQ will retry", error, {
+        analysisId,
+      });
       await prisma.candidateCvAnalysis.update({
         where: { id: analysisId },
         data: {
@@ -126,6 +165,9 @@ export async function handleAnalyzeCandidateCv(
       throw error;
     }
 
+    errorWorker("candidate CV analysis final attempt failed; refunding quota", error, {
+      analysisId,
+    });
     await refundCandidateCvQuota(prisma as unknown as PrismaClient, analysisId);
     await prisma.candidateCvAnalysis.update({
       where: { id: analysisId },
@@ -134,6 +176,10 @@ export async function handleAnalyzeCandidateCv(
         errorMessage: getErrorMessage(error),
         completedAt: new Date(),
       },
+    });
+    logWorker("candidate CV analysis marked failed", {
+      analysisId,
+      durationMs: Date.now() - startedAt,
     });
     throw error;
   }
