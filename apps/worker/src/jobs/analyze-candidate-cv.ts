@@ -3,7 +3,7 @@ import type { Prisma, PrismaClient } from "@07nghiep/db";
 
 import { refundCandidateCvQuota } from "../lib/quota";
 import { errorWorker, logWorker, warnWorker } from "../lib/log";
-import { extractPdfTextFromUrl } from "../lib/resume-text";
+import { extractResumeTextFromUrl } from "../lib/resume-text";
 
 type WorkerPrisma = {
   candidateCvAnalysis: {
@@ -80,7 +80,7 @@ export async function handleAnalyzeCandidateCv(
 
   try {
     logWorker("candidate CV resume extraction started", { analysisId });
-    const resume = await extractPdfTextFromUrl(analysis.resumeUrl);
+    const resume = await extractResumeTextFromUrl(analysis.resumeUrl);
     logWorker("candidate CV resume extraction completed", {
       analysisId,
       textLength: resume.text.length,

@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleAnalyzeCandidateCv } from "./analyze-candidate-cv";
 
 vi.mock("../lib/resume-text", () => ({
-  extractPdfTextFromUrl: vi.fn(),
+  extractResumeTextFromUrl: vi.fn(),
 }));
 
 vi.mock("../lib/quota", () => ({
   refundCandidateCvQuota: vi.fn(),
 }));
 
-const { extractPdfTextFromUrl } = await import("../lib/resume-text");
+const { extractResumeTextFromUrl } = await import("../lib/resume-text");
 const { refundCandidateCvQuota } = await import("../lib/quota");
 
 function createPrismaMock() {
@@ -27,7 +27,7 @@ function createPrismaMock() {
 
 describe("handleAnalyzeCandidateCv", () => {
   beforeEach(() => {
-    vi.mocked(extractPdfTextFromUrl).mockReset();
+    vi.mocked(extractResumeTextFromUrl).mockReset();
     vi.mocked(refundCandidateCvQuota).mockReset();
   });
 
@@ -81,7 +81,7 @@ describe("handleAnalyzeCandidateCv", () => {
         experienceLevel: "MID",
       },
     ]);
-    vi.mocked(extractPdfTextFromUrl).mockResolvedValue({
+    vi.mocked(extractResumeTextFromUrl).mockResolvedValue({
       text: "Readable resume text with enough details about TypeScript, APIs, PostgreSQL, and product work.",
       hash: "resume_hash",
     });
@@ -151,7 +151,7 @@ describe("handleAnalyzeCandidateCv", () => {
       user: { profile: null },
     });
     prisma.job.findMany.mockResolvedValue([]);
-    vi.mocked(extractPdfTextFromUrl).mockResolvedValue({
+    vi.mocked(extractResumeTextFromUrl).mockResolvedValue({
       text: "Readable resume text with enough details about TypeScript, APIs, PostgreSQL, and product work.",
       hash: "resume_hash",
     });
@@ -185,7 +185,7 @@ describe("handleAnalyzeCandidateCv", () => {
       user: { profile: null },
     });
     prisma.job.findMany.mockResolvedValue([]);
-    vi.mocked(extractPdfTextFromUrl).mockResolvedValue({
+    vi.mocked(extractResumeTextFromUrl).mockResolvedValue({
       text: "Readable resume text with enough details about TypeScript, APIs, PostgreSQL, and product work.",
       hash: "resume_hash",
     });

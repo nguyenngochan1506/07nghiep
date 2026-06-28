@@ -2,7 +2,7 @@ import type { AiCvProvider } from "@07nghiep/ai-cv/provider";
 import type { Prisma } from "@07nghiep/db";
 
 import { errorWorker, logWorker, warnWorker } from "../lib/log";
-import { extractPdfTextFromUrl } from "../lib/resume-text";
+import { extractResumeTextFromUrl } from "../lib/resume-text";
 
 type WorkerPrisma = {
   applicationAiScore: {
@@ -118,7 +118,7 @@ export async function handleScoreApplicationFit(
       applicationAiScoreId,
       applicationId: score.applicationId,
     });
-    const resume = await extractPdfTextFromUrl(resumeUrl);
+    const resume = await extractResumeTextFromUrl(resumeUrl);
     logWorker("application fit resume extraction completed", {
       applicationAiScoreId,
       textLength: resume.text.length,
