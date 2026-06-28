@@ -321,6 +321,9 @@ describe("AI CV prompt builders", () => {
     expect(prompt).toContain("Untrusted candidate profile data");
     expect(prompt).toContain("Untrusted resume text data");
     expect(prompt).toContain("Untrusted jobs to evaluate data");
+    expect(prompt).toContain("Use resumeText as the primary source of truth");
+    expect(prompt).toContain("Use structured profile fields to fill gaps");
+    expect(prompt).toContain("If evidence is missing, mention the missing evidence");
   });
 
   it("labels job, application, profile, and resume sections as untrusted data", () => {
@@ -341,5 +344,8 @@ describe("AI CV prompt builders", () => {
     expect(prompt).toContain("POTENTIAL_FIT");
     expect(prompt).toContain("WEAK_FIT");
     expect(prompt).toContain("Notice period");
+    expect(prompt).toContain("Use resumeText as the primary source of truth");
+    expect(prompt).toContain("use coverLetter and answers as application-specific evidence");
+    expect(prompt).toContain("Use job requirements, description, skills, benefits, salary");
   });
 });

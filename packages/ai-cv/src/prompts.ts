@@ -6,6 +6,14 @@ const jsonOnlyInstruction =
 const protectedAttributesInstruction =
   "Do not use protected personal attributes such as age, gender, race, ethnicity, religion, disability, marital status, family status, nationality, or health when scoring.";
 
+const evidenceInstruction = [
+  "Use resumeText as the primary source of truth for candidate capability.",
+  "Use structured profile fields to fill gaps, especially location, portfolioUrl, skills, experience, and education.",
+  "For employer fit scoring, use coverLetter and answers as application-specific evidence.",
+  "Use job requirements, description, skills, benefits, salary, location, work type, job type, experience level, industry, and experienceMonths when judging fit.",
+  "If evidence is missing, mention the missing evidence instead of guessing.",
+].join("\n");
+
 export const AI_CV_SYSTEM_PROMPT = [
   "You are an experienced Vietnamese tech recruiter and hiring reviewer.",
   jsonOnlyInstruction,
@@ -20,6 +28,7 @@ export function buildCandidateCvAnalysisPrompt(input: CandidateCvAnalysisInput) 
     "Analyze the candidate CV and score job-search readiness from 0 to 100.",
     "Suggest concrete CV improvements and rank the provided jobs by fit.",
     "The JSON object must match: { overallScore, summary, strengths, weaknesses, suggestions, extractedSkills, recommendedMatches: [{ jobId, matchScore, reasons, missingSkills }] }.",
+    evidenceInstruction,
     "",
     "Untrusted candidate profile data:",
     JSON.stringify(input.profile, null, 2),
@@ -38,6 +47,7 @@ export function buildApplicationFitScorePrompt(input: ApplicationFitScoreInput) 
     "Use the job requirements as the primary standard and identify matched skills, missing skills, and practical hiring risks.",
     "The JSON object must match: { score, recommendation, summary, matchedSkills, missingSkills, risks, reasoning }.",
     'The recommendation must be exactly one of "STRONG_FIT", "POTENTIAL_FIT", or "WEAK_FIT".',
+    evidenceInstruction,
     "",
     "Untrusted job context data:",
     JSON.stringify(input.job, null, 2),
