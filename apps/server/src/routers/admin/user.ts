@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { hashPassword } from "better-auth/crypto";
 import { z } from "zod";
 
 import { adminProcedure, router } from "../../lib/api";
@@ -48,7 +49,10 @@ const addAdminNoteSchema = z.object({
   content: z.string().trim().min(1).max(2000),
 });
 
-const resetPasswordSchema = z.object({ userId: z.string() });
+const resetPasswordSchema = z.object({
+  userId: z.string(),
+  password: z.string().min(8).max(256),
+});
 
 const deleteUserSchema = z.object({ userId: z.string() });
 
@@ -364,28 +368,40 @@ export const adminUserRouter = router({
   }),
 
   resetPassword: adminProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
-    const { userId } = input;
+    const { userId, password } = input;
 
     const user = await ctx.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!user) {
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    await ctx.prisma.session.deleteMany({ where: { userId } });
-
-    const verification = await ctx.prisma.verification.create({
-      data: {
-        id: crypto.randomUUID(),
-        identifier: `admin-reset:${userId}`,
-        value: crypto.randomUUID(),
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-      },
+    const passwordHash = await hashPassword(password);
+    const credentialAccount = await ctx.prisma.account.findFirst({
+      where: { userId, providerId: "credential" },
+      select: { id: true },
     });
+
+    if (credentialAccount) {
+      await ctx.prisma.account.update({
+        where: { id: credentialAccount.id },
+        data: { password: passwordHash },
+      });
+    } else {
+      await ctx.prisma.account.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId,
+          accountId: userId,
+          providerId: "credential",
+          password: passwordHash,
+        },
+      });
+    }
+
+    await ctx.prisma.session.deleteMany({ where: { userId } });
 
     return {
       success: true,
-      resetToken: verification.value,
-      expiresAt: verification.expiresAt,
     };
   }),
 

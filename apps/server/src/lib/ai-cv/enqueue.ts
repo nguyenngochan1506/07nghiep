@@ -1,5 +1,9 @@
 import type { PrismaClient } from "@07nghiep/db";
-import { enqueueApplicationFitScore, enqueueCandidateCvAnalysis } from "@07nghiep/queue";
+import {
+  enqueueApplicationFitScore,
+  enqueueApplicationFitScoreRepair,
+  enqueueCandidateCvAnalysis,
+} from "@07nghiep/queue";
 
 export async function enqueueCandidateAnalysisSafely(prisma: PrismaClient, analysisId: string) {
   try {
@@ -25,5 +29,26 @@ export async function enqueueApplicationFitSafely(
     });
   } catch (error) {
     console.error("Failed to enqueue application fit score", { applicationAiScoreId, error });
+  }
+}
+
+export async function enqueueApplicationFitRetrySafely(
+  prisma: PrismaClient,
+  applicationAiScoreId: string,
+) {
+  try {
+    const job = await enqueueApplicationFitScoreRepair(
+      { applicationAiScoreId },
+      { repairRunId: new Date().toISOString() },
+    );
+    await prisma.applicationAiScore.update({
+      where: { id: applicationAiScoreId },
+      data: { queueJobId: String(job.id) },
+    });
+  } catch (error) {
+    console.error("Failed to enqueue application fit score retry", {
+      applicationAiScoreId,
+      error,
+    });
   }
 }

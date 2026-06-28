@@ -98,6 +98,50 @@ describe("AI CV result schemas", () => {
     ).toThrow();
   });
 
+  it("normalizes application fit recommendation casing and separators", () => {
+    expect(
+      applicationFitScoreResultSchema.parse({
+        score: 82,
+        recommendation: "Strong Fit",
+        summary: "Relevant frontend experience with a few gaps.",
+        matchedSkills: ["React"],
+        missingSkills: ["GraphQL"],
+        risks: [],
+        reasoning: "The candidate matches the core frontend requirements.",
+      }),
+    ).toMatchObject({
+      recommendation: "STRONG_FIT",
+    });
+
+    expect(
+      applicationFitScoreResultSchema.parse({
+        score: 72,
+        recommendation: "potential-fit",
+        summary: "Potential fit with some missing requirements.",
+        matchedSkills: ["React"],
+        missingSkills: ["GraphQL"],
+        risks: [],
+        reasoning: "The candidate has relevant experience but misses one key skill.",
+      }),
+    ).toMatchObject({
+      recommendation: "POTENTIAL_FIT",
+    });
+  });
+
+  it("rejects unknown application fit recommendation values", () => {
+    expect(() =>
+      applicationFitScoreResultSchema.parse({
+        score: 82,
+        recommendation: "GOOD_FIT",
+        summary: "Unknown recommendation should be rejected.",
+        matchedSkills: ["React"],
+        missingSkills: [],
+        risks: [],
+        reasoning: "The recommendation is not in the supported enum.",
+      }),
+    ).toThrow();
+  });
+
   it("rejects extra top-level result fields", () => {
     expect(() =>
       applicationFitScoreResultSchema.parse({
@@ -177,5 +221,9 @@ describe("AI CV prompt builders", () => {
     expect(prompt).toContain("Untrusted candidate profile data");
     expect(prompt).toContain("Untrusted application context data");
     expect(prompt).toContain("Untrusted resume text data");
+    expect(prompt).toContain("recommendation must be exactly one of");
+    expect(prompt).toContain("STRONG_FIT");
+    expect(prompt).toContain("POTENTIAL_FIT");
+    expect(prompt).toContain("WEAK_FIT");
   });
 });

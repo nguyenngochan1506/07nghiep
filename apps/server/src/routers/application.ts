@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { enqueueApplicationFitSafely } from "../lib/ai-cv/enqueue";
+import { enqueueApplicationFitRetrySafely } from "../lib/ai-cv/enqueue";
 import { paidEmployerProcedure, protectedProcedure, router } from "../lib/api";
 import {
   applicationBulkUpdateStatusSchema,
@@ -172,7 +172,7 @@ export const applicationRouter = router({
             },
           });
 
-      await enqueueApplicationFitSafely(ctx.prisma, score.id);
+      await enqueueApplicationFitRetrySafely(ctx.prisma, score.id);
       return score;
     }),
 

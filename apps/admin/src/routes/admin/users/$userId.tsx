@@ -20,6 +20,16 @@ import {
   AlertDialogTrigger,
 } from "@07nghiep/ui/components/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@07nghiep/ui/components/dialog";
+import { Input } from "@07nghiep/ui/components/input";
+import { Label } from "@07nghiep/ui/components/label";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -32,8 +42,16 @@ import { Textarea } from "@07nghiep/ui/components/textarea";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, KeyRound, ShieldAlert, Trash2, UserCog } from "lucide-react";
-import { useMemo } from "react";
+import {
+  CalendarDays,
+  Copy,
+  KeyRound,
+  RefreshCw,
+  ShieldAlert,
+  Trash2,
+  UserCog,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -52,9 +70,41 @@ type AdminNoteFormValues = z.infer<typeof adminNoteSchema>;
 
 type UserRole = "ADMIN" | "EMPLOYER" | "CANDIDATE";
 
+function pickRandom(characters: string): string {
+  const random = new Uint32Array(1);
+  crypto.getRandomValues(random);
+  return characters[random[0] % characters.length];
+}
+
+function generateQuickPassword(): string {
+  const lowercase = "abcdefghijkmnopqrstuvwxyz";
+  const uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const digits = "23456789";
+  const symbols = "!@#$%&*?";
+  const allCharacters = lowercase + uppercase + digits + symbols;
+  const password = [
+    pickRandom(lowercase),
+    pickRandom(uppercase),
+    pickRandom(digits),
+    pickRandom(symbols),
+    ...Array.from({ length: 10 }, () => pickRandom(allCharacters)),
+  ];
+
+  for (let index = password.length - 1; index > 0; index -= 1) {
+    const random = new Uint32Array(1);
+    crypto.getRandomValues(random);
+    const swapIndex = random[0] % (index + 1);
+    [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
+  }
+
+  return password.join("");
+}
+
 function AdminUserDetailPage() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
   const detailQuery = useQuery(trpc.admin.users.getDetail.queryOptions({ id: userId }));
   const updateRoleMutation = useMutation(trpc.admin.users.updateRole.mutationOptions());
@@ -140,12 +190,27 @@ function AdminUserDetailPage() {
     }
 
     try {
-      const result = await resetPasswordMutation.mutateAsync({ userId: user.id });
-      toast.success("Đã tạo phiên reset mật khẩu", {
-        description: `Token: ${result.resetToken.slice(0, 12)}...`,
+      await resetPasswordMutation.mutateAsync({ userId: user.id, password: newPassword });
+      toast.success("Đã đặt mật khẩu mới", {
+        description: "Tất cả phiên đăng nhập hiện tại của người dùng đã bị thu hồi.",
       });
+      setResetPasswordDialogOpen(false);
+      setNewPassword("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể reset mật khẩu");
+    }
+  };
+
+  const onCopyPassword = async () => {
+    if (!newPassword) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(newPassword);
+      toast.success("Đã sao chép mật khẩu");
+    } catch {
+      toast.error("Không thể sao chép mật khẩu");
     }
   };
 
@@ -297,15 +362,81 @@ function AdminUserDetailPage() {
                 {status === "ACTIVE" ? "Khóa tài khoản" : "Kích hoạt tài khoản"}
               </Button>
 
-              <Button
-                className="w-full justify-start"
-                variant="outline"
-                onClick={onResetPassword}
-                disabled={resetPasswordMutation.isPending}
-              >
-                <KeyRound className="mr-2" />
-                Reset Mật khẩu
-              </Button>
+              <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+                <Button
+                  className="w-full justify-start"
+                  variant="outline"
+                  onClick={() => setResetPasswordDialogOpen(true)}
+                  disabled={resetPasswordMutation.isPending}
+                >
+                  <KeyRound className="mr-2" />
+                  Reset Mật khẩu
+                </Button>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Đặt mật khẩu mới</DialogTitle>
+                    <DialogDescription>
+                      Admin có thể nhập mật khẩu trực tiếp hoặc tạo nhanh một mật khẩu mạnh cho
+                      người dùng này.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="admin-reset-password">Mật khẩu mới</Label>
+                      <Input
+                        id="admin-reset-password"
+                        type="text"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                        minLength={8}
+                        autoComplete="new-password"
+                        placeholder="Nhập mật khẩu mới"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Tối thiểu 8 ký tự. Sau khi lưu, user sẽ phải đăng nhập lại.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setNewPassword(generateQuickPassword())}
+                      >
+                        <RefreshCw className="mr-2" />
+                        Gen mật khẩu
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onCopyPassword}
+                        disabled={!newPassword}
+                      >
+                        <Copy className="mr-2" />
+                        Sao chép
+                      </Button>
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => setResetPasswordDialogOpen(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={onResetPassword}
+                      disabled={resetPasswordMutation.isPending || newPassword.length < 8}
+                    >
+                      Lưu mật khẩu
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               <AlertDialog>
                 <AlertDialogTrigger

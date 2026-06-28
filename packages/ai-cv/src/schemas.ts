@@ -59,10 +59,24 @@ export const candidateCvAnalysisResultSchema = z
   })
   .strict();
 
+function normalizeApplicationRecommendation(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return value
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+}
+
 export const applicationFitScoreResultSchema = z
   .object({
     score: z.number().int().min(0).max(100),
-    recommendation: z.enum(["STRONG_FIT", "POTENTIAL_FIT", "WEAK_FIT"]),
+    recommendation: z.preprocess(
+      normalizeApplicationRecommendation,
+      z.enum(["STRONG_FIT", "POTENTIAL_FIT", "WEAK_FIT"]),
+    ),
     summary: z.string().min(1),
     matchedSkills: z.array(z.string()).max(30),
     missingSkills: z.array(z.string()).max(30),

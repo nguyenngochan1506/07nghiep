@@ -2,10 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { applicationRouter } from "./application";
 import { applicationsRouter } from "./applications";
-import { enqueueApplicationFitSafely } from "../lib/ai-cv/enqueue";
+import {
+  enqueueApplicationFitRetrySafely,
+  enqueueApplicationFitSafely,
+} from "../lib/ai-cv/enqueue";
 import { hasActiveEmployerPackage } from "../lib/ai-cv/quota";
 
 vi.mock("../lib/ai-cv/enqueue", () => ({
+  enqueueApplicationFitRetrySafely: vi.fn().mockResolvedValue(undefined),
   enqueueApplicationFitSafely: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -141,6 +145,7 @@ describe("applicationsRouter AI scoring", () => {
 describe("applicationRouter AI scoring", () => {
   beforeEach(() => {
     vi.mocked(enqueueApplicationFitSafely).mockClear();
+    vi.mocked(enqueueApplicationFitRetrySafely).mockClear();
   });
 
   it("retries a failed AI score for an owned application", async () => {
@@ -179,6 +184,7 @@ describe("applicationRouter AI scoring", () => {
         missingSkills: [],
       },
     });
-    expect(enqueueApplicationFitSafely).toHaveBeenCalledWith(prisma, "score_1");
+    expect(enqueueApplicationFitRetrySafely).toHaveBeenCalledWith(prisma, "score_1");
+    expect(enqueueApplicationFitSafely).not.toHaveBeenCalled();
   });
 });

@@ -37,6 +37,7 @@ export function buildApplicationFitScorePrompt(input: ApplicationFitScoreInput) 
     "Score how well this candidate fits the applied job from 0 to 100.",
     "Use the job requirements as the primary standard and identify matched skills, missing skills, and practical hiring risks.",
     "The JSON object must match: { score, recommendation, summary, matchedSkills, missingSkills, risks, reasoning }.",
+    'The recommendation must be exactly one of "STRONG_FIT", "POTENTIAL_FIT", or "WEAK_FIT".',
     "",
     "Untrusted job context data:",
     JSON.stringify(input.job, null, 2),
