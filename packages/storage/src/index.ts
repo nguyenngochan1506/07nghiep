@@ -57,7 +57,7 @@ export function getPublicUrl(key: string): string {
   return `${base}/${key}`;
 }
 
-export type UploadType = "resume" | "avatar";
+export type UploadType = "resume" | "avatar" | "business-document" | "business-logo";
 
 export const RESUME_MIME_TYPES: readonly string[] = [
   "application/pdf",
@@ -69,11 +69,20 @@ export const RESUME_MIME_TYPES: readonly string[] = [
 const ALLOWED_MIME_TYPES: Record<UploadType, string[]> = {
   resume: [...RESUME_MIME_TYPES],
   avatar: ["image/jpeg", "image/png", "image/webp"],
+  "business-document": [
+    ...RESUME_MIME_TYPES,
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ],
+  "business-logo": ["image/jpeg", "image/png", "image/webp"],
 };
 
 export const MAX_FILE_SIZES: Record<UploadType, number> = {
   resume: 5 * 1024 * 1024, // 5MB
   avatar: 2 * 1024 * 1024, // 2MB
+  "business-document": 10 * 1024 * 1024, // 10MB
+  "business-logo": 2 * 1024 * 1024, // 2MB
 };
 
 export interface PresignedUploadResult {

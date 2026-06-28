@@ -24,10 +24,29 @@ type PaymentWithPlan = {
   id: string;
   userId: string;
   planId: string;
+  businessApplicationId: string | null;
   amountVnd: number;
   status: PaymentStatusValue;
   paymentLinkId: string | null;
   plan: BillingPlanRecord;
+};
+
+type BusinessApplicationRecord = {
+  id: string;
+  userId: string;
+  companyName: string;
+  website: string | null;
+  industry: string | null;
+  companySize: "STARTUP" | "SMALL" | "MEDIUM" | "LARGE" | "ENTERPRISE" | null;
+  foundedYear: number | null;
+  location: string | null;
+  logoUrl: string | null;
+  description: string | null;
+  taxCode: string | null;
+  legalRepresentative: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  legalDocumentUrls: string[];
 };
 
 type PaymentCreateResult = {
@@ -40,40 +59,21 @@ type PaymentCreateResult = {
 
 type BillingTransaction = {
   payment: {
-    findUnique(args: {
-      where: { orderCode: bigint };
-      include: { plan: true };
-    }): Promise<PaymentWithPlan | null>;
-    update(args: {
-      where: { id: string };
-      data: {
-        status?: PaymentStatusValue;
-        paidAt?: Date;
-        providerPayload?: Prisma.InputJsonValue;
-        paymentLinkId?: string | null;
-      };
-    }): Promise<unknown>;
+    findUnique(args: any): Promise<PaymentWithPlan | null>;
+    update(args: any): Promise<unknown>;
   };
   subscription: {
-    findFirst(args: {
-      where: { userId: string; planId: string; status: "ACTIVE" };
-      orderBy: { currentPeriodEnd: "desc" };
-      select: { currentPeriodEnd: true };
-    }): Promise<{ currentPeriodEnd: Date } | null>;
-    create(args: {
-      data: {
-        userId: string;
-        planId: string;
-        status: "ACTIVE";
-        currentPeriodStart: Date;
-        currentPeriodEnd: Date;
-        aiCvQuotaLimit: number | null;
-        aiCvQuotaUsed: number;
-      };
-    }): Promise<unknown>;
+    findFirst(args: any): Promise<{ currentPeriodEnd: Date } | null>;
+    create(args: any): Promise<unknown>;
   };
   user: {
-    update(args: { where: { id: string }; data: { role: "EMPLOYER" } }): Promise<unknown>;
+    update(args: any): Promise<unknown>;
+  };
+  businessApplication: {
+    findUnique(args: any): Promise<BusinessApplicationRecord | null>;
+  };
+  organization: {
+    upsert(args: any): Promise<unknown>;
   };
 };
 
@@ -101,7 +101,7 @@ type BillingPrisma = {
       };
     }): Promise<PaymentCreateResult>;
   };
-  $transaction<T>(callback: (tx: BillingTransaction) => Promise<T>): Promise<T>;
+  $transaction: any;
 };
 
 export type CreateCheckoutPaymentInput = {
@@ -213,6 +213,70 @@ function getWebhookPayload(body: unknown) {
   };
 }
 
+function buildBusinessVerificationNote(application: BusinessApplicationRecord) {
+  const parts = [
+    application.taxCode ? `MST: ${application.taxCode}` : null,
+    application.legalRepresentative ? `Đại diện: ${application.legalRepresentative}` : null,
+    application.contactEmail ? `Email: ${application.contactEmail}` : null,
+    application.contactPhone ? `SĐT: ${application.contactPhone}` : null,
+    `Tài liệu pháp lý: ${application.legalDocumentUrls.length}`,
+  ].filter(Boolean);
+
+  return `Đã xác minh qua yêu cầu doanh nghiệp. ${parts.join(" | ")}`;
+}
+
+async function upsertVerifiedOrganizationFromBusinessApplication({
+  tx,
+  payment,
+}: {
+  tx: BillingTransaction;
+  payment: PaymentWithPlan;
+}) {
+  if (!payment.businessApplicationId) {
+    return;
+  }
+
+  const application = await tx.businessApplication.findUnique({
+    where: { id: payment.businessApplicationId },
+  });
+
+  if (!application) {
+    return;
+  }
+
+  const rawPayload = {
+    businessApplicationId: application.id,
+    taxCode: application.taxCode,
+    legalRepresentative: application.legalRepresentative,
+    contactEmail: application.contactEmail,
+    contactPhone: application.contactPhone,
+    legalDocumentUrls: application.legalDocumentUrls,
+  } as Prisma.InputJsonObject;
+  const organizationData = {
+    name: application.companyName,
+    description: application.description,
+    website: application.website,
+    industry: application.industry,
+    companySize: application.companySize,
+    foundedYear: application.foundedYear,
+    location: application.location,
+    logoUrl: application.logoUrl,
+    verified: true,
+    verificationStatus: "VERIFIED",
+    verificationNote: buildBusinessVerificationNote(application),
+    rawPayload,
+  };
+
+  await tx.organization.upsert({
+    where: { userId: payment.userId },
+    create: {
+      userId: payment.userId,
+      ...organizationData,
+    },
+    update: organizationData,
+  });
+}
+
 export async function createCheckoutPayment({
   prisma,
   userId,
@@ -302,7 +366,7 @@ export async function handlePayosWebhook({
     return { ok: true, paymentId: payment.id, alreadyProcessed: true };
   }
 
-  const result = await prisma.$transaction<PayosWebhookResult>(async (tx) => {
+  const result: PayosWebhookResult = await prisma.$transaction(async (tx: BillingTransaction) => {
     const currentPayment = await tx.payment.findUnique({
       where: { orderCode },
       include: { plan: true },
@@ -382,6 +446,10 @@ export async function handlePayosWebhook({
       await tx.user.update({
         where: { id: currentPayment.userId },
         data: { role: "EMPLOYER" },
+      });
+      await upsertVerifiedOrganizationFromBusinessApplication({
+        tx,
+        payment: currentPayment,
       });
     }
 

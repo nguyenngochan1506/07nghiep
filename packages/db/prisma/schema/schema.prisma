@@ -461,8 +461,16 @@ model BusinessApplication {
   companyName       String
   website           String?
   industry          String?
+  companySize       CompanySize?
+  foundedYear       Int?
   location          String?
+  logoUrl           String?
   description       String?                   @db.Text
+  taxCode           String?
+  legalRepresentative String?
+  contactEmail      String?
+  contactPhone      String?
+  legalDocumentUrls String[]                  @default([])
   status            BusinessApplicationStatus @default(PENDING)
   reviewedById      String?
   reviewedAt        DateTime?

@@ -20,6 +20,7 @@ import { Route as AdminBusinessApplicationsIndexRouteImport } from './routes/adm
 import { Route as AdminBillingIndexRouteImport } from './routes/admin/billing/index'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google/callback'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AdminBusinessApplicationsApplicationIdRouteImport } from './routes/admin/business-applications/$applicationId'
 import { Route as AdminBillingPaymentsRouteImport } from './routes/admin/billing/payments'
 
 const LoginRoute = LoginRouteImport.update({
@@ -78,6 +79,12 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBusinessApplicationsApplicationIdRoute =
+  AdminBusinessApplicationsApplicationIdRouteImport.update({
+    id: '/business-applications/$applicationId',
+    path: '/business-applications/$applicationId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminBillingPaymentsRoute = AdminBillingPaymentsRouteImport.update({
   id: '/billing/payments',
   path: '/billing/payments',
@@ -90,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
+  '/admin/business-applications/$applicationId': typeof AdminBusinessApplicationsApplicationIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing/': typeof AdminBillingIndexRoute
@@ -104,6 +112,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
+  '/admin/business-applications/$applicationId': typeof AdminBusinessApplicationsApplicationIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing': typeof AdminBillingIndexRoute
@@ -119,6 +128,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
+  '/admin/business-applications/$applicationId': typeof AdminBusinessApplicationsApplicationIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing/': typeof AdminBillingIndexRoute
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/admin/billing/payments'
+    | '/admin/business-applications/$applicationId'
     | '/admin/users/$userId'
     | '/auth/google/callback'
     | '/admin/billing/'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/admin/billing/payments'
+    | '/admin/business-applications/$applicationId'
     | '/admin/users/$userId'
     | '/auth/google/callback'
     | '/admin/billing'
@@ -163,6 +175,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/admin/billing/payments'
+    | '/admin/business-applications/$applicationId'
     | '/admin/users/$userId'
     | '/auth/google/callback'
     | '/admin/billing/'
@@ -259,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/business-applications/$applicationId': {
+      id: '/admin/business-applications/$applicationId'
+      path: '/business-applications/$applicationId'
+      fullPath: '/admin/business-applications/$applicationId'
+      preLoaderRoute: typeof AdminBusinessApplicationsApplicationIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/billing/payments': {
       id: '/admin/billing/payments'
       path: '/billing/payments'
@@ -271,6 +291,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminBillingPaymentsRoute: typeof AdminBillingPaymentsRoute
+  AdminBusinessApplicationsApplicationIdRoute: typeof AdminBusinessApplicationsApplicationIdRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
   AdminBillingIndexRoute: typeof AdminBillingIndexRoute
   AdminBusinessApplicationsIndexRoute: typeof AdminBusinessApplicationsIndexRoute
@@ -281,6 +302,8 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminBillingPaymentsRoute: AdminBillingPaymentsRoute,
+  AdminBusinessApplicationsApplicationIdRoute:
+    AdminBusinessApplicationsApplicationIdRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
   AdminBillingIndexRoute: AdminBillingIndexRoute,
   AdminBusinessApplicationsIndexRoute: AdminBusinessApplicationsIndexRoute,

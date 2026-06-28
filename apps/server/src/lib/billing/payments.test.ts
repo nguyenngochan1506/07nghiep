@@ -49,6 +49,7 @@ function createMockPrisma(paymentOverrides: Record<string, unknown> = {}) {
     id: "payment_1",
     userId: "user_1",
     planId: plan.id,
+    businessApplicationId: "business_application_1",
     status: "PENDING",
     amountVnd: 299000,
     orderCode: 123456789012345n,
@@ -67,6 +68,28 @@ function createMockPrisma(paymentOverrides: Record<string, unknown> = {}) {
     },
     user: {
       update: vi.fn().mockResolvedValue({ id: payment.userId, role: "EMPLOYER" }),
+    },
+    businessApplication: {
+      findUnique: vi.fn().mockResolvedValue({
+        id: "business_application_1",
+        userId: "user_1",
+        companyName: "Betodemy",
+        website: "https://betodemy.com",
+        industry: "Education Technology",
+        companySize: "SMALL",
+        foundedYear: 2024,
+        location: "Ho Chi Minh",
+        logoUrl: "https://cdn.example.com/logo.png",
+        description: "Online education platform",
+        taxCode: "0312345678",
+        legalRepresentative: "Nguyen Van A",
+        contactEmail: "hr@betodemy.com",
+        contactPhone: "0867435475",
+        legalDocumentUrls: ["https://cdn.example.com/legal/business-license.pdf"],
+      }),
+    },
+    organization: {
+      upsert: vi.fn().mockResolvedValue({ id: "organization_1", userId: payment.userId }),
     },
   };
   const prisma = {
@@ -238,6 +261,41 @@ describe("handlePayosWebhook", () => {
     expect(tx.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
       data: { role: "EMPLOYER" },
+    });
+  });
+
+  it("creates a verified organization profile from the approved business application after employer payment", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedNow);
+    const { prisma, tx } = createMockPrisma();
+
+    const result = await handlePayosWebhook({ prisma, body: createWebhookBody() });
+
+    expect(result).toEqual({ ok: true, paymentId: "payment_1" });
+    expect(tx.businessApplication.findUnique).toHaveBeenCalledWith({
+      where: { id: "business_application_1" },
+    });
+    expect(tx.organization.upsert).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+      create: expect.objectContaining({
+        userId: "user_1",
+        name: "Betodemy",
+        description: "Online education platform",
+        website: "https://betodemy.com",
+        industry: "Education Technology",
+        companySize: "SMALL",
+        foundedYear: 2024,
+        location: "Ho Chi Minh",
+        logoUrl: "https://cdn.example.com/logo.png",
+        verified: true,
+        verificationStatus: "VERIFIED",
+        verificationNote: expect.stringContaining("0312345678"),
+      }),
+      update: expect.objectContaining({
+        name: "Betodemy",
+        verified: true,
+        verificationStatus: "VERIFIED",
+      }),
     });
   });
 

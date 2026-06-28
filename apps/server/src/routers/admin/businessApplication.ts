@@ -25,6 +25,25 @@ export const adminBusinessApplicationRouter = router({
       });
     }),
 
+  getById: adminProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const application = await ctx.prisma.businessApplication.findUnique({
+        where: { id: input.id },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          payments: { orderBy: { createdAt: "desc" } },
+          approvedPayment: true,
+        },
+      });
+
+      if (!application) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy yêu cầu" });
+      }
+
+      return application;
+    }),
+
   approve: adminProcedure
     .input(z.object({ id: z.string().min(1), note: z.string().trim().max(1000).optional() }))
     .mutation(async ({ ctx, input }) => {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle, XCircle } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CheckCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@07nghiep/ui/components/badge";
@@ -28,7 +28,6 @@ import {
   TableHeader,
   TableRow,
 } from "@07nghiep/ui/components/table";
-import { Textarea } from "@07nghiep/ui/components/textarea";
 
 import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
@@ -43,8 +42,16 @@ type BusinessApplicationRow = {
   companyName: string;
   website: string | null;
   industry: string | null;
+  companySize: string | null;
+  foundedYear: number | null;
   location: string | null;
+  logoUrl: string | null;
   description: string | null;
+  taxCode: string | null;
+  legalRepresentative: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  legalDocumentUrls: string[];
   status: BusinessApplicationStatus;
   reviewNote: string | null;
   user: { name: string; email: string };
@@ -59,7 +66,6 @@ const statusLabels: Record<BusinessApplicationStatus, string> = {
 
 function AdminBusinessApplicationsRoute() {
   const [status, setStatus] = useState<BusinessApplicationStatus | "ALL">("PENDING");
-  const [notes, setNotes] = useState<Record<string, string>>({});
   const queryOptions = trpc.admin.businessApplications.list.queryOptions({
     status: status === "ALL" ? undefined : status,
   });
@@ -70,16 +76,6 @@ function AdminBusinessApplicationsRoute() {
       trpcClient.admin.businessApplications.approve.mutate(input),
     onSuccess: () => {
       toast.success("Đã duyệt và gửi email thanh toán");
-      queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: (input: { id: string; note: string }) =>
-      trpcClient.admin.businessApplications.reject.mutate(input),
-    onSuccess: () => {
-      toast.success("Đã từ chối và gửi email thông báo");
       queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
     },
     onError: (error) => toast.error(error.message),
@@ -109,54 +105,58 @@ function AdminBusinessApplicationsRoute() {
         </Select>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Công ty</TableHead>
-              <TableHead>Người gửi</TableHead>
-              <TableHead>Mô tả</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Ghi chú</TableHead>
-              <TableHead className="w-44" />
+              <TableHead className="w-[30%]">Công ty</TableHead>
+              <TableHead className="w-[22%]">Người gửi</TableHead>
+              <TableHead className="w-[22%]">Xác minh</TableHead>
+              <TableHead className="w-[10%]">Trạng thái</TableHead>
+              <TableHead className="w-[16%]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {query.isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                   Đang tải...
                 </TableCell>
               </TableRow>
             ) : applications.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                   Không có yêu cầu phù hợp.
                 </TableCell>
               </TableRow>
             ) : (
               applications.map((application) => {
-                const note = notes[application.id] ?? application.reviewNote ?? "";
                 const latestPayment = application.payments[0] ?? null;
 
                 return (
                   <TableRow key={application.id}>
-                    <TableCell>
-                      <div className="font-medium">{application.companyName}</div>
-                      <div className="text-xs text-muted-foreground">
+                    <TableCell className="whitespace-normal">
+                      <div className="line-clamp-1 font-medium">{application.companyName}</div>
+                      <div className="line-clamp-1 text-xs text-muted-foreground">
                         {application.website ?? application.location ?? "Chưa cập nhật"}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="line-clamp-1 text-xs text-muted-foreground">
                         {application.industry ?? "Chưa có ngành"}
+                        {" · "}
+                        {application.companySize ?? "Chưa có quy mô"}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div>{application.user.name}</div>
-                      <div className="text-xs text-muted-foreground">{application.user.email}</div>
+                    <TableCell className="whitespace-normal">
+                      <div className="line-clamp-1">{application.user.name}</div>
+                      <div className="line-clamp-1 text-xs text-muted-foreground">{application.user.email}</div>
                     </TableCell>
-                    <TableCell className="max-w-sm">
-                      <p className="line-clamp-3 text-sm text-muted-foreground">
-                        {application.description}
-                      </p>
+                    <TableCell className="whitespace-normal">
+                      <div className="line-clamp-1 text-sm">MST: {application.taxCode ?? "Chưa cập nhật"}</div>
+                      <div className="line-clamp-1 text-xs text-muted-foreground">
+                        Đại diện: {application.legalRepresentative ?? "Chưa cập nhật"}
+                      </div>
+                      <div className="line-clamp-1 text-xs text-muted-foreground">
+                        {application.legalDocumentUrls.length} tài liệu pháp lý
+                      </div>
                       {latestPayment ? (
                         <a
                           className="text-xs text-primary underline-offset-4 hover:underline"
@@ -174,50 +174,30 @@ function AdminBusinessApplicationsRoute() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Textarea
-                        value={note}
-                        onChange={(event) =>
-                          setNotes((current) => ({
-                            ...current,
-                            [application.id]: event.target.value,
-                          }))
-                        }
-                        placeholder="Ghi chú duyệt hoặc lý do từ chối"
-                        className="min-h-16"
-                      />
-                    </TableCell>
-                    <TableCell>
                       <div className="flex flex-col gap-2">
+                        <Button asChild size="sm" variant="outline">
+                          <Link
+                            to="/admin/business-applications/$applicationId"
+                            params={{ applicationId: application.id }}
+                          >
+                            <Eye className="h-4 w-4" />
+                            Chi tiết
+                          </Link>
+                        </Button>
                         <Button
                           size="sm"
                           onClick={() =>
                             approveMutation.mutate({
                               id: application.id,
-                              note: note.trim() || undefined,
                             })
                           }
                           disabled={
                             approveMutation.isPending ||
-                            rejectMutation.isPending ||
                             application.status === "APPROVED"
                           }
                         >
                           <CheckCircle className="h-4 w-4" />
                           Duyệt
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            rejectMutation.mutate({
-                              id: application.id,
-                              note: note.trim() || "Thông tin doanh nghiệp chưa đủ điều kiện.",
-                            })
-                          }
-                          disabled={approveMutation.isPending || rejectMutation.isPending}
-                        >
-                          <XCircle className="h-4 w-4" />
-                          Từ chối
                         </Button>
                       </div>
                     </TableCell>
