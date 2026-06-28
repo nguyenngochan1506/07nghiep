@@ -36,6 +36,10 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown AI CV analysis error.";
 }
 
+function decimalToString(value: Prisma.Decimal | null | undefined) {
+  return value ? value.toString() : null;
+}
+
 export async function handleAnalyzeCandidateCv(
   prisma: WorkerPrisma,
   provider: AiCvProvider,
@@ -110,6 +114,8 @@ export async function handleAnalyzeCandidateCv(
         skills: analysis.user.profile?.skills ?? [],
         experience: analysis.user.profile?.experience ?? null,
         education: analysis.user.profile?.education ?? null,
+        location: analysis.user.profile?.location ?? null,
+        portfolioUrl: analysis.user.profile?.portfolioUrl ?? null,
       },
       jobs: jobs.map((job) => ({
         id: job.id,
@@ -117,11 +123,21 @@ export async function handleAnalyzeCandidateCv(
         organizationName: job.organization.name,
         description: job.description,
         requirements: job.requirements,
+        benefits: job.benefits,
         skills: job.skills.map(({ skill }) => skill),
         location: job.location,
         workType: job.workType,
         jobType: job.jobType,
         experienceLevel: job.experienceLevel,
+        industry: job.industry,
+        salaryMin: decimalToString(job.salaryMin),
+        salaryMax: decimalToString(job.salaryMax),
+        salaryCurrency: job.salaryCurrency,
+        salaryUnit: job.salaryUnit,
+        salaryNegotiable: job.salaryNegotiable,
+        experienceMonths: job.experienceMonths,
+        applicantLocation: job.applicantLocation,
+        sourceSite: job.sourceSite,
       })),
     });
     logWorker("candidate CV AI analysis completed", {

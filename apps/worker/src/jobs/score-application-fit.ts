@@ -39,6 +39,10 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown application fit scoring error.";
 }
 
+function decimalToString(value: Prisma.Decimal | null | undefined) {
+  return value ? value.toString() : null;
+}
+
 export async function handleScoreApplicationFit(
   prisma: WorkerPrisma,
   provider: AiCvProvider,
@@ -139,6 +143,8 @@ export async function handleScoreApplicationFit(
         skills: application.candidate.profile?.skills ?? [],
         experience: application.candidate.profile?.experience ?? null,
         education: application.candidate.profile?.education ?? null,
+        location: application.candidate.profile?.location ?? null,
+        portfolioUrl: application.candidate.profile?.portfolioUrl ?? null,
       },
       job: {
         id: application.job.id,
@@ -146,11 +152,21 @@ export async function handleScoreApplicationFit(
         organizationName: application.job.organization.name,
         description: application.job.description,
         requirements: application.job.requirements,
+        benefits: application.job.benefits,
         skills: application.job.skills.map(({ skill }: SkillRecord) => skill),
         location: application.job.location,
         workType: application.job.workType,
         jobType: application.job.jobType,
         experienceLevel: application.job.experienceLevel,
+        industry: application.job.industry,
+        salaryMin: decimalToString(application.job.salaryMin),
+        salaryMax: decimalToString(application.job.salaryMax),
+        salaryCurrency: application.job.salaryCurrency,
+        salaryUnit: application.job.salaryUnit,
+        salaryNegotiable: application.job.salaryNegotiable,
+        experienceMonths: application.job.experienceMonths,
+        applicantLocation: application.job.applicantLocation,
+        sourceSite: application.job.sourceSite,
       },
     });
     logWorker("application fit AI scoring completed", {

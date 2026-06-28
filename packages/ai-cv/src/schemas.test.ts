@@ -4,7 +4,11 @@ import {
   buildApplicationFitScorePrompt,
   buildCandidateCvAnalysisPrompt,
 } from "./prompts";
-import { applicationFitScoreResultSchema, candidateCvAnalysisResultSchema } from "./schemas";
+import {
+  applicationFitScoreResultSchema,
+  candidateCvAnalysisInputSchema,
+  candidateCvAnalysisResultSchema,
+} from "./schemas";
 
 const matchingJob = {
   id: "job_1",
@@ -12,11 +16,21 @@ const matchingJob = {
   organizationName: "07Nghiep",
   description: "Build candidate-facing job search workflows.",
   requirements: "React, TypeScript, accessibility",
+  benefits: "Hybrid schedule and learning budget",
   skills: ["React", "TypeScript", "Accessibility"],
   location: "Ho Chi Minh City",
   workType: "HYBRID",
   jobType: "FULL_TIME",
   experienceLevel: "MID",
+  industry: "Software",
+  salaryMin: "1000.00",
+  salaryMax: "2000.00",
+  salaryCurrency: "USD",
+  salaryUnit: "MONTH",
+  salaryNegotiable: false,
+  experienceMonths: 24,
+  applicantLocation: "Vietnam",
+  sourceSite: "internal",
 };
 
 const candidateAnalysisInput = {
@@ -26,6 +40,8 @@ const candidateAnalysisInput = {
     skills: ["React", "TypeScript", "Accessibility"],
     experience: "3 years building SaaS dashboards",
     education: "BS Computer Science",
+    location: "Ho Chi Minh City",
+    portfolioUrl: "https://portfolio.example.com",
   },
   resumeText: "React developer with TypeScript, accessibility, and dashboard experience.",
   jobs: [matchingJob],
@@ -48,6 +64,62 @@ afterEach(() => {
 });
 
 describe("AI CV result schemas", () => {
+  it("accepts richer candidate CV analysis input", () => {
+    const parsed = candidateCvAnalysisInputSchema.parse({
+      resumeText: "Readable resume text with enough content for validation to pass.",
+      profile: {
+        headline: "Backend Engineer",
+        summary: "Builds APIs",
+        skills: ["TypeScript"],
+        experience: [{ title: "Engineer" }],
+        education: [{ school: "NLU" }],
+        location: "Ho Chi Minh",
+        portfolioUrl: "https://example.com",
+      },
+      jobs: [
+        {
+          id: "job_1",
+          title: "Backend Developer",
+          organizationName: "Acme",
+          description: "Build APIs",
+          requirements: "TypeScript",
+          benefits: "Remote",
+          skills: ["TypeScript"],
+          location: "Ho Chi Minh",
+          workType: "REMOTE",
+          jobType: "FULL_TIME",
+          experienceLevel: "MID",
+          industry: "Software",
+          salaryMin: "1000.00",
+          salaryMax: "2000.00",
+          salaryCurrency: "USD",
+          salaryUnit: "MONTH",
+          salaryNegotiable: true,
+          experienceMonths: 24,
+          applicantLocation: "Vietnam",
+          sourceSite: "internal",
+        },
+      ],
+    });
+
+    expect(parsed.profile).toMatchObject({
+      location: "Ho Chi Minh",
+      portfolioUrl: "https://example.com",
+    });
+    expect(parsed.jobs[0]).toMatchObject({
+      benefits: "Remote",
+      industry: "Software",
+      salaryMin: "1000.00",
+      salaryMax: "2000.00",
+      salaryCurrency: "USD",
+      salaryUnit: "MONTH",
+      salaryNegotiable: true,
+      experienceMonths: 24,
+      applicantLocation: "Vietnam",
+      sourceSite: "internal",
+    });
+  });
+
   it("parses valid candidate CV analysis results", () => {
     expect(
       candidateCvAnalysisResultSchema.parse({

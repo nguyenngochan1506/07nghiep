@@ -6,35 +6,43 @@ export const jobForMatchingSchema = z.object({
   organizationName: z.string(),
   description: z.string(),
   requirements: z.string().nullable(),
+  benefits: z.string().nullable(),
   skills: z.array(z.string()),
   location: z.string(),
   workType: z.string(),
   jobType: z.string(),
   experienceLevel: z.string(),
+  industry: z.string().nullable(),
+  salaryMin: z.string().nullable(),
+  salaryMax: z.string().nullable(),
+  salaryCurrency: z.string().nullable(),
+  salaryUnit: z.string().nullable(),
+  salaryNegotiable: z.boolean(),
+  experienceMonths: z.number().int().nullable(),
+  applicantLocation: z.string().nullable(),
+  sourceSite: z.string().nullable(),
+});
+
+const candidateProfileForAiSchema = z.object({
+  headline: z.string().nullable(),
+  summary: z.string().nullable(),
+  skills: z.array(z.string()),
+  experience: z.unknown(),
+  education: z.unknown(),
+  location: z.string().nullable(),
+  portfolioUrl: z.string().nullable(),
 });
 
 export const candidateCvAnalysisInputSchema = z.object({
   resumeText: z.string().min(50),
-  profile: z.object({
-    headline: z.string().nullable(),
-    summary: z.string().nullable(),
-    skills: z.array(z.string()),
-    experience: z.unknown(),
-    education: z.unknown(),
-  }),
+  profile: candidateProfileForAiSchema,
   jobs: z.array(jobForMatchingSchema).max(30),
 });
 
 export const applicationFitScoreInputSchema = z.object({
   resumeText: z.string().min(50),
   coverLetter: z.string().nullable(),
-  profile: z.object({
-    headline: z.string().nullable(),
-    summary: z.string().nullable(),
-    skills: z.array(z.string()),
-    experience: z.unknown(),
-    education: z.unknown(),
-  }),
+  profile: candidateProfileForAiSchema,
   job: jobForMatchingSchema,
 });
 
