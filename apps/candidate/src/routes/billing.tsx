@@ -46,6 +46,7 @@ type BillingPlanRow = {
 };
 
 const CANDIDATE_PLUS_FALLBACK_PRICE = 49000;
+const EMPLOYER_FALLBACK_PRICE = 299000;
 
 const plusFeatures = [
   "3 lượt phân tích CV bằng AI trong mỗi chu kỳ",
@@ -58,6 +59,12 @@ const freeFeatures = [
   "Tìm kiếm và lưu việc làm",
   "Ứng tuyển các tin đang mở",
   "Theo dõi trạng thái đơn ứng tuyển",
+];
+
+const employerFeatures = [
+  "Đăng và quản lý tin tuyển dụng",
+  "AI phân tích độ phù hợp CV ứng viên với từng tin",
+  "Quản lý hồ sơ, nhắn tin và lịch phỏng vấn",
 ];
 
 const benefits = [
@@ -131,11 +138,13 @@ function BillingRoute() {
   const subscriptions = (billingQuery.data?.subscriptions ?? []) as SubscriptionRow[];
   const plans = (plansQuery.data ?? []) as BillingPlanRow[];
   const plusPlan = plans.find((plan) => plan.code === "CANDIDATE_PLUS_MONTHLY");
+  const employerPlan = plans.find((plan) => plan.code === "EMPLOYER_MONTHLY");
   const plusSubscription = subscriptions.find(
     (subscription) => subscription.plan.code === "CANDIDATE_PLUS_MONTHLY",
   );
   const plusPrice =
     plusPlan?.priceVnd ?? plusSubscription?.plan.priceVnd ?? CANDIDATE_PLUS_FALLBACK_PRICE;
+  const employerPrice = employerPlan?.priceVnd ?? EMPLOYER_FALLBACK_PRICE;
   const plusIsActive = entitlements?.candidatePlus ?? false;
 
   if (plansQuery.isLoading || billingQuery.isLoading) {
@@ -193,8 +202,8 @@ function BillingRoute() {
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="grid gap-4 md:grid-cols-2">
+      <section className="mx-auto w-full max-w-6xl px-4 py-8">
+        <div className="grid items-start gap-4 lg:grid-cols-3">
           <PlanCard
             title="Free"
             description="Dành cho ứng viên mới bắt đầu theo dõi cơ hội."
@@ -228,35 +237,16 @@ function BillingRoute() {
               </Button>
             }
           />
-        </div>
 
-        <aside className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="size-4 text-primary" />
-                Gói Plus mở khóa gì?
-              </CardTitle>
-              <CardDescription>
-                Các quyền lợi tập trung vào việc giúp bạn chọn đúng tin và gửi hồ sơ tốt hơn.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {benefits.map((benefit) => (
-                <Benefit key={benefit.title} {...benefit} />
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Cần tuyển dụng?</CardTitle>
-              <CardDescription>
-                Doanh nghiệp cần gửi yêu cầu để admin duyệt trước khi kích hoạt gói nhà tuyển dụng.
-              </CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Button asChild variant="outline" className="w-full">
+          <PlanCard
+            title="Nhà tuyển dụng"
+            description="Dành cho doanh nghiệp cần đăng tin và sàng lọc hồ sơ ứng viên."
+            price={`${formatVnd(employerPrice)}đ`}
+            period="/30 ngày"
+            badge="Doanh nghiệp"
+            features={employerFeatures}
+            action={
+              <Button asChild variant="outline" size="lg" className="w-full">
                 {isLoggedIn ? (
                   <Link to="/business-application">Đăng ký nhà tuyển dụng</Link>
                 ) : (
@@ -265,9 +255,26 @@ function BillingRoute() {
                   </Link>
                 )}
               </Button>
-            </CardFooter>
-          </Card>
-        </aside>
+            }
+          />
+        </div>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="size-4 text-primary" />
+              Gói Plus mở khóa gì?
+            </CardTitle>
+            <CardDescription>
+              Các quyền lợi tập trung vào việc giúp bạn chọn đúng tin và gửi hồ sơ tốt hơn.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            {benefits.map((benefit) => (
+              <Benefit key={benefit.title} {...benefit} />
+            ))}
+          </CardContent>
+        </Card>
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-4 pb-10">
@@ -321,7 +328,7 @@ function PlanCard({
   featured?: boolean;
 }) {
   return (
-    <Card className={featured ? "border-primary/40 shadow-md" : undefined}>
+    <Card className={featured ? "h-fit border-primary/40 shadow-md" : "h-fit"}>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
