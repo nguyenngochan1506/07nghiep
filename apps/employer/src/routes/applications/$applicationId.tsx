@@ -149,47 +149,79 @@ function AiFitScoreCard({
   aiScore,
   retrying,
   onRetry,
+  wide = false,
 }: {
   aiScore: ApplicationAiScore | null;
   retrying: boolean;
   onRetry: () => void;
+  wide?: boolean;
 }) {
   const score = aiScore?.score ?? 0;
   const risks = asStringArray(aiScore?.risks);
+  const completed = aiScore?.status === "COMPLETED";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Sparkles className="size-4 text-primary" />
-          Điểm phù hợp AI
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
+    <Card className="gap-0 overflow-hidden py-0">
+      <CardHeader className="rounded-none border-b bg-secondary/30 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="size-4" />
+            </span>
+            <div>
+              <CardTitle className="text-base">Phân tích từ AI</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Đối chiếu CV với yêu cầu tuyển dụng
+              </p>
+            </div>
+          </div>
           <Badge variant={aiScore?.status === "FAILED" ? "destructive" : "secondary"}>
             {getAiStatusLabel(aiScore?.status)}
           </Badge>
-          <Badge variant="outline">{getRecommendationLabel(aiScore?.recommendation)}</Badge>
         </div>
-
-        {aiScore?.status === "COMPLETED" ? (
+      </CardHeader>
+      <CardContent className="space-y-4 p-4">
+        {completed ? (
           <>
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-semibold tabular-nums">{score}</span>
-              <span className="pb-1 text-sm text-muted-foreground">/ 100</span>
+            <div className={wide ? "grid gap-4 md:grid-cols-[220px_1fr]" : "space-y-4"}>
+              <div className="rounded-xl border bg-background p-4">
+                <div className="flex items-start justify-between gap-3 md:block">
+                  <div>
+                    <div className="flex items-end gap-2">
+                      <span className="text-4xl font-semibold leading-none tabular-nums">
+                        {score}
+                      </span>
+                      <span className="pb-1 text-sm text-muted-foreground">/ 100</span>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">Điểm tổng hợp</p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`md:mt-4 ${getRecommendationBadgeClass(aiScore.recommendation)}`}
+                  >
+                    {getRecommendationLabel(aiScore.recommendation)}
+                  </Badge>
+                </div>
+                <Progress value={score} className="mt-4 h-2" />
+              </div>
+
+              {aiScore.summary ? (
+                <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
+                  <p className="text-sm font-medium">Nhận định</p>
+                  <p className="text-sm leading-6 text-muted-foreground">{aiScore.summary}</p>
+                </div>
+              ) : null}
             </div>
-            <Progress value={score} />
-            {aiScore.summary ? (
-              <p className="text-sm leading-6 text-muted-foreground">{aiScore.summary}</p>
-            ) : null}
-            <SkillList title="Kỹ năng phù hợp" items={aiScore.matchedSkills} />
-            <SkillList title="Kỹ năng còn thiếu" items={aiScore.missingSkills} />
-            <SkillList title="Rủi ro" items={risks} />
+
+            <div className="divide-y rounded-xl border bg-muted/10">
+              <SkillList title="Điểm khớp" items={aiScore.matchedSkills} />
+              <SkillList title="Khoảng thiếu" items={aiScore.missingSkills} />
+              <SkillList title="Rủi ro" items={risks} />
+            </div>
           </>
         ) : aiScore?.status === "FAILED" ? (
           <div className="space-y-3">
-            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p className="max-h-36 overflow-y-auto rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-6 text-destructive">
               {aiScore.errorMessage || "AI chấm điểm thất bại."}
             </p>
             <Button onClick={onRetry} disabled={retrying} className="w-full">
@@ -202,11 +234,13 @@ function AiFitScoreCard({
             </Button>
           </div>
         ) : (
-          <p className="text-sm leading-6 text-muted-foreground">
-            {aiScore
-              ? "Hồ sơ này đang chờ AI chấm điểm."
-              : "Hồ sơ này chưa được đưa vào hàng chờ AI."}
-          </p>
+          <div className="rounded-xl border border-dashed bg-muted/25 p-4">
+            <p className="text-sm leading-6 text-muted-foreground">
+              {aiScore
+                ? "Hồ sơ này đang chờ AI chấm điểm."
+                : "Hồ sơ này chưa được đưa vào hàng chờ AI."}
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -217,16 +251,20 @@ function SkillList({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium">{title}</p>
-      <div className="flex flex-wrap gap-2">
-        {items.slice(0, 10).map((item) => (
-          <Badge key={item} variant="secondary">
-            {item}
-          </Badge>
-        ))}
+    <section className="space-y-3 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium">{title}</p>
+        <span className="text-xs tabular-nums text-muted-foreground">{items.length}</span>
       </div>
-    </div>
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li key={item} className="flex min-w-0 items-start gap-2 text-sm leading-6">
+            <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary/60" />
+            <span className="min-w-0 flex-1 break-words text-muted-foreground">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -235,6 +273,19 @@ function getRecommendationLabel(value?: string | null) {
   if (value === "POTENTIAL_FIT") return "Có tiềm năng";
   if (value === "WEAK_FIT") return "Ít phù hợp";
   return "Chưa có đề xuất";
+}
+
+function getRecommendationBadgeClass(value?: string | null) {
+  if (value === "STRONG_FIT") {
+    return "border-success/30 bg-success/10 text-success";
+  }
+  if (value === "POTENTIAL_FIT") {
+    return "border-warning/30 bg-warning/10 text-warning";
+  }
+  if (value === "WEAK_FIT") {
+    return "border-destructive/30 bg-destructive/10 text-destructive";
+  }
+  return "";
 }
 
 function getAiStatusLabel(value?: string | null) {
@@ -480,6 +531,12 @@ function ApplicationDetailPage() {
                 </TabsTrigger>
               )}
               <TabsTrigger
+                value="ai-score"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
+              >
+                Phân tích của AI
+              </TabsTrigger>
+              <TabsTrigger
                 value="interviews"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-6"
               >
@@ -616,6 +673,15 @@ function ApplicationDetailPage() {
                 </Card>
               </TabsContent>
             )}
+
+            <TabsContent value="ai-score" className="pt-6 outline-none">
+              <AiFitScoreCard
+                aiScore={application.aiScore}
+                retrying={retryAiScoreMutation.isPending}
+                onRetry={() => retryAiScoreMutation.mutate()}
+                wide
+              />
+            </TabsContent>
 
             <TabsContent value="interviews" className="pt-6 outline-none">
               <div className="space-y-4">
@@ -791,12 +857,6 @@ function ApplicationDetailPage() {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          <AiFitScoreCard
-            aiScore={application.aiScore}
-            retrying={retryAiScoreMutation.isPending}
-            onRetry={() => retryAiScoreMutation.mutate()}
-          />
-
           {/* Contact Info */}
           <Card>
             <CardHeader>
