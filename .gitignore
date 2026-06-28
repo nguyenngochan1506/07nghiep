@@ -12,6 +12,8 @@ build
 .env
 .env*.local
 deploy/.env.prod
+/deploy-to-vps.sh
+/07nghiep-images*.tar.gz
 
 # IDEs and editors
 .vscode/*
