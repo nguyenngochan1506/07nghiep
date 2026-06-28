@@ -19,7 +19,7 @@ import { cn } from "@07nghiep/ui/lib/utils";
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/dashboard" },
   { icon: Users, label: "Người dùng", href: "/admin/users" },
-  { icon: Building2, label: "Duyệt công ty", href: "/admin/organizations" },
+  { icon: Building2, label: "Công ty", href: "/admin/organizations" },
   { icon: Shield, label: "Yêu cầu doanh nghiệp", href: "/admin/business-applications" },
   { icon: Briefcase, label: "Duyệt việc làm", href: "/admin/jobs" },
   { icon: CreditCard, label: "Gói thanh toán", href: "/admin/billing" },

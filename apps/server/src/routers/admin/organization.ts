@@ -1,3 +1,4 @@
+import type { Prisma } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -5,7 +6,80 @@ import { adminProcedure, router } from "../../lib/api";
 
 const verificationStatusSchema = z.enum(["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"]);
 
+const listOrganizationsSchema = z.object({
+  status: verificationStatusSchema.optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+  search: z.string().trim().optional(),
+});
+
 export const adminOrganizationRouter = router({
+  list: adminProcedure.input(listOrganizationsSchema).query(async ({ ctx, input }) => {
+    const skip = (input.page - 1) * input.pageSize;
+    const where: Prisma.OrganizationWhereInput = {};
+    const search = input.search?.trim();
+
+    if (input.status) {
+      where.verificationStatus = input.status;
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { website: { contains: search, mode: "insensitive" } },
+        { industry: { contains: search, mode: "insensitive" } },
+        { location: { contains: search, mode: "insensitive" } },
+        {
+          user: {
+            is: {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+              ],
+            },
+          },
+        },
+      ];
+    }
+
+    const [organizations, total] = await Promise.all([
+      ctx.prisma.organization.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        skip,
+        take: input.pageSize,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              jobs: true,
+            },
+          },
+        },
+      }),
+      ctx.prisma.organization.count({ where }),
+    ]);
+
+    return {
+      organizations: organizations.map((organization) => ({
+        ...organization,
+        jobsCount: organization._count.jobs,
+      })),
+      pagination: {
+        page: input.page,
+        pageSize: input.pageSize,
+        total,
+        totalPages: Math.ceil(total / input.pageSize),
+      },
+    };
+  }),
+
   listVerificationRequests: adminProcedure
     .input(
       z.object({
