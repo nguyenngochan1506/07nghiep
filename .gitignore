@@ -62,6 +62,7 @@ venv/
 
 .cursor/
 .copilot/
+.worktrees/
 apps/server/src/fix-db.ts
 apps/server/src/seed-job.ts
 BAO_CAO_HE_THONG.md
