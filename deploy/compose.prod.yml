@@ -1,0 +1,106 @@
+services:
+  postgres:
+    image: postgres:17.9-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-07nghiep}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-07nghiep}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.app
+      args:
+        APP_FILTER: "@07nghiep/server"
+        APP_NAME: server
+    env_file:
+      - .env.prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      [
+        "node",
+        "node_modules/prisma/build/index.js",
+        "migrate",
+        "deploy",
+        "--config",
+        "node_modules/@07nghiep/db/prisma.config.ts",
+      ]
+    restart: "no"
+
+  server:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.app
+      args:
+        APP_FILTER: "@07nghiep/server"
+        APP_NAME: server
+    env_file:
+      - .env.prod
+    ports:
+      - "${SERVER_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.app
+      args:
+        APP_FILTER: "@07nghiep/worker"
+        APP_NAME: worker
+    env_file:
+      - .env.prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args:
+        VITE_SERVER_URL: ${PUBLIC_SERVER_URL:-http://localhost:3000}
+    environment:
+      STATIC_SITES: 3001:/app/admin,3002:/app/employer,3003:/app/candidate
+    ports:
+      - "${ADMIN_PORT:-3001}:3001"
+      - "${EMPLOYER_PORT:-3002}:3002"
+      - "${CANDIDATE_PORT:-3003}:3003"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

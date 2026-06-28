@@ -1,0 +1,46 @@
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+ENV DATABASE_URL=postgresql://postgres:password@localhost:5432/07nghiep
+
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.json ./
+COPY apps/server/package.json apps/server/package.json
+COPY apps/worker/package.json apps/worker/package.json
+COPY apps/admin/package.json apps/admin/package.json
+COPY apps/candidate/package.json apps/candidate/package.json
+COPY apps/employer/package.json apps/employer/package.json
+COPY packages/auth/package.json packages/auth/package.json
+COPY packages/db/package.json packages/db/package.json
+COPY packages/env/package.json packages/env/package.json
+COPY packages/ai-cv/package.json packages/ai-cv/package.json
+COPY packages/queue/package.json packages/queue/package.json
+COPY packages/storage/package.json packages/storage/package.json
+COPY packages/ui/package.json packages/ui/package.json
+COPY packages/config/package.json packages/config/package.json
+COPY packages/db/prisma.config.ts packages/db/prisma.config.ts
+COPY packages/db/prisma packages/db/prisma
+
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+ARG VITE_SERVER_URL=http://localhost:3000
+
+RUN VITE_APP_ROLE=ADMIN VITE_SERVER_URL=${VITE_SERVER_URL} pnpm --filter admin build \
+  && VITE_APP_ROLE=EMPLOYER VITE_SERVER_URL=${VITE_SERVER_URL} pnpm --filter employer build \
+  && VITE_APP_ROLE=CANDIDATE VITE_SERVER_URL=${VITE_SERVER_URL} pnpm --filter candidate build
+
+FROM node:24-alpine AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV STATIC_SITES=3001:/app/admin,3002:/app/employer,3003:/app/candidate
+
+COPY --from=builder /app/apps/admin/dist /app/admin
+COPY --from=builder /app/apps/employer/dist /app/employer
+COPY --from=builder /app/apps/candidate/dist /app/candidate
+COPY deploy/static-server.mjs /app/static-server.mjs
+
+CMD ["node", "/app/static-server.mjs"]

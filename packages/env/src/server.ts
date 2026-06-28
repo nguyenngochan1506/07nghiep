@@ -3,6 +3,12 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 const urlList = z.string().transform((val) => val.split(",").map((s) => s.trim()));
+const booleanString = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  if (value.toLowerCase() === "true") return true;
+  if (value.toLowerCase() === "false") return false;
+  return value;
+}, z.boolean());
 
 export const env = createEnv({
   server: {
@@ -14,7 +20,7 @@ export const env = createEnv({
     CORS_ORIGIN: urlList,
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     SERVER_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-    SEED_DEMO_USERS: z.coerce.boolean().default(false),
+    SEED_DEMO_USERS: booleanString.default(false),
     CANDIDATE_APP_URL: z.string().url().optional(),
     EMPLOYER_APP_URL: z.string().url().optional(),
     PAYOS_CLIENT_ID: z.string().min(1).optional(),

@@ -5,10 +5,10 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsdown",
     "check-types": "tsc -b",
     "dev": "DOTENV_CONFIG_PATH=../server/.env tsx watch src/index.ts",
-    "start": "DOTENV_CONFIG_PATH=../server/.env node dist/index.js",
+    "start": "node dist/index.mjs",
     "test": "vitest run src"
   },
   "dependencies": {
@@ -26,6 +26,7 @@
     "@07nghiep/config": "workspace:*",
     "@types/node": "catalog:",
     "@types/pdf-parse": "^1.1.5",
+    "tsdown": "^0.16.5",
     "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^4.1.9"
