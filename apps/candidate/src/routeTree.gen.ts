@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as InterviewsRouteImport } from './routes/interviews'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CvAnalysisRouteImport } from './routes/cv-analysis'
 import { Route as BusinessApplicationRouteImport } from './routes/business-application'
 import { Route as BillingRouteImport } from './routes/billing'
 import { Route as IndexRouteImport } from './routes/index'
@@ -65,6 +66,11 @@ const HomeRoute = HomeRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CvAnalysisRoute = CvAnalysisRouteImport.update({
+  id: '/cv-analysis',
+  path: '/cv-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessApplicationRoute = BusinessApplicationRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/billing': typeof BillingRouteWithChildren
   '/business-application': typeof BusinessApplicationRoute
+  '/cv-analysis': typeof CvAnalysisRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/billing': typeof BillingRouteWithChildren
   '/business-application': typeof BusinessApplicationRoute
+  '/cv-analysis': typeof CvAnalysisRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/billing': typeof BillingRouteWithChildren
   '/business-application': typeof BusinessApplicationRoute
+  '/cv-analysis': typeof CvAnalysisRoute
   '/dashboard': typeof DashboardRoute
   '/home': typeof HomeRoute
   '/interviews': typeof InterviewsRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/'
     | '/billing'
     | '/business-application'
+    | '/cv-analysis'
     | '/dashboard'
     | '/home'
     | '/interviews'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/'
     | '/billing'
     | '/business-application'
+    | '/cv-analysis'
     | '/dashboard'
     | '/home'
     | '/interviews'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/'
     | '/billing'
     | '/business-application'
+    | '/cv-analysis'
     | '/dashboard'
     | '/home'
     | '/interviews'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BillingRoute: typeof BillingRouteWithChildren
   BusinessApplicationRoute: typeof BusinessApplicationRoute
+  CvAnalysisRoute: typeof CvAnalysisRoute
   DashboardRoute: typeof DashboardRoute
   HomeRoute: typeof HomeRoute
   InterviewsRoute: typeof InterviewsRoute
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cv-analysis': {
+      id: '/cv-analysis'
+      path: '/cv-analysis'
+      fullPath: '/cv-analysis'
+      preLoaderRoute: typeof CvAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/business-application': {
@@ -501,6 +521,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BillingRoute: BillingRouteWithChildren,
   BusinessApplicationRoute: BusinessApplicationRoute,
+  CvAnalysisRoute: CvAnalysisRoute,
   DashboardRoute: DashboardRoute,
   HomeRoute: HomeRoute,
   InterviewsRoute: InterviewsRoute,

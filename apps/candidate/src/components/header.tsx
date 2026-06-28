@@ -40,6 +40,7 @@ export default function Header() {
   ];
 
   const protectedLinks: NavLink[] = [
+    { to: "/cv-analysis", label: "AI CV" },
     { to: "/applications", label: "Đơn ứng tuyển" },
     { to: "/messages", label: "Tin nhắn", hasMessageBadge: true },
     { to: "/interviews", label: "Lịch PV" },
