@@ -56,9 +56,6 @@ export default function Sidebar({ children }: SidebarProps) {
         <div className="flex h-16 items-center gap-2 border-b px-4">
           <Link to="/dashboard" className="flex items-center gap-2">
             <img src="/07logo.png" alt="07nghiep" className="h-12 w-auto object-contain" />
-            <span className="ml-1 rounded-sm bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground">
-              Admin
-            </span>
           </Link>
         </div>
 

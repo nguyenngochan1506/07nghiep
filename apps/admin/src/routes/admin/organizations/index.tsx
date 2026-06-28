@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle, Search, XCircle } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CheckCircle, Eye, Search, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -218,8 +218,18 @@ function AdminOrganizationsRoute() {
                     </TableCell>
                     <TableCell>{formatDate(organization.updatedAt)}</TableCell>
                     <TableCell>
-                      {canReview ? (
-                        <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2">
+                        <Button asChild size="sm" variant="outline">
+                          <Link
+                            to="/admin/organizations/$organizationId"
+                            params={{ organizationId: organization.id }}
+                          >
+                            <Eye className="h-4 w-4" />
+                            Chi tiết
+                          </Link>
+                        </Button>
+                        {canReview ? (
+                          <>
                           <Button
                             size="sm"
                             onClick={() => approveMutation.mutate({ id: organization.id })}
@@ -242,10 +252,9 @@ function AdminOrganizationsRoute() {
                             <XCircle className="h-4 w-4" />
                             Từ chối
                           </Button>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Đã xác minh</span>
-                      )}
+                          </>
+                        ) : null}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

@@ -18,9 +18,6 @@ export default function Header() {
         {/* Logo & Branding */}
         <Link to="/" className="flex items-center gap-2">
           <img src="/07logo.png" alt="07nghiep" className="h-12 w-auto object-contain" />
-          <span className="ml-1 rounded-sm bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground">
-            Admin
-          </span>
         </Link>
 
         {/* Navigation */}

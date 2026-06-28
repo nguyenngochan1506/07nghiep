@@ -20,6 +20,7 @@ import { Route as AdminBusinessApplicationsIndexRouteImport } from './routes/adm
 import { Route as AdminBillingIndexRouteImport } from './routes/admin/billing/index'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google/callback'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AdminOrganizationsOrganizationIdRouteImport } from './routes/admin/organizations/$organizationId'
 import { Route as AdminBusinessApplicationsApplicationIdRouteImport } from './routes/admin/business-applications/$applicationId'
 import { Route as AdminBillingPaymentsRouteImport } from './routes/admin/billing/payments'
 
@@ -79,6 +80,12 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOrganizationsOrganizationIdRoute =
+  AdminOrganizationsOrganizationIdRouteImport.update({
+    id: '/organizations/$organizationId',
+    path: '/organizations/$organizationId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminBusinessApplicationsApplicationIdRoute =
   AdminBusinessApplicationsApplicationIdRouteImport.update({
     id: '/business-applications/$applicationId',
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/business-applications/$applicationId': typeof AdminBusinessApplicationsApplicationIdRoute
+  '/admin/organizations/$organizationId': typeof AdminOrganizationsOrganizationIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing/': typeof AdminBillingIndexRoute
@@ -113,6 +121,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/business-applications/$applicationId': typeof AdminBusinessApplicationsApplicationIdRoute
+  '/admin/organizations/$organizationId': typeof AdminOrganizationsOrganizationIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing': typeof AdminBillingIndexRoute
@@ -129,6 +138,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/admin/billing/payments': typeof AdminBillingPaymentsRoute
   '/admin/business-applications/$applicationId': typeof AdminBusinessApplicationsApplicationIdRoute
+  '/admin/organizations/$organizationId': typeof AdminOrganizationsOrganizationIdRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/admin/billing/': typeof AdminBillingIndexRoute
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/billing/payments'
     | '/admin/business-applications/$applicationId'
+    | '/admin/organizations/$organizationId'
     | '/admin/users/$userId'
     | '/auth/google/callback'
     | '/admin/billing/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/billing/payments'
     | '/admin/business-applications/$applicationId'
+    | '/admin/organizations/$organizationId'
     | '/admin/users/$userId'
     | '/auth/google/callback'
     | '/admin/billing'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/billing/payments'
     | '/admin/business-applications/$applicationId'
+    | '/admin/organizations/$organizationId'
     | '/admin/users/$userId'
     | '/auth/google/callback'
     | '/admin/billing/'
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/organizations/$organizationId': {
+      id: '/admin/organizations/$organizationId'
+      path: '/organizations/$organizationId'
+      fullPath: '/admin/organizations/$organizationId'
+      preLoaderRoute: typeof AdminOrganizationsOrganizationIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/business-applications/$applicationId': {
       id: '/admin/business-applications/$applicationId'
       path: '/business-applications/$applicationId'
@@ -292,6 +312,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminBillingPaymentsRoute: typeof AdminBillingPaymentsRoute
   AdminBusinessApplicationsApplicationIdRoute: typeof AdminBusinessApplicationsApplicationIdRoute
+  AdminOrganizationsOrganizationIdRoute: typeof AdminOrganizationsOrganizationIdRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
   AdminBillingIndexRoute: typeof AdminBillingIndexRoute
   AdminBusinessApplicationsIndexRoute: typeof AdminBusinessApplicationsIndexRoute
@@ -304,6 +325,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBillingPaymentsRoute: AdminBillingPaymentsRoute,
   AdminBusinessApplicationsApplicationIdRoute:
     AdminBusinessApplicationsApplicationIdRoute,
+  AdminOrganizationsOrganizationIdRoute: AdminOrganizationsOrganizationIdRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
   AdminBillingIndexRoute: AdminBillingIndexRoute,
   AdminBusinessApplicationsIndexRoute: AdminBusinessApplicationsIndexRoute,

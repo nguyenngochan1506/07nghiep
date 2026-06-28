@@ -80,6 +80,49 @@ export const adminOrganizationRouter = router({
     };
   }),
 
+  getById: adminProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const organization = await ctx.prisma.organization.findUnique({
+        where: { id: input.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          jobs: {
+            orderBy: { updatedAt: "desc" },
+            take: 10,
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              location: true,
+              applicationsCount: true,
+              updatedAt: true,
+            },
+          },
+          _count: {
+            select: {
+              jobs: true,
+            },
+          },
+        },
+      });
+
+      if (!organization) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy công ty" });
+      }
+
+      return {
+        ...organization,
+        jobsCount: organization._count.jobs,
+      };
+    }),
+
   listVerificationRequests: adminProcedure
     .input(
       z.object({

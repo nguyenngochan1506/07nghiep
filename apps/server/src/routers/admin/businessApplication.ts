@@ -10,6 +10,14 @@ import {
 import { BILLING_PLAN_CODES } from "../../lib/billing/plans";
 import { createCheckoutPayment } from "../../lib/billing/payments";
 
+const safePaymentSelect = {
+  id: true,
+  status: true,
+  checkoutUrl: true,
+  amountVnd: true,
+  createdAt: true,
+};
+
 export const adminBusinessApplicationRouter = router({
   list: adminProcedure
     .input(z.object({ status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional() }))
@@ -19,8 +27,7 @@ export const adminBusinessApplicationRouter = router({
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { id: true, name: true, email: true } },
-          payments: { orderBy: { createdAt: "desc" } },
-          approvedPayment: true,
+          payments: { orderBy: { createdAt: "desc" }, select: safePaymentSelect },
         },
       });
     }),
@@ -32,8 +39,7 @@ export const adminBusinessApplicationRouter = router({
         where: { id: input.id },
         include: {
           user: { select: { id: true, name: true, email: true } },
-          payments: { orderBy: { createdAt: "desc" } },
-          approvedPayment: true,
+          payments: { orderBy: { createdAt: "desc" }, select: safePaymentSelect },
         },
       });
 
