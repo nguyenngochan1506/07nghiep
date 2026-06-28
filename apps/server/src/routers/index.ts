@@ -19,6 +19,7 @@ import { messageRouter } from "./message";
 import { savedJobRouter } from "./savedJob";
 import { billingRouter } from "./billing";
 import { businessApplicationRouter } from "./businessApplication";
+import { cvAnalysisRouter } from "./cvAnalysis";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -39,6 +40,7 @@ export const appRouter = router({
   applications: applicationsRouter,
   billing: billingRouter,
   businessApplication: businessApplicationRouter,
+  cvAnalysis: cvAnalysisRouter,
   admin: router({
     summary: adminSummaryRouter,
     users: adminUserRouter,
