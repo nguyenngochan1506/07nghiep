@@ -98,11 +98,12 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {
-        title: "Tìm việc | 07nghiep",
+        title: "07nghiep - Tìm việc làm phù hợp, ứng tuyển nhanh tại Việt Nam",
       },
       {
         name: "description",
-        content: "Cổng tìm việc 07nghiep - Tìm kiếm việc làm và ứng tuyển trực tuyến",
+        content:
+          "07nghiep giúp ứng viên tìm việc, so sánh công ty, lưu cơ hội phù hợp và theo dõi ứng tuyển trong một workspace rõ ràng.",
       },
     ],
     links: [

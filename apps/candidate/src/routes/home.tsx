@@ -32,7 +32,38 @@ import { ProvinceCombobox } from "@/components/province-combobox";
 import { type JobType, useJobs } from "@/routes/__root";
 import { trpc } from "@/utils/trpc";
 
+const SITE_URL = "https://07nghiep.site";
+const SEO_TITLE = "07nghiep - Tìm việc làm phù hợp, ứng tuyển nhanh tại Việt Nam";
+const SEO_DESCRIPTION =
+  "07nghiep giúp ứng viên tìm việc, so sánh công ty, lưu cơ hội phù hợp và theo dõi ứng tuyển trong một workspace rõ ràng.";
+const SEO_IMAGE = `${SITE_URL}/images/candidate-home/hero.webp`;
+
+export function homeSeoHead() {
+  return {
+    meta: [
+      { title: SEO_TITLE },
+      { name: "description", content: SEO_DESCRIPTION },
+      {
+        name: "keywords",
+        content: "tìm việc, việc làm, tuyển dụng, ứng tuyển, công ty, 07nghiep",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "07nghiep" },
+      { property: "og:title", content: SEO_TITLE },
+      { property: "og:description", content: SEO_DESCRIPTION },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:image", content: SEO_IMAGE },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: SEO_TITLE },
+      { name: "twitter:description", content: SEO_DESCRIPTION },
+      { name: "twitter:image", content: SEO_IMAGE },
+    ],
+    links: [{ rel: "canonical", href: SITE_URL }],
+  };
+}
+
 export const Route = createFileRoute("/home")({
+  head: homeSeoHead,
   component: HomeComponent,
 });
 
@@ -69,8 +100,8 @@ function formatStatCount(value: number | undefined) {
   return `${new Intl.NumberFormat("vi-VN").format(value)}+`;
 }
 
-function HomeComponent() {
-  const navigate = useNavigate({ from: "/home" });
+export function HomeComponent() {
+  const navigate = useNavigate();
   const { jobs, isLoading, isError } = useJobs();
   const jobStatsQuery = useQuery(trpc.job.getPublicList.queryOptions({ limit: 1 }));
   const organizationStatsQuery = useQuery(
