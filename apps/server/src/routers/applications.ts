@@ -1,6 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { enqueueApplicationFitSafely } from "../lib/ai-cv/enqueue";
+import { hasActiveEmployerPackage } from "../lib/ai-cv/quota";
 import { candidateProcedure, paidEmployerProcedure, router } from "../lib/api";
 
 const applySchema = z.object({
@@ -115,6 +117,23 @@ export const applicationsRouter = router({
         note: "Application submitted",
       },
     });
+
+    const employerHasAiScoring = await hasActiveEmployerPackage(
+      ctx.prisma,
+      created.job.organization.userId,
+    );
+
+    if (employerHasAiScoring) {
+      const score = await ctx.prisma.applicationAiScore.create({
+        data: {
+          applicationId: created.id,
+          status: "PENDING",
+          matchedSkills: [],
+          missingSkills: [],
+        },
+      });
+      await enqueueApplicationFitSafely(ctx.prisma, score.id);
+    }
 
     // Notify Employer
     const { createNotification } = await import("../lib/notifications/service");

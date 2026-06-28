@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { enqueueApplicationFitSafely } from "../lib/ai-cv/enqueue";
 import { paidEmployerProcedure, protectedProcedure, router } from "../lib/api";
 import {
   applicationBulkUpdateStatusSchema,
@@ -60,6 +61,14 @@ export const applicationRouter = router({
               image: true,
             },
           },
+          aiScore: {
+            select: {
+              id: true,
+              status: true,
+              score: true,
+              recommendation: true,
+            },
+          },
         },
         orderBy: {
           appliedAt: "desc",
@@ -97,6 +106,7 @@ export const applicationRouter = router({
             profile: true,
           },
         },
+        aiScore: true,
       },
     });
 
@@ -117,6 +127,54 @@ export const applicationRouter = router({
 
     return application;
   }),
+
+  retryAiScore: paidEmployerProcedure
+    .input(z.object({ applicationId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const application = await ctx.prisma.application.findUnique({
+        where: { id: input.applicationId },
+        include: { job: { include: { organization: true } }, aiScore: true },
+      });
+
+      if (!application) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+      }
+
+      if (application.job.organization.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this application.",
+        });
+      }
+
+      if (application.aiScore && application.aiScore.status !== "FAILED") {
+        return application.aiScore;
+      }
+
+      const score = application.aiScore
+        ? await ctx.prisma.applicationAiScore.update({
+            where: { id: application.aiScore.id },
+            data: {
+              status: "PENDING",
+              errorMessage: null,
+              startedAt: null,
+              completedAt: null,
+              matchedSkills: [],
+              missingSkills: [],
+            },
+          })
+        : await ctx.prisma.applicationAiScore.create({
+            data: {
+              applicationId: application.id,
+              status: "PENDING",
+              matchedSkills: [],
+              missingSkills: [],
+            },
+          });
+
+      await enqueueApplicationFitSafely(ctx.prisma, score.id);
+      return score;
+    }),
 
   updateStatus: paidEmployerProcedure
     .input(applicationUpdateStatusSchema)
