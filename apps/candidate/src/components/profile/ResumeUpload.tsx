@@ -10,6 +10,7 @@ import {
   type DragEvent,
   type ChangeEvent,
 } from "react";
+import { isAllowedResumeFile, RESUME_ACCEPT } from "@/lib/resume-file";
 
 type ResumeUploadProps = {
   value?: string;
@@ -42,10 +43,6 @@ function getFileNameFromUrl(url?: string) {
   } catch {
     return decodeURIComponent(url.split("/").pop() ?? "resume.pdf");
   }
-}
-
-function isPdfFile(file: File) {
-  return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 }
 
 export default function ResumeUpload({
@@ -84,8 +81,8 @@ export default function ResumeUpload({
       return;
     }
 
-    if (!isPdfFile(selectedFile)) {
-      alert("Chỉ chấp nhận file PDF.");
+    if (!isAllowedResumeFile(selectedFile)) {
+      alert("Chỉ chấp nhận file PDF, DOCX, TXT hoặc Markdown.");
       return;
     }
 
@@ -146,7 +143,9 @@ export default function ResumeUpload({
           <Upload className="size-5" />
         </div>
         <p className="text-sm font-medium text-foreground">Kéo thả hoặc click để tải lên CV</p>
-        <p className="text-xs text-muted-foreground">Chỉ hỗ trợ PDF, dung lượng tối đa 5MB</p>
+        <p className="text-xs text-muted-foreground">
+          Hỗ trợ PDF, DOCX, TXT, Markdown. Dung lượng tối đa 5MB
+        </p>
       </div>
     ),
     [],
@@ -163,7 +162,7 @@ export default function ResumeUpload({
           ref={inputRef}
           id={inputId}
           type="file"
-          accept=".pdf,application/pdf"
+          accept={RESUME_ACCEPT}
           className="sr-only"
           onChange={handleInputChange}
         />
@@ -195,7 +194,7 @@ export default function ResumeUpload({
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="truncate text-sm font-medium text-foreground">{displayedName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {displayedSize ? formatFileSize(displayedSize) : "File PDF"}
+                  {displayedSize ? formatFileSize(displayedSize) : "File CV"}
                 </p>
               </div>
             </div>

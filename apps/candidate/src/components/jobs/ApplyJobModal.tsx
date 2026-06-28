@@ -13,6 +13,7 @@ import {
   SheetHeader as DialogHeader,
   SheetTitle as DialogTitle,
 } from "@07nghiep/ui/components/sheet";
+import { getResumeContentType, isAllowedResumeFile, RESUME_ACCEPT } from "@/lib/resume-file";
 import { trpc } from "@/utils/trpc";
 
 const COVER_MAX = 2000;
@@ -96,24 +97,25 @@ export default function ApplyJobModal({
 
       if (values.resumeChoice === "upload") {
         if (!uploadedFile) {
-          toast.error("Vui lòng chọn tệp PDF để tải lên.");
+          toast.error("Vui lòng chọn tệp CV để tải lên.");
           return;
         }
 
-        if (uploadedFile.type !== "application/pdf") {
-          toast.error("Hệ thống chỉ hỗ trợ CV định dạng PDF.");
+        const contentType = getResumeContentType(uploadedFile);
+        if (!contentType) {
+          toast.error("Hệ thống chỉ hỗ trợ CV định dạng PDF, DOCX, TXT hoặc Markdown.");
           return;
         }
 
         const upload = await uploadResumeMutation.mutateAsync({
           filename: uploadedFile.name,
-          contentType: uploadedFile.type,
+          contentType,
         });
 
         const uploadResponse = await fetch(upload.uploadUrl, {
           method: "PUT",
           headers: {
-            "Content-Type": uploadedFile.type,
+            "Content-Type": contentType,
           },
           body: uploadedFile,
         });
@@ -220,8 +222,19 @@ export default function ApplyJobModal({
                 </label>
                 <input
                   type="file"
-                  accept="application/pdf,.pdf"
-                  onChange={(e) => setUploadedFile(e.target.files?.[0] ?? null)}
+                  accept={RESUME_ACCEPT}
+                  onChange={(e) => {
+                    const selectedFile = e.target.files?.[0] ?? null;
+
+                    if (selectedFile && !isAllowedResumeFile(selectedFile)) {
+                      toast.error("Hệ thống chỉ hỗ trợ CV định dạng PDF, DOCX, TXT hoặc Markdown.");
+                      e.target.value = "";
+                      setUploadedFile(null);
+                      return;
+                    }
+
+                    setUploadedFile(selectedFile);
+                  }}
                 />
                 {uploadedFile ? <span className="text-xs">{uploadedFile.name}</span> : null}
               </div>

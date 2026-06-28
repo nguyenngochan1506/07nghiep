@@ -9,7 +9,7 @@ import {
 } from "@07nghiep/ui/components/card";
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
-import { Upload } from "lucide-react";
+import { ExternalLink, FileText, Upload } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 
 type FileUploadProps = {
@@ -74,6 +74,19 @@ function isLikelyPdfUrl(url: string) {
   return url.toLowerCase().includes(".pdf");
 }
 
+function isLikelyImageUrl(url: string) {
+  return /\.(avif|gif|jpe?g|png|webp)(\?|#|$)/i.test(url);
+}
+
+function getFileNameFromUrl(url: string) {
+  try {
+    const parsedUrl = new URL(url);
+    return decodeURIComponent(parsedUrl.pathname.split("/").pop() ?? "Tệp đã tải lên");
+  } catch {
+    return decodeURIComponent(url.split("/").pop() ?? "Tệp đã tải lên");
+  }
+}
+
 export default function FileUpload({ value, onChange, accept, maxSize, label }: FileUploadProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -92,6 +105,9 @@ export default function FileUpload({ value, onChange, accept, maxSize, label }: 
   const displayedUrl = previewUrl ?? value;
   const isPdfPreview =
     previewType === "application/pdf" || (!!value && !previewType && isLikelyPdfUrl(value));
+  const isImagePreview =
+    previewType?.startsWith("image/") || (!!value && !previewType && isLikelyImageUrl(value));
+  const displayedFileName = fileName || (displayedUrl ? getFileNameFromUrl(displayedUrl) : "");
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -153,12 +169,28 @@ export default function FileUpload({ value, onChange, accept, maxSize, label }: 
                 src={displayedUrl}
                 className="h-72 w-full rounded-lg border"
               />
-            ) : (
+            ) : isImagePreview ? (
               <img
                 src={displayedUrl}
                 alt="File preview"
                 className="h-56 w-full rounded-lg object-cover"
               />
+            ) : (
+              <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <FileText className="size-5 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm text-foreground">{displayedFileName}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(displayedUrl, "_blank", "noopener,noreferrer")}
+                >
+                  <ExternalLink data-icon="inline-start" />
+                  Mở
+                </Button>
+              </div>
             )}
             {fileName ? <p className="text-xs text-muted-foreground">{fileName}</p> : null}
           </div>

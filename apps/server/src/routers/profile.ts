@@ -5,16 +5,16 @@ import {
   generatePresignedUploadUrl,
   isStorageConfigured,
   getFileUrl,
+  RESUME_MIME_TYPES,
   type UploadType,
 } from "@07nghiep/storage";
 import { profileUpdateSchema } from "../lib/api/schemas";
 import { candidateProcedure, publicProcedure, router } from "../lib/api";
 
 const VALID_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const VALID_RESUME_TYPES = ["application/pdf"];
 
 function validateUpload(type: UploadType, contentType: string): void {
-  const allowed = type === "avatar" ? VALID_AVATAR_TYPES : VALID_RESUME_TYPES;
+  const allowed = type === "avatar" ? VALID_AVATAR_TYPES : RESUME_MIME_TYPES;
   if (!allowed.includes(contentType)) {
     throw new TRPCError({
       code: "BAD_REQUEST",

@@ -59,8 +59,15 @@ export function getPublicUrl(key: string): string {
 
 export type UploadType = "resume" | "avatar";
 
+export const RESUME_MIME_TYPES: readonly string[] = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/markdown",
+] as const;
+
 const ALLOWED_MIME_TYPES: Record<UploadType, string[]> = {
-  resume: ["application/pdf"],
+  resume: [...RESUME_MIME_TYPES],
   avatar: ["image/jpeg", "image/png", "image/webp"],
 };
 
