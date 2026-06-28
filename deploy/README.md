@@ -37,7 +37,7 @@ cp deploy/.env.prod.example deploy/.env.prod
 Edit `deploy/.env.prod`:
 
 - Replace `127.0.0.1` with the VPS IP.
-- Set the same password in `POSTGRES_PASSWORD` and `DATABASE_URL`.
+- Set `POSTGRES_PASSWORD` to a real password. The compose file derives the app `DATABASE_URL` from `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`.
 - Set a real `BETTER_AUTH_SECRET` with at least 32 characters.
 - Keep `SEED_DEMO_USERS=true` for the report/demo accounts.
 

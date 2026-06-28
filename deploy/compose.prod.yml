@@ -35,6 +35,8 @@ services:
         APP_NAME: server
     env_file:
       - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-07nghiep}
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,6 +60,8 @@ services:
         APP_NAME: server
     env_file:
       - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-07nghiep}
     ports:
       - "${SERVER_PORT:-3000}:3000"
     depends_on:
@@ -78,6 +82,8 @@ services:
         APP_NAME: worker
     env_file:
       - .env.prod
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-07nghiep}
     depends_on:
       postgres:
         condition: service_healthy

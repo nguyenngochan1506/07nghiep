@@ -36,6 +36,7 @@ const SEED_USERS = [
 async function seedUsers() {
   const { createPrismaClient } = await import("@07nghiep/db");
   const prisma = createPrismaClient();
+  const seedOrigin = env.CORS_ORIGIN[0] ?? new URL(env.BETTER_AUTH_URL).origin;
 
   for (const user of SEED_USERS) {
     const existing = await prisma.user.findUnique({ where: { email: user.email } });
@@ -52,7 +53,7 @@ async function seedUsers() {
     // Create user + account via Better Auth API (handles password hashing correctly)
     const res = await fetch(`${env.BETTER_AUTH_URL}/api/auth/sign-up/email`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Origin: "http://localhost:3000" },
+      headers: { "Content-Type": "application/json", Origin: seedOrigin },
       body: JSON.stringify({
         email: user.email,
         password: user.password,
