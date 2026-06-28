@@ -15,6 +15,7 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
+  CreditCard,
   FileSearch,
   Loader2,
   Sparkles,
@@ -109,6 +110,13 @@ function CvAnalysisPage() {
     },
     onError: (error) => toast.error(error.message),
   });
+  const extraCreditsCheckoutMutation = useMutation({
+    mutationFn: () => trpcClient.billing.createCandidateAiCvCreditsCheckout.mutate(),
+    onSuccess: (payment) => {
+      window.location.href = payment.checkoutUrl;
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
   if (sessionPending) {
     return (
@@ -152,6 +160,7 @@ function CvAnalysisPage() {
   const status = latest?.status ?? null;
   const isAnalysisRunning = status === "PENDING" || status === "PROCESSING";
   const isAnalyzeButtonLoading = createAnalysisMutation.isPending || isAnalysisRunning;
+  const quotaExhausted = isPlus && remaining <= 0;
   const canAnalyze =
     isPlus && remaining > 0 && hasResume && !createAnalysisMutation.isPending && !isAnalysisRunning;
   const strengths = asStringArray(latest?.strengths);
@@ -181,6 +190,8 @@ function CvAnalysisPage() {
               <CardDescription>
                 {isAnalysisRunning
                   ? "AI đang phân tích CV hiện tại. Vui lòng chờ kết quả trước khi gửi lượt mới."
+                  : quotaExhausted
+                    ? "Bạn đã dùng hết lượt AI CV trong kỳ hiện tại."
                   : isPlus
                     ? `${remaining} lượt còn lại trong kỳ hiện tại`
                     : "Cần Candidate Plus"}
@@ -202,6 +213,20 @@ function CvAnalysisPage() {
               {!isPlus ? (
                 <Button asChild variant="outline" className="w-full">
                   <Link to="/billing">Nâng cấp Plus</Link>
+                </Button>
+              ) : quotaExhausted ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={extraCreditsCheckoutMutation.isPending}
+                  onClick={() => extraCreditsCheckoutMutation.mutate()}
+                >
+                  {extraCreditsCheckoutMutation.isPending ? (
+                    <Loader2 data-icon="inline-start" className="animate-spin" />
+                  ) : (
+                    <CreditCard data-icon="inline-start" />
+                  )}
+                  Mua thêm lượt
                 </Button>
               ) : !hasResume ? (
                 <Button asChild variant="outline" className="w-full">

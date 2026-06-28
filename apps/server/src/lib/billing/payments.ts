@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import type { BillingPlanCode, Prisma } from "@07nghiep/db";
+import { BILLING_PLAN_AI_CV_QUOTA } from "./plans";
 import { createPayosCheckout, verifyPayosWebhookSignature } from "./payos";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -196,6 +197,10 @@ function getPaymentLinkId(data: Record<string, unknown>, fallback: string | null
   return typeof data.paymentLinkId === "string" && data.paymentLinkId.length > 0 ? data.paymentLinkId : fallback;
 }
 
+function getAiCvQuotaLimit(planCode: BillingPlanCode) {
+  return BILLING_PLAN_AI_CV_QUOTA[planCode] ?? null;
+}
+
 function getWebhookPayload(body: unknown) {
   if (!isRecord(body) || !isRecord(body.data) || typeof body.signature !== "string" || body.signature.length === 0) {
     return null;
@@ -368,7 +373,7 @@ export async function handlePayosWebhook({
         status: "ACTIVE",
         currentPeriodStart: billingPeriod.currentPeriodStart,
         currentPeriodEnd: billingPeriod.currentPeriodEnd,
-        aiCvQuotaLimit: currentPayment.plan.code === "CANDIDATE_PLUS_MONTHLY" ? 3 : null,
+        aiCvQuotaLimit: getAiCvQuotaLimit(currentPayment.plan.code),
         aiCvQuotaUsed: 0,
       },
     });

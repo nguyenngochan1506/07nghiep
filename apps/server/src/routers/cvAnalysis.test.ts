@@ -71,6 +71,7 @@ describe("cvAnalysisRouter", () => {
         status: "PENDING",
         extractedSkills: [],
         quotaReservedAt: expect.any(Date),
+        quotaSubscriptionId: "sub_1",
       },
     });
     expect(enqueueCandidateAnalysisSafely).toHaveBeenCalledWith(prisma, "analysis_1");

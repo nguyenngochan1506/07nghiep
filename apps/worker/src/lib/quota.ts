@@ -1,4 +1,9 @@
-import type { PrismaClient } from "@07nghiep/db";
+import type { BillingPlanCode, PrismaClient } from "@07nghiep/db";
+
+const AI_CV_QUOTA_PLAN_CODES: BillingPlanCode[] = [
+  "CANDIDATE_PLUS_MONTHLY",
+  "CANDIDATE_AI_CV_CREDITS",
+];
 
 export async function refundCandidateCvQuota(prisma: PrismaClient, analysisId: string) {
   const now = new Date();
@@ -19,10 +24,18 @@ export async function refundCandidateCvQuota(prisma: PrismaClient, analysisId: s
 
     const analysis = await tx.candidateCvAnalysis.findUnique({
       where: { id: analysisId },
-      select: { userId: true },
+      select: { userId: true, quotaSubscriptionId: true },
     });
 
     if (!analysis) {
+      return;
+    }
+
+    if (analysis.quotaSubscriptionId) {
+      await tx.subscription.updateMany({
+        where: { id: analysis.quotaSubscriptionId, aiCvQuotaUsed: { gt: 0 } },
+        data: { aiCvQuotaUsed: { decrement: 1 } },
+      });
       return;
     }
 
@@ -33,7 +46,7 @@ export async function refundCandidateCvQuota(prisma: PrismaClient, analysisId: s
         currentPeriodStart: { lte: now },
         currentPeriodEnd: { gt: now },
         aiCvQuotaUsed: { gt: 0 },
-        plan: { code: "CANDIDATE_PLUS_MONTHLY" },
+        plan: { code: { in: AI_CV_QUOTA_PLAN_CODES } },
       },
       orderBy: { currentPeriodEnd: "desc" },
       select: { id: true },

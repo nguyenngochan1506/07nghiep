@@ -98,6 +98,7 @@ enum InterviewStatus {
 
 enum BillingPlanCode {
   CANDIDATE_PLUS_MONTHLY
+  CANDIDATE_AI_CV_CREDITS
   EMPLOYER_MONTHLY
 }
 
@@ -288,6 +289,7 @@ model CandidateCvAnalysis {
   errorMessage       String?     @db.Text
   quotaReservedAt    DateTime?
   quotaRefundedAt    DateTime?
+  quotaSubscriptionId String?
   startedAt          DateTime?
   completedAt        DateTime?
   createdAt          DateTime    @default(now())

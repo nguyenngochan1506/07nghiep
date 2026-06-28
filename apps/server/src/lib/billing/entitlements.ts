@@ -1,5 +1,5 @@
 import type { BillingPlanCode, SubscriptionStatus } from "@07nghiep/db";
-import { BILLING_PLAN_CODES } from "./plans";
+import { BILLING_PLAN_AI_CV_QUOTA, BILLING_PLAN_CODES } from "./plans";
 
 export type EntitlementSubscription = {
   plan: { code: BillingPlanCode };
@@ -25,6 +25,8 @@ function isActive(subscription: EntitlementSubscription, now: Date) {
 }
 
 function getRemainingQuota(subscription: EntitlementSubscription) {
+  if (!(subscription.plan.code in BILLING_PLAN_AI_CV_QUOTA)) return 0;
+
   const limit = Math.max(subscription.aiCvQuotaLimit ?? 0, 0);
   const used = Math.max(subscription.aiCvQuotaUsed, 0);
 
@@ -39,11 +41,14 @@ export function getActiveEntitlements(
   const plusSubscriptions = activeSubscriptions.filter(
     (subscription) => subscription.plan.code === BILLING_PLAN_CODES.candidatePlusMonthly,
   );
+  const quotaSubscriptions = activeSubscriptions.filter(
+    (subscription) => subscription.plan.code in BILLING_PLAN_AI_CV_QUOTA,
+  );
   const employer = activeSubscriptions.some(
     (subscription) => subscription.plan.code === BILLING_PLAN_CODES.employerMonthly,
   );
 
-  const aiCvRemaining = plusSubscriptions.reduce(
+  const aiCvRemaining = quotaSubscriptions.reduce(
     (total, subscription) => total + getRemainingQuota(subscription),
     0,
   );

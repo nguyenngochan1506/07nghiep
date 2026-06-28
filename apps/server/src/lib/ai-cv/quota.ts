@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@07nghiep/db";
 import { TRPCError } from "@trpc/server";
 
-import { BILLING_PLAN_CODES } from "../billing/plans";
+import { BILLING_PLAN_AI_CV_QUOTA_CODES, BILLING_PLAN_CODES } from "../billing/plans";
 
 function getQuotaError() {
   return new TRPCError({
@@ -12,20 +12,27 @@ function getQuotaError() {
 
 export async function reserveCandidateCvQuota(prisma: PrismaClient, userId: string) {
   const now = new Date();
-  const subscription = await prisma.subscription.findFirst({
+  const subscriptions = await prisma.subscription.findMany({
     where: {
       userId,
       status: "ACTIVE",
       currentPeriodStart: { lte: now },
       currentPeriodEnd: { gt: now },
-      plan: { code: BILLING_PLAN_CODES.candidatePlusMonthly },
+      aiCvQuotaLimit: { gt: 0 },
+      plan: { code: { in: BILLING_PLAN_AI_CV_QUOTA_CODES } },
     },
-    orderBy: { currentPeriodEnd: "desc" },
+    orderBy: { currentPeriodEnd: "asc" },
     select: {
       id: true,
       aiCvQuotaLimit: true,
       aiCvQuotaUsed: true,
     },
+  });
+  const subscription = subscriptions.find((item) => {
+    const limit = Math.max(item.aiCvQuotaLimit ?? 0, 0);
+    const used = Math.max(item.aiCvQuotaUsed, 0);
+
+    return limit - used > 0;
   });
 
   if (!subscription) {

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { hasActiveEmployerPackage, reserveCandidateCvQuota } from "./quota";
 
 describe("reserveCandidateCvQuota", () => {
-  it("increments the newest active Candidate Plus subscription with remaining quota", async () => {
+  it("increments the active AI CV quota subscription that expires first", async () => {
     const subscription = {
       id: "sub_1",
       aiCvQuotaLimit: 3,
@@ -12,21 +12,22 @@ describe("reserveCandidateCvQuota", () => {
     };
     const prisma = {
       subscription: {
-        findFirst: vi.fn().mockResolvedValue(subscription),
+        findMany: vi.fn().mockResolvedValue([subscription]),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
     };
 
     await expect(reserveCandidateCvQuota(prisma as never, "user_1")).resolves.toEqual("sub_1");
-    expect(prisma.subscription.findFirst).toHaveBeenCalledWith({
+    expect(prisma.subscription.findMany).toHaveBeenCalledWith({
       where: {
         userId: "user_1",
         status: "ACTIVE",
         currentPeriodStart: { lte: expect.any(Date) },
         currentPeriodEnd: { gt: expect.any(Date) },
-        plan: { code: "CANDIDATE_PLUS_MONTHLY" },
+        aiCvQuotaLimit: { gt: 0 },
+        plan: { code: { in: ["CANDIDATE_PLUS_MONTHLY", "CANDIDATE_AI_CV_CREDITS"] } },
       },
-      orderBy: { currentPeriodEnd: "desc" },
+      orderBy: { currentPeriodEnd: "asc" },
       select: {
         id: true,
         aiCvQuotaLimit: true,
@@ -45,7 +46,7 @@ describe("reserveCandidateCvQuota", () => {
   it("rejects users without active Candidate Plus", async () => {
     const prisma = {
       subscription: {
-        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
       },
     };
 
@@ -57,11 +58,13 @@ describe("reserveCandidateCvQuota", () => {
   it("rejects users with exhausted Candidate Plus quota", async () => {
     const prisma = {
       subscription: {
-        findFirst: vi.fn().mockResolvedValue({
-          id: "sub_1",
-          aiCvQuotaLimit: 3,
-          aiCvQuotaUsed: 3,
-        }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "sub_1",
+            aiCvQuotaLimit: 3,
+            aiCvQuotaUsed: 3,
+          },
+        ]),
       },
     };
 
@@ -70,14 +73,41 @@ describe("reserveCandidateCvQuota", () => {
     });
   });
 
+  it("uses AI CV credit add-on quota when Plus quota is exhausted", async () => {
+    const subscription = {
+      id: "credit_sub_1",
+      aiCvQuotaLimit: 5,
+      aiCvQuotaUsed: 2,
+    };
+    const prisma = {
+      subscription: {
+        findMany: vi.fn().mockResolvedValue([subscription]),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+
+    await expect(reserveCandidateCvQuota(prisma as never, "user_1")).resolves.toEqual(
+      "credit_sub_1",
+    );
+    expect(prisma.subscription.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "credit_sub_1",
+        aiCvQuotaUsed: { lt: 5 },
+      },
+      data: { aiCvQuotaUsed: { increment: 1 } },
+    });
+  });
+
   it("rejects quota if a concurrent reservation already consumed it", async () => {
     const prisma = {
       subscription: {
-        findFirst: vi.fn().mockResolvedValue({
-          id: "sub_1",
-          aiCvQuotaLimit: 3,
-          aiCvQuotaUsed: 2,
-        }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "sub_1",
+            aiCvQuotaLimit: 3,
+            aiCvQuotaUsed: 2,
+          },
+        ]),
         updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
     };

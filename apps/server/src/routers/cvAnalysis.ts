@@ -35,7 +35,7 @@ export const cvAnalysisRouter = router({
       return activeAnalysis;
     }
 
-    await reserveCandidateCvQuota(ctx.prisma, ctx.user.id);
+    const quotaSubscriptionId = await reserveCandidateCvQuota(ctx.prisma, ctx.user.id);
 
     const analysis = await ctx.prisma.candidateCvAnalysis.create({
       data: {
@@ -45,6 +45,7 @@ export const cvAnalysisRouter = router({
         status: "PENDING",
         extractedSkills: [],
         quotaReservedAt: new Date(),
+        quotaSubscriptionId,
       },
     });
 

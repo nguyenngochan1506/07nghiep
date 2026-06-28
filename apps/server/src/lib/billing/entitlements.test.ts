@@ -146,6 +146,32 @@ describe("billing entitlements", () => {
     ).toEqual({ candidatePlus: true, employer: false, aiCvRemaining: 5 });
   });
 
+  it("sums remaining quota from active Candidate Plus and AI CV credit add-ons", () => {
+    expect(
+      getActiveEntitlements(
+        [
+          {
+            plan: { code: "CANDIDATE_PLUS_MONTHLY" },
+            status: "ACTIVE",
+            currentPeriodStart: new Date("2026-06-01T00:00:00.000Z"),
+            currentPeriodEnd: new Date("2026-07-01T00:00:00.000Z"),
+            aiCvQuotaLimit: 3,
+            aiCvQuotaUsed: 3,
+          },
+          {
+            plan: { code: "CANDIDATE_AI_CV_CREDITS" },
+            status: "ACTIVE",
+            currentPeriodStart: new Date("2026-06-20T00:00:00.000Z"),
+            currentPeriodEnd: new Date("2026-07-20T00:00:00.000Z"),
+            aiCvQuotaLimit: 5,
+            aiCvQuotaUsed: 1,
+          },
+        ],
+        now,
+      ),
+    ).toEqual({ candidatePlus: true, employer: false, aiCvRemaining: 4 });
+  });
+
   it("clamps invalid quota values before computing remaining quota", () => {
     expect(
       getActiveEntitlements(

@@ -240,4 +240,46 @@ describe("handlePayosWebhook", () => {
       data: { role: "EMPLOYER" },
     });
   });
+
+  it("creates a 5-use AI CV credit subscription for an add-on payment", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedNow);
+    const creditPlan = {
+      id: "plan_ai_cv_credits",
+      code: "CANDIDATE_AI_CV_CREDITS",
+      name: "AI CV Credits",
+      priceVnd: 19000,
+      durationDays: 30,
+      active: true,
+    };
+    const { prisma, tx } = createMockPrisma({
+      planId: creditPlan.id,
+      amountVnd: creditPlan.priceVnd,
+      plan: creditPlan,
+    });
+    const body = createWebhookBody({
+      data: {
+        orderCode: 123456789012345,
+        amount: 19000,
+        code: "00",
+        paymentLinkId: "plink_credits",
+      },
+    });
+
+    const result = await handlePayosWebhook({ prisma, body });
+
+    expect(result).toEqual({ ok: true, paymentId: "payment_1" });
+    expect(tx.subscription.create).toHaveBeenCalledWith({
+      data: {
+        userId: "user_1",
+        planId: creditPlan.id,
+        status: "ACTIVE",
+        currentPeriodStart: fixedNow,
+        currentPeriodEnd: new Date("2026-07-27T10:00:00.000Z"),
+        aiCvQuotaLimit: 5,
+        aiCvQuotaUsed: 0,
+      },
+    });
+    expect(tx.user.update).not.toHaveBeenCalled();
+  });
 });

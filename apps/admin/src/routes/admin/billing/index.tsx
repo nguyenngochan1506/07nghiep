@@ -31,7 +31,7 @@ export const Route = createFileRoute("/admin/billing/")({
 
 type BillingPlanRow = {
   id: string;
-  code: "CANDIDATE_PLUS_MONTHLY" | "EMPLOYER_MONTHLY";
+  code: "CANDIDATE_PLUS_MONTHLY" | "CANDIDATE_AI_CV_CREDITS" | "EMPLOYER_MONTHLY";
   name: string;
   priceVnd: number;
   durationDays: number;

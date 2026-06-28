@@ -45,6 +45,35 @@ export const billingRouter = router({
     };
   }),
 
+  createCandidateAiCvCreditsCheckout: protectedProcedure.mutation(async ({ ctx }) => {
+    const subscriptions = await ctx.prisma.subscription.findMany({
+      where: { userId: ctx.session.user.id },
+      include: { plan: { select: { code: true } } },
+    });
+    const entitlements = getActiveEntitlements(subscriptions);
+
+    if (!entitlements.candidatePlus) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Cần Candidate Plus trước khi mua thêm lượt AI CV.",
+      });
+    }
+
+    const payment = await createCheckoutPayment({
+      prisma: ctx.prisma,
+      userId: ctx.session.user.id,
+      planCode: BILLING_PLAN_CODES.candidateAiCvCredits,
+      returnUrl: "http://localhost:3001/cv-analysis",
+      cancelUrl: "http://localhost:3001/cv-analysis",
+    });
+
+    return {
+      paymentId: payment.id,
+      checkoutUrl: payment.checkoutUrl,
+      orderCode: String(payment.orderCode),
+    };
+  }),
+
   createEmployerCheckout: protectedProcedure.mutation(async ({ ctx }) => {
     if (ctx.role !== "EMPLOYER" && ctx.role !== "ADMIN") {
       throw new TRPCError({
