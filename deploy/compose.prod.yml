@@ -65,7 +65,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-07nghiep}
     ports:
-      - "${SERVER_PORT:-3000}:3000"
+      - "127.0.0.1:${SERVER_PORT:-3000}:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -106,9 +106,9 @@ services:
     environment:
       STATIC_SITES: 3001:/app/admin,3002:/app/employer,3003:/app/candidate
     ports:
-      - "${ADMIN_PORT:-3001}:3001"
-      - "${EMPLOYER_PORT:-3002}:3002"
-      - "${CANDIDATE_PORT:-3003}:3003"
+      - "127.0.0.1:${ADMIN_PORT:-3001}:3001"
+      - "127.0.0.1:${EMPLOYER_PORT:-3002}:3002"
+      - "127.0.0.1:${CANDIDATE_PORT:-3003}:3003"
     restart: unless-stopped
 
 volumes:
