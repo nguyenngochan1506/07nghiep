@@ -2,12 +2,20 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { env } from "@07nghiep/env/server";
 
-import { protectedProcedure, router } from "../lib/api";
+import { protectedProcedure, publicProcedure, router } from "../lib/api";
 import { getActiveEntitlements } from "../lib/billing/entitlements";
 import { BILLING_PLAN_CODES } from "../lib/billing/plans";
 import { createCheckoutPayment } from "../lib/billing/payments";
 
 export const billingRouter = router({
+  plans: publicProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.billingPlan.findMany({
+      where: { active: true },
+      select: { code: true, name: true, priceVnd: true, durationDays: true },
+      orderBy: { code: "asc" },
+    });
+  }),
+
   me: protectedProcedure.query(async ({ ctx }) => {
     const subscriptions = await ctx.prisma.subscription.findMany({
       where: { userId: ctx.session.user.id },

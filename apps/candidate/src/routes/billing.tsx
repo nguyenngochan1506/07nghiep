@@ -38,6 +38,13 @@ type SubscriptionRow = {
   plan: { name: string; code: string; priceVnd: number };
 };
 
+type BillingPlanRow = {
+  name: string;
+  code: string;
+  priceVnd: number;
+  durationDays: number;
+};
+
 const CANDIDATE_PLUS_FALLBACK_PRICE = 49000;
 
 const plusFeatures = [
@@ -97,6 +104,7 @@ function formatVnd(value: number) {
 function BillingRoute() {
   const { data: session } = authClient.useSession();
   const isLoggedIn = !!session;
+  const plansQuery = useQuery(trpc.billing.plans.queryOptions());
   const billingQuery = useQuery(
     trpc.billing.me.queryOptions(undefined, {
       enabled: isLoggedIn,
@@ -121,13 +129,16 @@ function BillingRoute() {
 
   const entitlements = billingQuery.data?.entitlements;
   const subscriptions = (billingQuery.data?.subscriptions ?? []) as SubscriptionRow[];
+  const plans = (plansQuery.data ?? []) as BillingPlanRow[];
+  const plusPlan = plans.find((plan) => plan.code === "CANDIDATE_PLUS_MONTHLY");
   const plusSubscription = subscriptions.find(
     (subscription) => subscription.plan.code === "CANDIDATE_PLUS_MONTHLY",
   );
-  const plusPrice = plusSubscription?.plan.priceVnd ?? CANDIDATE_PLUS_FALLBACK_PRICE;
+  const plusPrice =
+    plusPlan?.priceVnd ?? plusSubscription?.plan.priceVnd ?? CANDIDATE_PLUS_FALLBACK_PRICE;
   const plusIsActive = entitlements?.candidatePlus ?? false;
 
-  if (billingQuery.isLoading) {
+  if (plansQuery.isLoading || billingQuery.isLoading) {
     return (
       <main className="min-h-screen bg-background px-4 py-8">
         <div className="mx-auto w-full max-w-6xl">
@@ -324,11 +335,6 @@ function PlanCard({
         <div>
           <span className="text-3xl font-semibold text-foreground">{price}</span>
           <span className="ml-1 text-sm text-muted-foreground">{period}</span>
-          {featured ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Giá hiển thị theo seed mặc định; checkout sẽ xác nhận giá hiện hành.
-            </p>
-          ) : null}
         </div>
         <ul className="space-y-3">
           {features.map((feature) => (
