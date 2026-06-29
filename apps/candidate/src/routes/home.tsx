@@ -158,7 +158,7 @@ export function HomeComponent() {
 
             <div className="flex max-w-3xl flex-col gap-5">
               <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl md:leading-[1.02]">
-                Tìm việc rõ hơn, ứng tuyển chắc hơn.
+                Tìm việc làm phù hợp, ứng tuyển nhanh tại Việt Nam.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
                 Một workspace để tìm việc, so sánh công ty, lưu cơ hội tốt và theo dõi ứng tuyển
