@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -66,13 +65,12 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
             </div>
             <div className="min-w-0 flex-1">
               <CardTitle className="text-base leading-snug">
-                <Link
-                  to={`/jobs/$jobId`}
-                  params={{ jobId: job.id }}
+                <a
+                  href={`/jobs/${job.id}`}
                   className="line-clamp-2 text-foreground transition-colors hover:text-primary"
                 >
                   {job.title}
-                </Link>
+                </a>
               </CardTitle>
               <p className="mt-1 flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
                 <span className="truncate">{job.companyName}</span>
@@ -144,10 +142,10 @@ export function JobCardItem({ job, onSave }: JobCardProps) {
             size="sm"
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
+            <a href={`/jobs/${job.id}`}>
               Chi tiết
               <ArrowRight data-icon="inline-end" />
-            </Link>
+            </a>
           </Button>
         </div>
       </CardFooter>

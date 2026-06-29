@@ -4,7 +4,7 @@ import { Card, CardContent } from "@07nghiep/ui/components/card";
 import { Input } from "@07nghiep/ui/components/input";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   BriefcaseBusiness,
   Building2,
@@ -19,7 +19,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { IndustryMultiSelect } from "@/components/industry-multi-select";
 import { PageHero } from "@/components/page-hero";
 import { ProvinceMultiSelect } from "@/components/province-multi-select";
-import { trpc } from "@/utils/trpc";
+import { type RouterAppContext } from "@/routes/__root";
+import { publicQueryOptions, trpc } from "@/utils/trpc";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -53,12 +54,7 @@ export const Route = createFileRoute("/organizations/")({
     }),
   validateSearch: (
     search: Record<string, unknown>,
-  ): {
-    keyword?: string;
-    location?: string;
-    industry?: string;
-    page?: number;
-  } => ({
+  ): OrganizationSearch => ({
     keyword: typeof search.keyword === "string" && search.keyword ? search.keyword : undefined,
     location: typeof search.location === "string" && search.location ? search.location : undefined,
     industry: typeof search.industry === "string" && search.industry ? search.industry : undefined,
@@ -67,8 +63,22 @@ export const Route = createFileRoute("/organizations/")({
       return typeof page === "number" && Number.isInteger(page) && page > 0 ? page : undefined;
     })(),
   }),
+  loaderDeps: ({ search }): OrganizationSearch => ({
+    keyword: search.keyword,
+    location: search.location,
+    industry: search.industry,
+    page: search.page,
+  }),
+  loader: ({ context, deps }) => preloadOrganizationsRoute(context, deps),
   component: OrganizationsPage,
 });
+
+type OrganizationSearch = {
+  keyword?: string;
+  location?: string;
+  industry?: string;
+  page?: number;
+};
 
 function splitMultiSearchParam(value?: string) {
   if (!value) return [];
@@ -81,6 +91,35 @@ function splitMultiSearchParam(value?: string) {
 
 function joinMultiSearchParam(value: string[]) {
   return value.length > 0 ? value.join("|") : undefined;
+}
+
+function getOrganizationsQueryInput(search: OrganizationSearch) {
+  const locations = splitMultiSearchParam(search.location);
+  const industries = splitMultiSearchParam(search.industry);
+  const page = search.page ?? 1;
+
+  return {
+    keyword: search.keyword || undefined,
+    locations: locations.length > 0 ? locations : undefined,
+    industries: industries.length > 0 ? industries : undefined,
+    limit: ITEMS_PER_PAGE,
+    offset: (page - 1) * ITEMS_PER_PAGE,
+  };
+}
+
+async function preloadOrganizationsRoute(
+  context: RouterAppContext,
+  search: OrganizationSearch,
+): Promise<void> {
+  await context.queryClient.ensureQueryData(
+    context.trpc.organization.getIndustries.queryOptions(undefined, publicQueryOptions),
+  );
+  await context.queryClient.ensureQueryData(
+    context.trpc.organization.getPublicList.queryOptions(
+      getOrganizationsQueryInput(search),
+      publicQueryOptions,
+    ),
+  );
 }
 
 function OrganizationsPage() {
@@ -96,16 +135,20 @@ function OrganizationsPage() {
   const [currentPage, setCurrentPage] = useState(search.page ?? 1);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollResultsRef = useRef(false);
-  const industriesQuery = useQuery(trpc.organization.getIndustries.queryOptions());
+  const industriesQuery = useQuery(
+    trpc.organization.getIndustries.queryOptions(undefined, publicQueryOptions),
+  );
 
   const { data, isFetching, isLoading } = useQuery(
-    trpc.organization.getPublicList.queryOptions({
-      keyword: keyword || undefined,
-      locations: locations.length > 0 ? locations : undefined,
-      industries: industries.length > 0 ? industries : undefined,
-      limit: ITEMS_PER_PAGE,
-      offset: (currentPage - 1) * ITEMS_PER_PAGE,
-    }),
+    trpc.organization.getPublicList.queryOptions(
+      getOrganizationsQueryInput({
+        keyword,
+        location: joinMultiSearchParam(locations),
+        industry: joinMultiSearchParam(industries),
+        page: currentPage,
+      }),
+      publicQueryOptions,
+    ),
   );
 
   const organizations = (data?.organizations ?? []) as unknown as PublicOrganization[];
@@ -240,7 +283,7 @@ function OrganizationsPage() {
                 .toUpperCase();
 
               return (
-                <Link key={org.id} to="/organizations/$orgId" params={{ orgId: org.id }}>
+                <a key={org.id} href={`/organizations/${org.id}`}>
                   <Card className="h-full cursor-pointer transition-shadow hover:border-brand-orange/50 hover:shadow-md">
                     <CardContent className="flex h-full flex-col gap-4 p-6">
                       <div className="flex items-start gap-4">
@@ -295,7 +338,7 @@ function OrganizationsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
+                </a>
               );
             })}
             {totalPages > 1 ? (

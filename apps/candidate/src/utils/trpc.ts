@@ -5,6 +5,13 @@ import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
 
+export const publicQueryOptions = {
+  staleTime: 5 * 60 * 1000,
+  refetchOnMount: false,
+  refetchOnReconnect: false,
+  refetchOnWindowFocus: false,
+} as const;
+
 function createQueryClient() {
   return new QueryClient({
     queryCache: new QueryCache({

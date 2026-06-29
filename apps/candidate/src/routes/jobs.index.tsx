@@ -8,17 +8,16 @@ import {
   CardTitle,
 } from "@07nghiep/ui/components/card";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JobCardItem } from "@/components/job-card";
 import { PageHero } from "@/components/page-hero";
 import { SearchBar } from "@/components/search-bar";
-import { authClient } from "@/lib/auth-client";
 import { useLocalSavedJobs } from "@/lib/saved-jobs";
 import { mapJob, type PublicJob, type RouterAppContext } from "@/routes/__root";
-import { queryClient, trpc, trpcClient } from "@/utils/trpc";
+import { publicQueryOptions, trpc } from "@/utils/trpc";
 
 import { createSeoHead, SITE_URL } from "@/lib/seo";
 
@@ -89,27 +88,14 @@ function getJobsQueryInput(search: JobsSearch) {
 async function preloadJobsRoute(context: RouterAppContext, search: JobsSearch): Promise<void> {
   await context.queryClient.ensureQueryData(context.trpc.job.getIndustries.queryOptions());
   await context.queryClient.ensureQueryData(
-    context.trpc.job.getPublicList.queryOptions(getJobsQueryInput(search)),
+    context.trpc.job.getPublicList.queryOptions(getJobsQueryInput(search), publicQueryOptions),
   );
 }
 
 function JobsPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { data: session } = authClient.useSession();
-  const isLoggedIn = !!session;
-  const savedJobsOptions = trpc.savedJob.list.queryOptions(
-    { pageSize: 50 },
-    { enabled: isLoggedIn },
-  );
-  const savedJobsQuery = useQuery(savedJobsOptions);
   const localSavedJobs = useLocalSavedJobs();
-  const toggleSavedJob = useMutation({
-    mutationFn: (input: { jobId: string }) => trpcClient.savedJob.toggle.mutate(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
-    },
-  });
 
   const [keyword, setKeyword] = useState(search.keyword ?? "");
   const [locations, setLocations] = useState(() => splitMultiSearchParam(search.location));
@@ -118,7 +104,9 @@ function JobsPage() {
   const [currentPage, setCurrentPage] = useState(search.page ?? 1);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollResultsRef = useRef(false);
-  const industriesQuery = useQuery(trpc.job.getIndustries.queryOptions());
+  const industriesQuery = useQuery(
+    trpc.job.getIndustries.queryOptions(undefined, publicQueryOptions),
+  );
   const jobsQuery = useQuery(
     trpc.job.getPublicList.queryOptions(
       getJobsQueryInput({
@@ -127,6 +115,7 @@ function JobsPage() {
         industry: joinMultiSearchParam(industries),
         page: currentPage,
       }),
+      publicQueryOptions,
     ),
   );
 
@@ -183,13 +172,9 @@ function JobsPage() {
     shouldScrollResultsRef.current = false;
     resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [jobsQuery.isFetching]);
-  const savedJobsData = savedJobsQuery.data as { jobs?: { id: string }[] } | undefined;
-  const savedJobRows = savedJobsData?.jobs ?? [];
-  const dbSavedIds = useMemo(() => new Set(savedJobRows.map((job) => job.id)), [savedJobRows]);
-  const savedIds = isLoggedIn ? dbSavedIds : localSavedJobs.savedIds;
   const paginatedJobs: JobCardItemProps["job"][] = jobs.map((job) => ({
     ...job,
-    isSaved: savedIds.has(job.id),
+    isSaved: localSavedJobs.savedIds.has(job.id),
   }));
   const activeFilterCount = [keyword].filter(Boolean).length + locations.length + industries.length;
 
@@ -246,11 +231,6 @@ function JobsPage() {
                     key={job.id}
                     job={job}
                     onSave={(jobId) => {
-                      if (isLoggedIn) {
-                        toggleSavedJob.mutate({ jobId });
-                        return;
-                      }
-
                       const targetJob = paginatedJobs.find((item) => item.id === jobId);
                       if (targetJob) localSavedJobs.toggleSavedJob(targetJob);
                     }}

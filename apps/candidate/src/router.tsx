@@ -10,7 +10,6 @@ export function getRouter() {
   const trpc = createTrpcOptions(queryClient);
   const router = createRouter({
     routeTree,
-    defaultPreload: "intent",
     defaultPendingComponent: Loader,
     context: { trpc, queryClient } satisfies RouterAppContext,
   });

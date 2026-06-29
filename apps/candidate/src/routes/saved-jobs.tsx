@@ -1,16 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type React from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, Heart, Search } from "lucide-react";
 import { JobCardItem } from "@/components/job-card";
 import { PageHero } from "@/components/page-hero";
-import { formatSalaryRangeVnd } from "@/lib/salary";
 import { useLocalSavedJobs } from "@/lib/saved-jobs";
-import { queryClient, trpc, trpcClient } from "@/utils/trpc";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent, CardTitle } from "@07nghiep/ui/components/card";
-import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
 import { createSeoHead, SITE_URL } from "@/lib/seo";
 
@@ -24,74 +18,9 @@ export const Route = createFileRoute("/saved-jobs")({
   component: SavedJobsPage,
 });
 
-type SavedJob = {
-  id: string;
-  title: string;
-  location: string | null;
-  workType: string | null;
-  jobType: string | null;
-  salaryMin: string | number | null;
-  salaryMax: string | number | null;
-  skills: string[];
-  createdAt: string | Date;
-  expiresAt: string | null;
-  organization?: {
-    name: string | null;
-    logoUrl: string | null;
-    verified: boolean | null;
-  } | null;
-};
-type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
-
-function mapSavedJob(raw: SavedJob): JobCardItemProps["job"] {
-  const salaryRange = formatSalaryRangeVnd(raw.salaryMin, raw.salaryMax);
-
-  const postedAt = new Date(raw.createdAt);
-  const diffDays = Math.floor((Date.now() - postedAt.getTime()) / (1000 * 60 * 60 * 24));
-  const postedDate =
-    diffDays === 0
-      ? "Hôm nay"
-      : diffDays === 1
-        ? "1 ngày trước"
-        : diffDays < 30
-          ? `${diffDays} ngày trước`
-          : `${Math.floor(diffDays / 30)} tháng trước`;
-
-  return {
-    id: raw.id,
-    companyName: raw.organization?.name ?? "Unknown",
-    companyLogo: raw.organization?.logoUrl ?? "",
-    isVerified: raw.organization?.verified ?? false,
-    title: raw.title,
-    location: raw.location ?? "",
-    workType: raw.workType ?? "",
-    jobType: raw.jobType ?? "",
-    salaryRange,
-    skills: raw.skills ?? [],
-    postedDate,
-    expiresAt: raw.expiresAt ?? null,
-    isSaved: true,
-  };
-}
-
 function SavedJobsPage() {
-  const { data: session, isPending: sessionPending } = authClient.useSession();
-  const isLoggedIn = Boolean(session?.user?.id);
   const localSavedJobs = useLocalSavedJobs();
-  const savedJobsOptions = trpc.savedJob.list.queryOptions(
-    { page: 1, pageSize: 20 },
-    { enabled: isLoggedIn },
-  );
-  const savedJobsQuery = useQuery(savedJobsOptions);
-  const toggleSavedJob = useMutation({
-    mutationFn: (input: { jobId: string }) => trpcClient.savedJob.toggle.mutate(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
-    },
-  });
-  const savedJobs = isLoggedIn
-    ? ((savedJobsQuery.data as { jobs?: SavedJob[] } | undefined)?.jobs ?? []).map(mapSavedJob)
-    : localSavedJobs.savedJobs;
+  const savedJobs = localSavedJobs.savedJobs;
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -108,22 +37,13 @@ function SavedJobsPage() {
       />
 
       <main className="container mx-auto max-w-7xl px-4 py-8 md:px-6">
-        {sessionPending ? (
-          <SavedJobsSkeleton />
-        ) : savedJobsQuery.isLoading ? (
-          <SavedJobsSkeleton />
-        ) : savedJobs.length > 0 ? (
+        {savedJobs.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {savedJobs.map((job) => (
               <JobCardItem
                 key={job.id}
                 job={job}
                 onSave={(jobId) => {
-                  if (isLoggedIn) {
-                    toggleSavedJob.mutate({ jobId });
-                    return;
-                  }
-
                   const targetJob = savedJobs.find((item) => item.id === jobId);
                   if (targetJob) localSavedJobs.toggleSavedJob(targetJob);
                 }}
@@ -133,30 +53,13 @@ function SavedJobsPage() {
         ) : (
           <SavedJobsEmptyState
             title="Chưa có công việc nào được lưu"
-            description={
-              isLoggedIn
-                ? "Khi thấy một vị trí đáng cân nhắc, nhấn biểu tượng trái tim để giữ lại tại đây."
-                : "Bạn có thể lưu việc trên thiết bị này trước, sau đó đăng nhập để đồng bộ vào tài khoản."
-            }
+            description="Bạn có thể lưu việc trên thiết bị này trước, sau đó đăng nhập để đồng bộ vào tài khoản."
             actionLabel="Khám phá việc làm"
             actionTo="/jobs"
           />
         )}
       </main>
     </div>
-  );
-}
-
-function SavedJobsSkeleton() {
-  return (
-    <Card className="mx-auto w-full max-w-3xl border-dashed">
-      <CardContent className="flex flex-col gap-4 px-6 py-12 md:px-12">
-        <Skeleton className="mx-auto size-14 rounded-full" />
-        <Skeleton className="mx-auto h-6 w-56" />
-        <Skeleton className="mx-auto h-4 w-full max-w-md" />
-        <Skeleton className="mx-auto h-9 w-36 rounded-md" />
-      </CardContent>
-    </Card>
   );
 }
 
@@ -186,17 +89,17 @@ function SavedJobsEmptyState({
             asChild
             className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
           >
-            <Link to={actionTo}>
+            <a href={actionTo}>
               {actionLabel}
               <ArrowRight data-icon="inline-end" />
-            </Link>
+            </a>
           </Button>
           {actionTo === "/jobs" ? (
             <Button asChild variant="outline">
-              <Link to="/jobs">
+              <a href="/jobs">
                 <Search data-icon="inline-start" />
                 Tìm theo bộ lọc
-              </Link>
+              </a>
             </Button>
           ) : null}
         </div>

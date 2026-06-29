@@ -4,7 +4,7 @@ import { Card, CardContent } from "@07nghiep/ui/components/card";
 import { Separator } from "@07nghiep/ui/components/separator";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import type { AppRouter } from "@07nghiep/server/routers/index";
 import type { inferRouterOutputs } from "@trpc/server";
 import {
@@ -25,7 +25,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LocationMap } from "@/components/location-map";
 import { RichTextBlock } from "@/lib/rich-text";
 import { formatSalaryRangeVnd } from "@/lib/salary";
-import { trpc } from "@/utils/trpc";
+import { type RouterAppContext } from "@/routes/__root";
+import { publicQueryOptions, trpc } from "@/utils/trpc";
 
 const JOBS_PER_PAGE = 15;
 
@@ -38,6 +39,7 @@ const COMPANY_SIZE_LABELS: Record<string, string> = {
 };
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
+type OrganizationDetail = RouterOutputs["organization"]["getById"];
 type OrganizationJob = RouterOutputs["organization"]["getJobs"]["jobs"][number];
 
 function formatSalary(raw: OrganizationJob): string {
@@ -61,14 +63,46 @@ function getInitials(name: string | null | undefined) {
 import { createSeoHead, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/organizations/$orgId")({
-  head: () =>
-    createSeoHead({
-      title: "Chi tiết công ty | 07nghiep",
-      description: "Xem thông tin công ty, việc làm đang tuyển và đánh giá từ ứng viên.",
-      url: `${SITE_URL}/organizations`,
-    }),
+  loader: ({ context, params }) => preloadOrganizationDetailRoute(context, params.orgId),
+  head: ({ loaderData, params }) => {
+    const org = loaderData as OrganizationDetail | undefined;
+    const title = org?.name ? `${org.name} | 07nghiep` : "Chi tiết công ty | 07nghiep";
+    const description = org
+      ? `Xem thông tin ${org.name}, ngành ${org.industry ?? "đang cập nhật"} và các việc làm đang tuyển.`
+      : "Xem thông tin công ty, việc làm đang tuyển và đánh giá từ ứng viên.";
+
+    return createSeoHead({
+      title,
+      description,
+      image: org?.logoUrl || undefined,
+      url: `${SITE_URL}/organizations/${params.orgId}`,
+    });
+  },
   component: OrganizationDetailPage,
 });
+
+async function preloadOrganizationDetailRoute(
+  context: RouterAppContext,
+  orgId: string,
+): Promise<OrganizationDetail> {
+  const org = await context.queryClient.ensureQueryData(
+    context.trpc.organization.getById.queryOptions({ id: orgId }, publicQueryOptions),
+  );
+
+  await context.queryClient.ensureQueryData(
+    context.trpc.organization.getJobs.queryOptions(
+      {
+        organizationId: orgId,
+        status: "OPEN",
+        page: 1,
+        pageSize: JOBS_PER_PAGE,
+      },
+      publicQueryOptions,
+    ),
+  );
+
+  return org;
+}
 
 function OrganizationDetailPage() {
   const { orgId } = Route.useParams();
@@ -77,7 +111,7 @@ function OrganizationDetailPage() {
   const shouldScrollJobsRef = useRef(false);
 
   const { data: org, isLoading: orgLoading } = useQuery(
-    trpc.organization.getById.queryOptions({ id: orgId }),
+    trpc.organization.getById.queryOptions({ id: orgId }, publicQueryOptions),
   );
 
   const {
@@ -90,7 +124,7 @@ function OrganizationDetailPage() {
       status: "OPEN",
       page: currentPage,
       pageSize: JOBS_PER_PAGE,
-    }),
+    }, publicQueryOptions),
   );
 
   const isLoading = orgLoading || jobsLoading;
@@ -137,7 +171,7 @@ function OrganizationDetailPage() {
         <h1 className="mb-2 text-2xl font-bold text-foreground">Không tìm thấy công ty</h1>
         <p className="mb-6 text-muted-foreground">Công ty này không tồn tại hoặc đã bị xóa.</p>
         <Button asChild variant="outline">
-          <Link to="/organizations">Quay lại danh sách</Link>
+          <a href="/organizations">Quay lại danh sách</a>
         </Button>
       </div>
     );
@@ -166,13 +200,13 @@ function OrganizationDetailPage() {
   return (
     <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <Link
-          to="/organizations"
+        <a
+          href="/organizations"
           className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
         >
           <ArrowLeft className="size-4" />
           Quay lại danh sách
-        </Link>
+        </a>
 
         <Card className="shadow-md shadow-primary/5">
           {org.coverImageUrl ? (
@@ -330,7 +364,7 @@ function OrganizationDetailPage() {
           {jobs.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {jobs.map((job) => (
-                <Link key={job.id} to="/jobs/$jobId" params={{ jobId: job.id }} className="h-full">
+                <a key={job.id} href={`/jobs/${job.id}`} className="h-full">
                   <Card className="h-full cursor-pointer transition-shadow hover:border-brand-orange/50 hover:shadow-md">
                     <CardContent className="flex h-full flex-col gap-3 p-4">
                       <div className="min-w-0">
@@ -365,7 +399,7 @@ function OrganizationDetailPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
+                </a>
               ))}
 
               {totalPages > 1 ? (

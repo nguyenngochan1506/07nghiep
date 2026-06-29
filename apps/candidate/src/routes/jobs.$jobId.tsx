@@ -1,16 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { type RouterAppContext, useJobs } from "@/routes/__root";
 import { useEffect, useMemo, useState } from "react";
 import { createSeoHead, SITE_URL } from "@/lib/seo";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
-import ApplyJobModal from "@/components/jobs/ApplyJobModal";
 import { LocationMap } from "@/components/location-map";
 import { RichTextBlock } from "@/lib/rich-text";
 import { formatSalaryRangeVnd } from "@/lib/salary";
 import { useLocalSavedJobs, type LocalSavedJob } from "@/lib/saved-jobs";
-import { queryClient, trpc } from "@/utils/trpc";
-import { authClient } from "@/lib/auth-client";
+import { publicQueryOptions, trpc } from "@/utils/trpc";
 import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
 import {
@@ -164,7 +162,7 @@ export const Route = createFileRoute("/jobs/$jobId")({
 
 function preloadJobDetailRoute(context: RouterAppContext, jobId: string) {
   return context.queryClient.ensureQueryData(
-    context.trpc.job.getPublicById.queryOptions({ id: jobId }),
+    context.trpc.job.getPublicById.queryOptions({ id: jobId }, publicQueryOptions),
   );
 }
 
@@ -173,8 +171,6 @@ function JobDetailPage() {
   const loaderJob = Route.useLoaderData() as PublicJobDetail | null;
   const { jobs } = useJobs();
   const [hasMounted, setHasMounted] = useState(false);
-  const { data: session } = authClient.useSession();
-  const isLoggedIn = hasMounted && !!session;
   const localSavedJobs = useLocalSavedJobs();
 
   useEffect(() => {
@@ -184,7 +180,7 @@ function JobDetailPage() {
   const contextJob = jobs.find((j) => j.id === jobId);
 
   const { data: apiJob, isLoading: apiLoading } = useQuery(
-    trpc.job.getPublicById.queryOptions({ id: jobId }),
+    trpc.job.getPublicById.queryOptions({ id: jobId }, publicQueryOptions),
   );
 
   const contextJobView: JobDetailView | null = contextJob
@@ -229,48 +225,7 @@ function JobDetailPage() {
     };
   }, [contextJob?.isVerified, contextJob?.postedDate, job]);
 
-  const hasAppliedQuery = useQuery(
-    trpc.applications.list.queryOptions({ search: undefined }, { enabled: isLoggedIn }),
-  );
-  const profileQuery = useQuery(
-    trpc.profile.getMyProfile.queryOptions(undefined, { enabled: isLoggedIn }),
-  );
-  const savedJobOptions = trpc.savedJob.isSaved.queryOptions({ jobId }, { enabled: isLoggedIn });
-  const savedJobQuery = useQuery(savedJobOptions);
-  const billingQuery = useQuery(
-    trpc.billing.me.queryOptions(undefined, { enabled: isLoggedIn }),
-  );
-  const toggleSavedJob = useMutation(
-    trpc.savedJob.toggle.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: savedJobOptions.queryKey });
-      },
-    }),
-  );
-
-  const isLoadingTrigger = hasAppliedQuery.isLoading || profileQuery.isLoading || apiLoading;
-
-  const hasApplied = useMemo(() => {
-    if (hasAppliedQuery.data == null) return false;
-    const applications = hasAppliedQuery.data as unknown as Array<{ job?: { id: string } | null }>;
-    return applications.some((a) => a.job?.id === jobId);
-  }, [hasAppliedQuery.data, jobId]);
-
-  const applicationStatus = useMemo(() => {
-    if (hasAppliedQuery.data == null) return null;
-    const applications = hasAppliedQuery.data as unknown as Array<{
-      status: string | null;
-      job?: { id: string } | null;
-    }>;
-    const app = applications.find((a) => a.job?.id === jobId);
-    return app?.status ?? null;
-  }, [hasAppliedQuery.data, jobId]);
-
-  const isProfileComplete = useMemo(() => {
-    const p = profileQuery.data;
-    if (!p) return false;
-    return Boolean(p.summary && p.resumeUrl);
-  }, [profileQuery.data]);
+  const isLoadingTrigger = apiLoading && !hasMounted;
 
   if (!job && !apiLoading) {
     return (
@@ -280,7 +235,7 @@ function JobDetailPage() {
         </h1>
         <p className="mb-6 text-muted-foreground">Công việc này có thể đã bị xóa hoặc hết hạn.</p>
         <Button asChild>
-          <Link to="/jobs">Quay lại danh sách</Link>
+          <a href="/jobs">Quay lại danh sách</a>
         </Button>
       </div>
     );
@@ -294,10 +249,8 @@ function JobDetailPage() {
     );
   }
 
-  const isSaved = isLoggedIn
-    ? (savedJobQuery.data?.saved ?? false)
-    : localSavedJobs.savedIds.has(job.id);
-  const canSeeApplicantCount = billingQuery.data?.entitlements.candidatePlus ?? false;
+  const isSaved = localSavedJobs.savedIds.has(job.id);
+  const canSeeApplicantCount = false;
 
   const jobFacts = [
     { label: "Mức lương", value: job.salaryRange, icon: DollarSign },
@@ -315,13 +268,13 @@ function JobDetailPage() {
   return (
     <div className="min-h-[100dvh] bg-background px-4 py-8 text-foreground md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <Link
-          to="/jobs"
+        <a
+          href="/jobs"
           className="flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
         >
           <ArrowLeft className="size-4" />
           Quay lại danh sách
-        </Link>
+        </a>
 
         <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <Card className="shadow-md shadow-primary/5">
@@ -354,14 +307,8 @@ function JobDetailPage() {
                   <Button
                     type="button"
                     onClick={() => {
-                      if (isLoggedIn) {
-                        toggleSavedJob.mutate({ jobId: job.id });
-                        return;
-                      }
-
                       if (localSavedJob) localSavedJobs.toggleSavedJob(localSavedJob);
                     }}
-                    disabled={isLoggedIn && toggleSavedJob.isPending}
                     variant={isSaved ? "default" : "outline"}
                     className={
                       isSaved
@@ -480,11 +427,7 @@ function JobDetailPage() {
                 </div>
 
                 <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground">
-                  {hasApplied
-                    ? `Bạn đã ứng tuyển vị trí này${applicationStatus ? ` (${applicationStatus})` : ""}.`
-                    : isLoggedIn
-                      ? "Bạn có thể gửi hồ sơ ngay khi CV và tóm tắt cá nhân đã sẵn sàng."
-                      : "Bạn có thể lưu việc để quay lại sau; đăng nhập khi sẵn sàng ứng tuyển."}
+                  Bạn có thể lưu việc để quay lại sau; đăng nhập khi sẵn sàng ứng tuyển.
                 </div>
                 <div className="rounded-xl border bg-surface-wash p-3 text-sm">
                   <p className="font-medium text-foreground">Số lượng ứng viên</p>
@@ -498,20 +441,12 @@ function JobDetailPage() {
               <CardFooter className="bg-card">
                 {isLoadingTrigger ? (
                   <Skeleton className="h-10 w-full rounded-md" />
-                ) : isLoggedIn ? (
-                  <ApplyJobModal
-                    jobId={job.id}
-                    jobStatus={job.status || "OPEN"}
-                    hasApplied={hasApplied}
-                    isProfileComplete={isProfileComplete}
-                    applicationStatus={applicationStatus}
-                  />
                 ) : (
                   <Button
                     asChild
                     className="w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
                   >
-                    <Link to="/login">Đăng nhập để ứng tuyển</Link>
+                    <a href="/login">Đăng nhập để ứng tuyển</a>
                   </Button>
                 )}
               </CardFooter>

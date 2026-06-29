@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createSeoHead, SITE_URL } from "@/lib/seo";
 import { Building2, CreditCard, FileText, Upload, X } from "lucide-react";
@@ -13,7 +13,7 @@ import { Label } from "@07nghiep/ui/components/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@07nghiep/ui/components/select";
 import { Textarea } from "@07nghiep/ui/components/textarea";
 
-import { queryClient, trpc, trpcClient } from "@/utils/trpc";
+import { trpcClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/business-application")({
   head: () =>
@@ -69,8 +69,6 @@ const emptyForm = {
 };
 
 function BusinessApplicationRoute() {
-  const queryOptions = trpc.businessApplication.mine.queryOptions();
-  const applicationQuery = useQuery(queryOptions);
   const [form, setForm] = useState(emptyForm);
   const [documentUrl, setDocumentUrl] = useState("");
 
@@ -159,12 +157,11 @@ function BusinessApplicationRoute() {
     onSuccess: () => {
       toast.success("Đã gửi yêu cầu doanh nghiệp");
       setForm(emptyForm);
-      queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
     },
     onError: (error) => toast.error(error.message),
   });
 
-  const application = applicationQuery.data as BusinessApplication | null | undefined;
+  const application = null as BusinessApplication | null;
   const latestPayment = application?.payments[0] ?? null;
   const canCreate = !application || application.status === "REJECTED";
 

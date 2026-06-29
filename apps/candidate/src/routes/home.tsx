@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -29,8 +29,8 @@ import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { ProvinceCombobox } from "@/components/province-combobox";
-import { type JobType, useJobs } from "@/routes/__root";
-import { trpc } from "@/utils/trpc";
+import { type JobType, type RouterAppContext, useJobs } from "@/routes/__root";
+import { publicQueryOptions, trpc } from "@/utils/trpc";
 import { createSeoHead, SITE_URL } from "@/lib/seo";
 
 const SEO_IMAGE = `${SITE_URL}/images/candidate-home/hero.webp`;
@@ -47,8 +47,18 @@ export function homeSeoHead() {
 
 export const Route = createFileRoute("/home")({
   head: homeSeoHead,
+  loader: ({ context }) => preloadHomeRoute(context),
   component: HomeComponent,
 });
+
+async function preloadHomeRoute(context: RouterAppContext): Promise<void> {
+  await context.queryClient.ensureQueryData(
+    context.trpc.job.getPublicList.queryOptions({ limit: 1 }, publicQueryOptions),
+  );
+  await context.queryClient.ensureQueryData(
+    context.trpc.organization.getPublicList.queryOptions({ limit: 1 }, publicQueryOptions),
+  );
+}
 
 const POPULAR_SEARCHES = ["React", "Product Designer", "Remote", "Data Analyst", "Marketing"];
 
@@ -84,11 +94,12 @@ function formatStatCount(value: number | undefined) {
 }
 
 export function HomeComponent() {
-  const navigate = useNavigate();
   const { jobs, isLoading, isError } = useJobs();
-  const jobStatsQuery = useQuery(trpc.job.getPublicList.queryOptions({ limit: 1 }));
+  const jobStatsQuery = useQuery(
+    trpc.job.getPublicList.queryOptions({ limit: 1 }, publicQueryOptions),
+  );
   const organizationStatsQuery = useQuery(
-    trpc.organization.getPublicList.queryOptions({ limit: 1 }),
+    trpc.organization.getPublicList.queryOptions({ limit: 1 }, publicQueryOptions),
   );
 
   const featuredJobs = useMemo(() => jobs.slice(0, 4), [jobs]);
@@ -111,22 +122,11 @@ export function HomeComponent() {
   const handleSearchSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
 
-    navigate({
-      to: "/jobs",
-      search: {
-        keyword: keyword || undefined,
-        location: location || undefined,
-      },
-    });
+    window.location.assign(getJobsHref({ keyword, location }));
   };
 
   const handleTagClick = (tag: string) => {
-    navigate({
-      to: "/jobs",
-      search: {
-        keyword: tag,
-      },
-    });
+    window.location.assign(getJobsHref({ keyword: tag }));
   };
 
   return (
@@ -275,7 +275,7 @@ export function HomeComponent() {
               </CardHeader>
               <CardFooter>
                 <Button asChild variant="outline">
-                  <Link to="/jobs">Mở trang việc làm</Link>
+                  <a href="/jobs">Mở trang việc làm</a>
                 </Button>
               </CardFooter>
             </Card>
@@ -298,10 +298,10 @@ export function HomeComponent() {
 
           <div>
             <Button asChild variant="outline" size="lg">
-              <Link to="/jobs">
+              <a href="/jobs">
                 Xem tất cả
                 <ArrowRight data-icon="inline-end" />
-              </Link>
+              </a>
             </Button>
           </div>
         </div>
@@ -426,7 +426,7 @@ export function HomeComponent() {
               size="lg"
               className="bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
             >
-              <Link to="/jobs">Tìm việc</Link>
+              <a href="/jobs">Tìm việc</a>
             </Button>
             <Button
               asChild
@@ -434,7 +434,7 @@ export function HomeComponent() {
               size="lg"
               className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/15"
             >
-              <Link to="/organizations">Xem công ty</Link>
+              <a href="/organizations">Xem công ty</a>
             </Button>
           </div>
         </div>
@@ -468,9 +468,9 @@ function FeaturedJobCard({ job, highlighted = false }: { job: JobType; highlight
           </div>
           <div className="min-w-0 flex-1">
             <CardTitle className="line-clamp-2 text-base leading-snug">
-              <Link to="/jobs/$jobId" params={{ jobId: job.id }} className="hover:text-primary">
+              <a href={`/jobs/${job.id}`} className="hover:text-primary">
                 {job.title}
-              </Link>
+              </a>
             </CardTitle>
             <CardDescription className="mt-1 line-clamp-1">{job.companyName}</CardDescription>
           </div>
@@ -506,14 +506,24 @@ function FeaturedJobCard({ job, highlighted = false }: { job: JobType; highlight
       </CardContent>
       <CardFooter className="mt-auto border-t bg-card px-4 py-3">
         <Button asChild variant="outline" className="w-full">
-          <Link to="/jobs/$jobId" params={{ jobId: job.id }}>
+          <a href={`/jobs/${job.id}`}>
             Xem chi tiết
             <ArrowRight data-icon="inline-end" />
-          </Link>
+          </a>
         </Button>
       </CardFooter>
     </Card>
   );
+}
+
+function getJobsHref(search: { keyword?: string; location?: string }) {
+  const params = new URLSearchParams();
+
+  if (search.keyword) params.set("keyword", search.keyword);
+  if (search.location) params.set("location", search.location);
+
+  const query = params.toString();
+  return query ? `/jobs?${query}` : "/jobs";
 }
 
 function InsightItem({

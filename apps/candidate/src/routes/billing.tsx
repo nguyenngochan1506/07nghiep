@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   Bell,
   Check,
@@ -26,8 +26,8 @@ import {
 import { Input } from "@07nghiep/ui/components/input";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
-import { trpc, trpcClient } from "@/utils/trpc";
-import { authClient } from "@/lib/auth-client";
+import { type RouterAppContext } from "@/routes/__root";
+import { publicQueryOptions, trpc, trpcClient } from "@/utils/trpc";
 
 import { createSeoHead, SITE_URL } from "@/lib/seo";
 
@@ -38,8 +38,15 @@ export const Route = createFileRoute("/billing")({
       description: "Nâng cấp tài khoản để mở khóa tính năng phân tích CV, xem số lượng ứng viên và hơn thế nữa.",
       url: `${SITE_URL}/billing`,
     }),
+  loader: ({ context }) => preloadBillingRoute(context),
   component: BillingRoute,
 });
+
+function preloadBillingRoute(context: RouterAppContext) {
+  return context.queryClient.ensureQueryData(
+    context.trpc.billing.plans.queryOptions(undefined, publicQueryOptions),
+  );
+}
 
 type SubscriptionRow = {
   id: string;
@@ -129,16 +136,9 @@ function formatVoucherFinalAmount(value: number) {
 }
 
 function BillingRoute() {
-  const { data: session } = authClient.useSession();
-  const isLoggedIn = !!session;
   const [plusVoucherCode, setPlusVoucherCode] = useState("");
   const [plusVoucherPreview, setPlusVoucherPreview] = useState<VoucherPreview | null>(null);
-  const plansQuery = useQuery(trpc.billing.plans.queryOptions());
-  const billingQuery = useQuery(
-    trpc.billing.me.queryOptions(undefined, {
-      enabled: isLoggedIn,
-    }),
-  );
+  const plansQuery = useQuery(trpc.billing.plans.queryOptions(undefined, publicQueryOptions));
   const checkoutMutation = useMutation({
     mutationFn: () =>
       trpcClient.billing.createCandidatePlusCheckout.mutate({
@@ -171,11 +171,6 @@ function BillingRoute() {
   }
 
   function handleApplyPlusVoucher() {
-    if (!isLoggedIn) {
-      window.location.href = "/login?redirect=/billing";
-      return;
-    }
-
     if (!plusVoucherCode.trim()) {
       toast.error("Vui lòng nhập mã voucher");
       return;
@@ -185,11 +180,6 @@ function BillingRoute() {
   }
 
   function handleCandidatePlusCheckout() {
-    if (!isLoggedIn) {
-      window.location.href = "/login?redirect=/billing";
-      return;
-    }
-
     if (plusVoucherCode.trim() && !plusVoucherPreview) {
       toast.error("Vui lòng bấm Áp dụng mã voucher trước khi thanh toán");
       return;
@@ -198,8 +188,7 @@ function BillingRoute() {
     checkoutMutation.mutate();
   }
 
-  const entitlements = billingQuery.data?.entitlements;
-  const subscriptions = (billingQuery.data?.subscriptions ?? []) as SubscriptionRow[];
+  const subscriptions: SubscriptionRow[] = [];
   const plans = (plansQuery.data ?? []) as BillingPlanRow[];
   const plusPlan = plans.find((plan) => plan.code === "CANDIDATE_PLUS_MONTHLY");
   const employerPlan = plans.find((plan) => plan.code === "EMPLOYER_MONTHLY");
@@ -209,7 +198,7 @@ function BillingRoute() {
   const plusPrice =
     plusPlan?.priceVnd ?? plusSubscription?.plan.priceVnd ?? CANDIDATE_PLUS_FALLBACK_PRICE;
   const employerPrice = employerPlan?.priceVnd ?? EMPLOYER_FALLBACK_PRICE;
-  const plusIsActive = entitlements?.candidatePlus ?? false;
+  const plusIsActive = false;
   const plusCheckoutLabel =
     plusVoucherPreview?.finalAmountVnd === 0
       ? plusIsActive
@@ -219,7 +208,7 @@ function BillingRoute() {
         ? "Gia hạn Plus"
         : "Nâng cấp Plus";
 
-  if (plansQuery.isLoading || billingQuery.isLoading) {
+  if (plansQuery.isLoading) {
     return (
       <main className="min-h-screen bg-background px-4 py-8">
         <div className="mx-auto w-full max-w-6xl">
@@ -284,7 +273,7 @@ function BillingRoute() {
             features={freeFeatures}
             action={
               <Button asChild variant="outline" size="lg" className="w-full">
-                <Link to="/jobs">Xem việc làm</Link>
+                <a href="/jobs">Xem việc làm</a>
               </Button>
             }
           />
@@ -349,13 +338,9 @@ function BillingRoute() {
             features={employerFeatures}
             action={
               <Button asChild variant="outline" size="lg" className="w-full">
-                {isLoggedIn ? (
-                  <Link to="/business-application">Đăng ký nhà tuyển dụng</Link>
-                ) : (
-                  <Link to="/login" search={{ redirect: "/business-application" }}>
-                    Đăng ký nhà tuyển dụng
-                  </Link>
-                )}
+                <a href="/login?redirect=%2Fbusiness-application">
+                  Đăng ký nhà tuyển dụng
+                </a>
               </Button>
             }
           />

@@ -1,13 +1,10 @@
-import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "@tanstack/react-router";
 import { BriefcaseBusiness, Menu } from "lucide-react";
 
 import { ModeToggle } from "./mode-toggle";
-import { NotificationBellContainer } from "./notification-bell-container";
 import UserMenu from "./user-menu";
-import { authClient } from "@/lib/auth-client";
-import { Badge } from "@07nghiep/ui/components/badge";
 import { Button } from "@07nghiep/ui/components/button";
+import { cn } from "@07nghiep/ui/lib/utils";
 import {
   Sheet,
   SheetContent,
@@ -16,60 +13,41 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@07nghiep/ui/components/sheet";
-import { trpc } from "@/utils/trpc";
 
 export default function Header() {
-  const { data: session } = authClient.useSession();
-  const isLoggedIn = !!session;
-
-  const { data: unreadCount } = useQuery(
-    trpc.conversation.getUnreadCount.queryOptions(undefined, {
-      enabled: isLoggedIn,
-      refetchInterval: 15000,
-    }),
-  );
-
-  type NavLink = { to: string; label: string; hasMessageBadge?: boolean };
+  const location = useLocation();
+  type NavLink = { to: string; label: string };
 
   const publicLinks: NavLink[] = [
     { to: "/home", label: "Trang chủ" },
     { to: "/jobs/", label: "Việc làm" },
     { to: "/organizations", label: "Công ty" },
     { to: "/saved-jobs", label: "Đã lưu" },
-    ...(!isLoggedIn ? [{ to: "/billing", label: "Plus" }] : []),
+    { to: "/billing", label: "Plus" },
   ];
 
-  const protectedLinks: NavLink[] = [
-    { to: "/cv-analysis", label: "AI CV" },
-    { to: "/applications", label: "Đơn ứng tuyển" },
-    { to: "/messages", label: "Tin nhắn", hasMessageBadge: true },
-    { to: "/interviews", label: "Lịch PV" },
-  ];
-
-  const navLinks = isLoggedIn ? [...publicLinks, ...protectedLinks] : publicLinks;
+  const activePath = location.pathname.replace(/\/$/, "") || "/";
+  const isActive = (to: string) => activePath === (to.replace(/\/$/, "") || "/");
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/85">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
-        <Link to="/" className="flex min-w-fit items-center gap-3">
+        <a href="/" className="flex min-w-fit items-center gap-3">
           <img src="/07logo.png" alt="07nghiep" className="h-12 w-auto object-contain" />
-        </Link>
+        </a>
 
         <nav className="hidden items-center gap-1 rounded-full border bg-surface-wash p-1 shadow-sm lg:flex">
-          {navLinks.map(({ to, label, hasMessageBadge }) => (
-            <Link
+          {publicLinks.map(({ to, label }) => (
+            <a
               key={label}
-              to={to}
-              activeProps={{ className: "bg-primary text-primary-foreground shadow-sm" }}
-              className="relative flex h-9 items-center gap-1 rounded-full px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              href={to}
+              className={cn(
+                "relative flex h-9 items-center gap-1 rounded-full px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+                isActive(to) && "bg-primary text-primary-foreground shadow-sm",
+              )}
             >
               {label}
-              {hasMessageBadge && unreadCount && unreadCount > 0 ? (
-                <Badge variant="destructive" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </Badge>
-              ) : null}
-            </Link>
+            </a>
           ))}
         </nav>
 
@@ -97,25 +75,21 @@ export default function Header() {
                 <SheetDescription>Điều hướng nhanh trong tài khoản ứng viên.</SheetDescription>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4">
-                {navLinks.map(({ to, label, hasMessageBadge }) => (
-                  <Link
+                {publicLinks.map(({ to, label }) => (
+                  <a
                     key={label}
-                    to={to}
-                    activeProps={{ className: "bg-primary text-primary-foreground" }}
-                    className="flex h-10 items-center justify-between rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    href={to}
+                    className={cn(
+                      "flex h-10 items-center justify-between rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+                      isActive(to) && "bg-primary text-primary-foreground",
+                    )}
                   >
                     <span>{label}</span>
-                    {hasMessageBadge && unreadCount && unreadCount > 0 ? (
-                      <Badge variant="destructive" className="h-5 min-w-5 rounded-full px-1">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </Badge>
-                    ) : null}
-                  </Link>
+                  </a>
                 ))}
               </nav>
             </SheetContent>
           </Sheet>
-          {isLoggedIn && <NotificationBellContainer />}
           <ModeToggle />
           <UserMenu />
         </div>

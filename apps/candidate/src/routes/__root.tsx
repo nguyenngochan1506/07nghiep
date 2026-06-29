@@ -11,12 +11,10 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import Header from "@/components/header";
-import { authClient } from "@/lib/auth-client";
-import { useSyncLocalSavedJobs } from "@/lib/saved-jobs";
 import { NotFoundComponent } from "@/components/not-found";
 import { ThemeProvider } from "@/components/theme-provider";
 import { formatSalaryRangeVnd } from "@/lib/salary";
-import { trpc } from "@/utils/trpc";
+import { publicQueryOptions, trpc } from "@/utils/trpc";
 
 import appCss from "../index.css?url";
 
@@ -116,7 +114,10 @@ export function mapJob(raw: PublicJob): JobType {
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   beforeLoad: async ({ context }) => {
     await context.queryClient.prefetchQuery(
-      context.trpc.job.getPublicList.queryOptions({ limit: PUBLIC_JOBS_PREVIEW_LIMIT }),
+      context.trpc.job.getPublicList.queryOptions(
+        { limit: PUBLIC_JOBS_PREVIEW_LIMIT },
+        publicQueryOptions,
+      ),
     );
   },
   component: RootComponent,
@@ -142,7 +143,10 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 function RootComponent() {
   const location = useLocation();
   const { data, isLoading, isError } = useQuery(
-    trpc.job.getPublicList.queryOptions({ limit: PUBLIC_JOBS_PREVIEW_LIMIT }),
+    trpc.job.getPublicList.queryOptions(
+      { limit: PUBLIC_JOBS_PREVIEW_LIMIT },
+      publicQueryOptions,
+    ),
   );
 
   const publicJobsData = data as { jobs?: PublicJob[] } | undefined;
@@ -161,7 +165,6 @@ function RootComponent() {
         <div className="grid min-h-svh grid-rows-[auto_1fr] bg-background text-foreground">
           {isOAuthPopupCallback ? null : (
             <>
-              <SavedJobsSyncGate />
               <Header />
             </>
           )}
@@ -189,12 +192,4 @@ function RootDocument({ children }: { children: ReactNode }) {
       </body>
     </html>
   );
-}
-
-function SavedJobsSyncGate() {
-  const { data: session } = authClient.useSession();
-
-  useSyncLocalSavedJobs(Boolean(session?.user?.id));
-
-  return null;
 }
