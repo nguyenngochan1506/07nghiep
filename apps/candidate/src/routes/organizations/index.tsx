@@ -42,7 +42,15 @@ type PublicOrganization = {
   openJobsCount: number;
 };
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/organizations/")({
+  head: () =>
+    createSeoHead({
+      title: "Công ty | 07nghiep",
+      description: "Khám phá các công ty hàng đầu, xem thông tin và việc làm đang tuyển dụng.",
+      url: `${SITE_URL}/organizations`,
+    }),
   validateSearch: (
     search: Record<string, unknown>,
   ): {

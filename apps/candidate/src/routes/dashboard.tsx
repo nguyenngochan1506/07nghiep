@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createSeoHead, SITE_URL } from "@/lib/seo";
 import {
   ArrowRight,
   Bell,
@@ -29,6 +30,12 @@ import {
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
 export const Route = createFileRoute("/dashboard")({
+  head: () =>
+    createSeoHead({
+      title: "Dashboard | 07nghiep",
+      description: "Tổng quan hoạt động - quản lý hồ sơ, việc đã lưu và đơn ứng tuyển.",
+      url: `${SITE_URL}/dashboard`,
+    }),
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) {

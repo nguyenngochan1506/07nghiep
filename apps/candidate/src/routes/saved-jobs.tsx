@@ -12,7 +12,15 @@ import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent, CardTitle } from "@07nghiep/ui/components/card";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/saved-jobs")({
+  head: () =>
+    createSeoHead({
+      title: "Việc đã lưu | 07nghiep",
+      description: "Danh sách việc làm đã lưu - quản lý và ứng tuyển nhanh chóng.",
+      url: `${SITE_URL}/saved-jobs`,
+    }),
   component: SavedJobsPage,
 });
 

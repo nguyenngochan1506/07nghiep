@@ -39,7 +39,15 @@ import ApplicationStatusTracker, {
 import { Label } from "@07nghiep/ui/components/label";
 import { Textarea } from "@07nghiep/ui/components/textarea";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/applications/$applicationId")({
+  head: () =>
+    createSeoHead({
+      title: "Chi tiết đơn ứng tuyển | 07nghiep",
+      description: "Xem chi tiết trạng thái đơn ứng tuyển và phản hồi từ nhà tuyển dụng.",
+      url: `${SITE_URL}/applications`,
+    }),
   component: ApplicationDetailPage,
 });
 

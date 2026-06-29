@@ -5,18 +5,31 @@ import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
 
-export const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: (error, query) => {
-      toast.error(error.message, {
-        action: {
-          label: "retry",
-          onClick: query.invalidate,
-        },
-      });
-    },
-  }),
-});
+function createQueryClient() {
+  return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        toast.error(error.message, {
+          action: {
+            label: "retry",
+            onClick: query.invalidate,
+          },
+        });
+      },
+    }),
+  });
+}
+
+let browserQueryClient: QueryClient | undefined;
+
+export function getQueryClient() {
+  if (typeof window === "undefined") {
+    return createQueryClient();
+  }
+
+  browserQueryClient ??= createQueryClient();
+  return browserQueryClient;
+}
 
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
@@ -32,7 +45,13 @@ export const trpcClient = createTRPCClient<AppRouter>({
   ],
 });
 
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-  client: trpcClient,
-  queryClient,
-});
+export function createTrpcOptions(queryClient: QueryClient) {
+  return createTRPCOptionsProxy<AppRouter>({
+    client: trpcClient,
+    queryClient,
+  });
+}
+
+export const queryClient = getQueryClient();
+
+export const trpc = createTrpcOptions(queryClient);

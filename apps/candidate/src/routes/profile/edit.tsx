@@ -19,7 +19,15 @@ import { authClient } from "@/lib/auth-client";
 import { queryClient, trpc } from "@/utils/trpc";
 import { profileSchema, type ProfileFormValues } from "@/utils/profile-schema";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/profile/edit")({
+  head: () =>
+    createSeoHead({
+      title: "Chỉnh sửa hồ sơ | 07nghiep",
+      description: "Cập nhật thông tin cá nhân, CV, kỹ năng và kinh nghiệm làm việc.",
+      url: `${SITE_URL}/profile/edit`,
+    }),
   component: ProfileEditPage,
 });
 

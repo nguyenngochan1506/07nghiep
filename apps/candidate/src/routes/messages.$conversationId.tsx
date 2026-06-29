@@ -12,7 +12,15 @@ import { useEffect, useRef } from "react";
 import { env } from "@07nghiep/env/candidate";
 import { createSSEConnection } from "@07nghiep/ui/lib/sse";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/messages/$conversationId")({
+  head: () =>
+    createSeoHead({
+      title: "Tin nhắn | 07nghiep",
+      description: "Xem hội thoại với nhà tuyển dụng.",
+      url: `${SITE_URL}/messages`,
+    }),
   component: ConversationDetail,
 });
 

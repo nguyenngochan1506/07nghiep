@@ -17,18 +17,21 @@ import { PageHero } from "@/components/page-hero";
 import { SearchBar } from "@/components/search-bar";
 import { authClient } from "@/lib/auth-client";
 import { useLocalSavedJobs } from "@/lib/saved-jobs";
-import { mapJob, type PublicJob } from "@/routes/__root";
+import { mapJob, type PublicJob, type RouterAppContext } from "@/routes/__root";
 import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/jobs/")({
+  head: () =>
+    createSeoHead({
+      title: "Việc làm | 07nghiep",
+      description: "Tìm kiếm việc làm phù hợp với kỹ năng và kinh nghiệm của bạn. Hàng ngàn cơ hội việc làm đang chờ đón.",
+      url: `${SITE_URL}/jobs`,
+    }),
   validateSearch: (
     search: Record<string, unknown>,
-  ): {
-    keyword?: string;
-    location?: string;
-    industry?: string;
-    page?: number;
-  } => ({
+  ): JobsSearch => ({
     keyword: typeof search.keyword === "string" && search.keyword ? search.keyword : undefined,
     location: typeof search.location === "string" && search.location ? search.location : undefined,
     industry: typeof search.industry === "string" && search.industry ? search.industry : undefined,
@@ -37,10 +40,23 @@ export const Route = createFileRoute("/jobs/")({
       return typeof page === "number" && Number.isInteger(page) && page > 0 ? page : undefined;
     })(),
   }),
+  loaderDeps: ({ search }): JobsSearch => ({
+    keyword: search.keyword,
+    location: search.location,
+    industry: search.industry,
+    page: search.page,
+  }),
+  loader: ({ context, deps }) => preloadJobsRoute(context, deps),
   component: JobsPage,
 });
 
 const ITEMS_PER_PAGE = 15;
+type JobsSearch = {
+  keyword?: string;
+  location?: string;
+  industry?: string;
+  page?: number;
+};
 type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
 function splitMultiSearchParam(value?: string) {
@@ -54,6 +70,27 @@ function splitMultiSearchParam(value?: string) {
 
 function joinMultiSearchParam(value: string[]) {
   return value.length > 0 ? value.join("|") : undefined;
+}
+
+function getJobsQueryInput(search: JobsSearch) {
+  const locations = splitMultiSearchParam(search.location);
+  const industries = splitMultiSearchParam(search.industry);
+  const page = search.page ?? 1;
+
+  return {
+    keyword: search.keyword || undefined,
+    locations: locations.length > 0 ? locations : undefined,
+    industries: industries.length > 0 ? industries : undefined,
+    limit: ITEMS_PER_PAGE,
+    offset: (page - 1) * ITEMS_PER_PAGE,
+  };
+}
+
+async function preloadJobsRoute(context: RouterAppContext, search: JobsSearch): Promise<void> {
+  await context.queryClient.ensureQueryData(context.trpc.job.getIndustries.queryOptions());
+  await context.queryClient.ensureQueryData(
+    context.trpc.job.getPublicList.queryOptions(getJobsQueryInput(search)),
+  );
 }
 
 function JobsPage() {
@@ -83,13 +120,14 @@ function JobsPage() {
   const shouldScrollResultsRef = useRef(false);
   const industriesQuery = useQuery(trpc.job.getIndustries.queryOptions());
   const jobsQuery = useQuery(
-    trpc.job.getPublicList.queryOptions({
-      keyword: keyword || undefined,
-      locations: locations.length > 0 ? locations : undefined,
-      industries: industries.length > 0 ? industries : undefined,
-      limit: ITEMS_PER_PAGE,
-      offset: (currentPage - 1) * ITEMS_PER_PAGE,
-    }),
+    trpc.job.getPublicList.queryOptions(
+      getJobsQueryInput({
+        keyword,
+        location: joinMultiSearchParam(locations),
+        industry: joinMultiSearchParam(industries),
+        page: currentPage,
+      }),
+    ),
   );
 
   useEffect(() => {

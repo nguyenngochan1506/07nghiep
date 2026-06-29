@@ -9,7 +9,15 @@ import { trpc } from "../../utils/trpc";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/profile/notifications")({
+  head: () =>
+    createSeoHead({
+      title: "Cài đặt thông báo | 07nghiep",
+      description: "Quản lý thông báo việc làm, ứng tuyển và cập nhật từ hệ thống.",
+      url: `${SITE_URL}/profile/notifications`,
+    }),
   component: NotificationPreferencesPage,
 });
 

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useJobs } from "@/routes/__root";
-import { useMemo } from "react";
+import { type RouterAppContext, useJobs } from "@/routes/__root";
+import { useEffect, useMemo, useState } from "react";
+import { createSeoHead, SITE_URL } from "@/lib/seo";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import ApplyJobModal from "@/components/jobs/ApplyJobModal";
@@ -143,15 +144,42 @@ function formatExperience(level: string, months: number | null) {
 }
 
 export const Route = createFileRoute("/jobs/$jobId")({
+  loader: ({ context, params }) => preloadJobDetailRoute(context, params.jobId),
+  head: ({ loaderData, params }) => {
+    const job = loaderData as PublicJobDetail | undefined;
+    const title = job?.title ? `${job.title} | 07nghiep` : "Chi tiết việc làm | 07nghiep";
+    const description = job
+      ? `${job.organization?.name ?? "Nhà tuyển dụng"} tuyển ${job.title}${job.location ? ` tại ${job.location}` : ""}. Xem mô tả, yêu cầu và ứng tuyển trực tiếp.`
+      : "Xem chi tiết công việc, mô tả, yêu cầu và ứng tuyển trực tiếp.";
+
+    return createSeoHead({
+      title,
+      description,
+      image: job?.organization?.logoUrl || undefined,
+      url: `${SITE_URL}/jobs/${params.jobId}`,
+    });
+  },
   component: JobDetailPage,
 });
 
+function preloadJobDetailRoute(context: RouterAppContext, jobId: string) {
+  return context.queryClient.ensureQueryData(
+    context.trpc.job.getPublicById.queryOptions({ id: jobId }),
+  );
+}
+
 function JobDetailPage() {
   const { jobId } = Route.useParams();
+  const loaderJob = Route.useLoaderData() as PublicJobDetail | null;
   const { jobs } = useJobs();
+  const [hasMounted, setHasMounted] = useState(false);
   const { data: session } = authClient.useSession();
-  const isLoggedIn = !!session;
+  const isLoggedIn = hasMounted && !!session;
   const localSavedJobs = useLocalSavedJobs();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const contextJob = jobs.find((j) => j.id === jobId);
 
@@ -177,7 +205,9 @@ function JobDetailPage() {
     : null;
 
   const job: JobDetailView | null =
-    (apiJob ? mapJob(apiJob as unknown as PublicJobDetail) : null) ?? contextJobView;
+    (apiJob ? mapJob(apiJob as unknown as PublicJobDetail) : null) ??
+    (loaderJob ? mapJob(loaderJob) : null) ??
+    contextJobView;
   const localSavedJob = useMemo<LocalSavedJob | null>(() => {
     if (!job) return null;
 
@@ -491,6 +521,39 @@ function JobDetailPage() {
           </aside>
         </section>
       </div>
+      <JobPostingJsonLd job={job} />
     </div>
+  );
+}
+
+function JobPostingJsonLd({ job }: { job: JobDetailView }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description || job.title,
+    identifier: { "@type": "PropertyValue", name: "07nghiep", value: job.id },
+    datePosted: job.publishedAt || new Date().toISOString(),
+    validThrough: job.expiresAt || undefined,
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.companyName,
+      logo: job.companyLogo || undefined,
+    },
+    jobLocation: job.location
+      ? {
+          "@type": "Place",
+          address: { "@type": "PostalAddress", addressLocality: job.location },
+        }
+      : undefined,
+    employmentType: job.jobType || undefined,
+    directApply: true,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
   );
 }

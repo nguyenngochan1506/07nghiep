@@ -30,7 +30,15 @@ import {
   type ApplicationCardProps,
 } from "@/components/application/application-card";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/applications/")({
+  head: () =>
+    createSeoHead({
+      title: "Đơn ứng tuyển | 07nghiep",
+      description: "Theo dõi trạng thái đơn ứng tuyển và quản lý hồ sơ đã gửi.",
+      url: `${SITE_URL}/applications`,
+    }),
   component: ApplicationsPage,
 });
 

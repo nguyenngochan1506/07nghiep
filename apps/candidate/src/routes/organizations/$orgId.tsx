@@ -58,7 +58,15 @@ function getInitials(name: string | null | undefined) {
     .toUpperCase();
 }
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/organizations/$orgId")({
+  head: () =>
+    createSeoHead({
+      title: "Chi tiết công ty | 07nghiep",
+      description: "Xem thông tin công ty, việc làm đang tuyển và đánh giá từ ứng viên.",
+      url: `${SITE_URL}/organizations`,
+    }),
   component: OrganizationDetailPage,
 });
 

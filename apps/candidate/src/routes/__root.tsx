@@ -1,9 +1,15 @@
 import { Toaster } from "@07nghiep/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { createRootRouteWithContext, HeadContent, Outlet } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Outlet,
+  Scripts,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useLocation } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import Header from "@/components/header";
 import { authClient } from "@/lib/auth-client";
 import { useSyncLocalSavedJobs } from "@/lib/saved-jobs";
@@ -12,7 +18,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { formatSalaryRangeVnd } from "@/lib/salary";
 import { trpc } from "@/utils/trpc";
 
-import "../index.css";
+import appCss from "../index.css?url";
 
 import { useQuery } from "@tanstack/react-query";
 import { createContext, useContext, useMemo } from "react";
@@ -108,6 +114,11 @@ export function mapJob(raw: PublicJob): JobType {
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
+  beforeLoad: async ({ context }) => {
+    await context.queryClient.prefetchQuery(
+      context.trpc.job.getPublicList.queryOptions({ limit: PUBLIC_JOBS_PREVIEW_LIMIT }),
+    );
+  },
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   head: () => ({
@@ -122,10 +133,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       },
     ],
     links: [
-      {
-        rel: "icon",
-        href: "/07logo.png",
-      },
+      { rel: "icon", href: "/07logo.png" },
+      { rel: "stylesheet", href: appCss },
     ],
   }),
 });
@@ -142,8 +151,7 @@ function RootComponent() {
   const isOAuthPopupCallback = location.pathname === "/auth/google/callback";
 
   return (
-    <>
-      <HeadContent />
+    <RootDocument>
       <ThemeProvider
         attribute="class"
         defaultTheme="light"
@@ -165,7 +173,21 @@ function RootComponent() {
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-left" />
       <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
-    </>
+    </RootDocument>
+  );
+}
+
+function RootDocument({ children }: { children: ReactNode }) {
+  return (
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
   );
 }
 

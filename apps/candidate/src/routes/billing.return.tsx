@@ -9,10 +9,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@07ng
 
 import { queryClient, trpc } from "@/utils/trpc";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/billing/return")({
   validateSearch: (search) => ({
     paymentId: typeof search.paymentId === "string" ? search.paymentId : undefined,
   }),
+  head: () =>
+    createSeoHead({
+      title: "Xử lý thanh toán | 07nghiep",
+      description: "Đang xử lý thanh toán gói dịch vụ 07nghiep.",
+      url: `${SITE_URL}/billing/return`,
+      noIndex: true,
+    }),
   component: BillingReturnRoute,
 });
 

@@ -13,6 +13,7 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { createSeoHead, SITE_URL } from "@/lib/seo";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -28,6 +29,12 @@ import { authClient } from "@/lib/auth-client";
 import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/cv-analysis")({
+  head: () =>
+    createSeoHead({
+      title: "Phân tích CV | 07nghiep",
+      description: "Phân tích CV miễn phí - đánh giá kỹ năng, gợi ý cải thiện hồ sơ xin việc.",
+      url: `${SITE_URL}/cv-analysis`,
+    }),
   component: CvAnalysisPage,
 });
 

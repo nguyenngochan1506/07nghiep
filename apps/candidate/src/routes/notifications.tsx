@@ -8,8 +8,15 @@ import { Check, Trash2, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { createSeoHead, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/notifications")({
+  head: () =>
+    createSeoHead({
+      title: "Thông báo | 07nghiep",
+      description: "Xem thông báo việc làm, ứng tuyển và cập nhật từ nhà tuyển dụng.",
+      url: `${SITE_URL}/notifications`,
+    }),
   component: NotificationsPage,
 });
 

@@ -1,6 +1,7 @@
 import { createFileRoute, Link as RouterLink } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import { createSeoHead, SITE_URL } from "@/lib/seo";
 import type { AppRouter } from "@07nghiep/server/routers/index";
 import type { inferRouterOutputs } from "@trpc/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@07nghiep/ui/components/card";
@@ -25,6 +26,12 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/interviews")({
+  head: () =>
+    createSeoHead({
+      title: "Phỏng vấn | 07nghiep",
+      description: "Quản lý lịch phỏng vấn và theo dõi trạng thái ứng tuyển.",
+      url: `${SITE_URL}/interviews`,
+    }),
   component: CandidateInterviewsPage,
 });
 

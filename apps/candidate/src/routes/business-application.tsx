@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { createSeoHead, SITE_URL } from "@/lib/seo";
 import { Building2, CreditCard, FileText, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,6 +16,12 @@ import { Textarea } from "@07nghiep/ui/components/textarea";
 import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/business-application")({
+  head: () =>
+    createSeoHead({
+      title: "Đăng ký doanh nghiệp | 07nghiep",
+      description: "Đăng ký tài khoản doanh nghiệp để đăng tin tuyển dụng và quản lý ứng viên.",
+      url: `${SITE_URL}/business-application`,
+    }),
   component: BusinessApplicationRoute,
 });
 

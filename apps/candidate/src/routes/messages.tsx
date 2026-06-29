@@ -11,7 +11,15 @@ import { env } from "@07nghiep/env/candidate";
 import { createSSEConnection } from "@07nghiep/ui/lib/sse";
 import { MessageSquare } from "lucide-react";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/messages")({
+  head: () =>
+    createSeoHead({
+      title: "Tin nhắn | 07nghiep",
+      description: "Trao đổi tin nhắn với nhà tuyển dụng và quản lý hội thoại ứng tuyển.",
+      url: `${SITE_URL}/messages`,
+    }),
   component: MessagesLayout,
 });
 

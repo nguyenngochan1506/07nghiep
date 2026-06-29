@@ -29,7 +29,15 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { trpc, trpcClient } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 
+import { createSeoHead, SITE_URL } from "@/lib/seo";
+
 export const Route = createFileRoute("/billing")({
+  head: () =>
+    createSeoHead({
+      title: "Gói dịch vụ | 07nghiep",
+      description: "Nâng cấp tài khoản để mở khóa tính năng phân tích CV, xem số lượng ứng viên và hơn thế nữa.",
+      url: `${SITE_URL}/billing`,
+    }),
   component: BillingRoute,
 });
 

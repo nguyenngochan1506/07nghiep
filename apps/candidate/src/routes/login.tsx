@@ -4,6 +4,7 @@ import { useState } from "react";
 import SignInForm from "@/components/sign-in-form";
 import SignUpForm from "@/components/sign-up-form";
 import { authClient } from "@/lib/auth-client";
+import { createSeoHead, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
@@ -15,6 +16,13 @@ export const Route = createFileRoute("/login")({
       });
     }
   },
+  head: () =>
+    createSeoHead({
+      title: "Đăng nhập | 07nghiep",
+      description: "Đăng nhập vào 07nghiep để quản lý hồ sơ, theo dõi đơn ứng tuyển và lưu việc làm.",
+      url: `${SITE_URL}/login`,
+      noIndex: true,
+    }),
   component: RouteComponent,
 });
 
