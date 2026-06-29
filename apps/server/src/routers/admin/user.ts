@@ -56,6 +56,93 @@ const resetPasswordSchema = z.object({
 
 const deleteUserSchema = z.object({ userId: z.string() });
 
+const subscriptionStatusSchema = z.enum(["ACTIVE", "EXPIRED", "CANCELLED"]);
+
+const cancelSubscriptionSchema = z.object({
+  userId: z.string().min(1),
+  subscriptionId: z.string().min(1),
+});
+
+const updateSubscriptionSchema = z
+  .object({
+    userId: z.string().min(1),
+    subscriptionId: z.string().min(1),
+    planId: z.string().min(1),
+    status: subscriptionStatusSchema,
+    currentPeriodStart: z.coerce.date(),
+    currentPeriodEnd: z.coerce.date(),
+    aiCvQuotaLimit: z.number().int().min(0).nullable(),
+    aiCvQuotaUsed: z.number().int().min(0),
+  })
+  .superRefine((value, ctx) => {
+    if (value.currentPeriodStart >= value.currentPeriodEnd) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["currentPeriodEnd"],
+        message: "Ngày kết thúc phải sau ngày bắt đầu.",
+      });
+    }
+
+    if (value.aiCvQuotaLimit !== null && value.aiCvQuotaUsed > value.aiCvQuotaLimit) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["aiCvQuotaUsed"],
+        message: "Số lượt đã dùng không được vượt quá giới hạn.",
+      });
+    }
+  });
+
+async function syncEmployerRoleAfterSubscriptionChange({
+  prisma,
+  userId,
+  now = new Date(),
+}: {
+  prisma: {
+    subscription: {
+      findFirst(args: any): Promise<{ id: string } | null>;
+    };
+    user: {
+      updateMany(args: any): Promise<unknown>;
+    };
+  };
+  userId: string;
+  now?: Date;
+}) {
+  const activeEmployerSubscription = await prisma.subscription.findFirst({
+    where: {
+      userId,
+      status: "ACTIVE",
+      currentPeriodStart: { lte: now },
+      currentPeriodEnd: { gt: now },
+      plan: { code: "EMPLOYER_MONTHLY" },
+    },
+    select: { id: true },
+  });
+
+  if (activeEmployerSubscription) {
+    return;
+  }
+
+  await prisma.user.updateMany({
+    where: { id: userId, role: "EMPLOYER" },
+    data: { role: "CANDIDATE" },
+  });
+}
+
+function isSubscriptionActiveNow({
+  status,
+  currentPeriodStart,
+  currentPeriodEnd,
+  now = new Date(),
+}: {
+  status: "ACTIVE" | "EXPIRED" | "CANCELLED";
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  now?: Date;
+}) {
+  return status === "ACTIVE" && currentPeriodStart <= now && now < currentPeriodEnd;
+}
+
 export const adminUserRouter = router({
   list: adminProcedure.input(userListSchema).query(async ({ ctx, input }) => {
     const { page, limit, search, role, status, sortBy, order } = input;
@@ -231,8 +318,15 @@ export const adminUserRouter = router({
     }
 
     // Activity snapshots
-    const [applications, jobsPosted, messagesCount, lastSession, recentSessions, adminNotesRaw] =
-      await Promise.all([
+    const [
+      applications,
+      jobsPosted,
+      messagesCount,
+      lastSession,
+      recentSessions,
+      adminNotesRaw,
+      subscriptions,
+    ] = await Promise.all([
         ctx.prisma.application.findMany({
           where: { candidateId: id },
           orderBy: { appliedAt: "desc" },
@@ -259,6 +353,22 @@ export const adminUserRouter = router({
           },
           orderBy: { createdAt: "desc" },
           take: 30,
+        }),
+        ctx.prisma.subscription.findMany({
+          where: { userId: id },
+          orderBy: { currentPeriodEnd: "desc" },
+          include: {
+            plan: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+                priceVnd: true,
+                durationDays: true,
+                active: true,
+              },
+            },
+          },
         }),
       ]);
 
@@ -326,8 +436,94 @@ export const adminUserRouter = router({
       },
       adminNotes,
       roleHistory,
+      subscriptions,
     };
   }),
+
+  cancelSubscription: adminProcedure
+    .input(cancelSubscriptionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const subscription = await ctx.prisma.subscription.findUnique({
+        where: { id: input.subscriptionId },
+        include: { plan: { select: { code: true } } },
+      });
+
+      if (!subscription || subscription.userId !== input.userId) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy gói đăng ký" });
+      }
+
+      const now = new Date();
+      await ctx.prisma.subscription.update({
+        where: { id: input.subscriptionId },
+        data: {
+          status: "CANCELLED",
+          currentPeriodEnd: now,
+        },
+      });
+
+      if (subscription.plan.code === "EMPLOYER_MONTHLY") {
+        await syncEmployerRoleAfterSubscriptionChange({
+          prisma: ctx.prisma,
+          userId: input.userId,
+          now,
+        });
+      }
+
+      return { success: true };
+    }),
+
+  updateSubscription: adminProcedure
+    .input(updateSubscriptionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const subscription = await ctx.prisma.subscription.findUnique({
+        where: { id: input.subscriptionId },
+        include: { plan: { select: { code: true } } },
+      });
+
+      if (!subscription || subscription.userId !== input.userId) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy gói đăng ký" });
+      }
+
+      const plan = await ctx.prisma.billingPlan.findUnique({
+        where: { id: input.planId },
+        select: { id: true, code: true },
+      });
+
+      if (!plan) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Không tìm thấy gói thanh toán" });
+      }
+
+      await ctx.prisma.subscription.update({
+        where: { id: input.subscriptionId },
+        data: {
+          planId: input.planId,
+          status: input.status,
+          currentPeriodStart: input.currentPeriodStart,
+          currentPeriodEnd: input.currentPeriodEnd,
+          aiCvQuotaLimit: input.aiCvQuotaLimit,
+          aiCvQuotaUsed: input.aiCvQuotaUsed,
+        },
+      });
+
+      const touchesEmployerPlan =
+        subscription.plan.code === "EMPLOYER_MONTHLY" || plan.code === "EMPLOYER_MONTHLY";
+
+      if (plan.code === "EMPLOYER_MONTHLY" && isSubscriptionActiveNow(input)) {
+        await ctx.prisma.user.updateMany({
+          where: { id: input.userId, role: "CANDIDATE" },
+          data: { role: "EMPLOYER" },
+        });
+      }
+
+      if (touchesEmployerPlan) {
+        await syncEmployerRoleAfterSubscriptionChange({
+          prisma: ctx.prisma,
+          userId: input.userId,
+        });
+      }
+
+      return { success: true };
+    }),
 
   addAdminNote: adminProcedure.input(addAdminNoteSchema).mutation(async ({ ctx, input }) => {
     const { userId, content } = input;

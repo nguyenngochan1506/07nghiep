@@ -43,9 +43,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Ban,
   CalendarDays,
   Copy,
+  CreditCard,
   KeyRound,
+  Pencil,
   RefreshCw,
   ShieldAlert,
   Trash2,
@@ -69,6 +72,58 @@ const adminNoteSchema = z.object({
 type AdminNoteFormValues = z.infer<typeof adminNoteSchema>;
 
 type UserRole = "ADMIN" | "EMPLOYER" | "CANDIDATE";
+type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
+
+type BillingPlanRow = {
+  id: string;
+  code: string;
+  name: string;
+  priceVnd: number;
+  durationDays: number;
+  active: boolean;
+};
+
+type SubscriptionRow = {
+  id: string;
+  planId: string;
+  status: SubscriptionStatus;
+  currentPeriodStart: string | Date;
+  currentPeriodEnd: string | Date;
+  aiCvQuotaLimit: number | null;
+  aiCvQuotaUsed: number;
+  plan: BillingPlanRow;
+};
+
+type SubscriptionFormState = {
+  planId: string;
+  status: SubscriptionStatus;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  aiCvQuotaLimit: string;
+  aiCvQuotaUsed: string;
+};
+
+function toDateTimeLocalValue(value: string | Date) {
+  const date = new Date(value);
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+function formatDateTime(value: string | Date) {
+  return new Date(value).toLocaleString("vi-VN");
+}
+
+function formatSubscriptionStatus(status: SubscriptionStatus) {
+  if (status === "ACTIVE") return "Đang hoạt động";
+  if (status === "EXPIRED") return "Hết hạn";
+  return "Đã hủy";
+}
+
+function getSubscriptionBadgeVariant(status: SubscriptionStatus) {
+  if (status === "ACTIVE") return "default" as const;
+  if (status === "CANCELLED") return "destructive" as const;
+  return "secondary" as const;
+}
 
 function pickRandom(characters: string): string {
   const random = new Uint32Array(1);
@@ -104,14 +159,30 @@ function AdminUserDetailPage() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [editingSubscription, setEditingSubscription] = useState<SubscriptionRow | null>(null);
+  const [subscriptionForm, setSubscriptionForm] = useState<SubscriptionFormState>({
+    planId: "",
+    status: "ACTIVE",
+    currentPeriodStart: "",
+    currentPeriodEnd: "",
+    aiCvQuotaLimit: "",
+    aiCvQuotaUsed: "0",
+  });
   const [newPassword, setNewPassword] = useState("");
 
   const detailQuery = useQuery(trpc.admin.users.getDetail.queryOptions({ id: userId }));
+  const plansQuery = useQuery(trpc.admin.billing.plans.queryOptions());
   const updateRoleMutation = useMutation(trpc.admin.users.updateRole.mutationOptions());
   const updateStatusMutation = useMutation(trpc.admin.users.updateStatus.mutationOptions());
   const resetPasswordMutation = useMutation(trpc.admin.users.resetPassword.mutationOptions());
   const deleteUserMutation = useMutation(trpc.admin.users.deleteUser.mutationOptions());
   const addAdminNoteMutation = useMutation(trpc.admin.users.addAdminNote.mutationOptions());
+  const cancelSubscriptionMutation = useMutation(
+    trpc.admin.users.cancelSubscription.mutationOptions(),
+  );
+  const updateSubscriptionMutation = useMutation(
+    trpc.admin.users.updateSubscription.mutationOptions(),
+  );
 
   const form = useForm<AdminNoteFormValues>({
     resolver: zodResolver(adminNoteSchema),
@@ -124,6 +195,8 @@ function AdminUserDetailPage() {
   const timeline = detailQuery.data?.activity.timeline ?? [];
   const notes = detailQuery.data?.adminNotes ?? [];
   const roleHistory = detailQuery.data?.roleHistory ?? [];
+  const subscriptions = (detailQuery.data?.subscriptions ?? []) as SubscriptionRow[];
+  const billingPlans = (plansQuery.data ?? []) as BillingPlanRow[];
   const status = detailQuery.data?.status ?? "SUSPENDED";
 
   const roleBadgeVariant = useMemo(() => {
@@ -245,6 +318,62 @@ function AdminUserDetailPage() {
       toast.error(error instanceof Error ? error.message : "Không thể lưu ghi chú");
     }
   });
+
+  function openSubscriptionEditor(subscription: SubscriptionRow) {
+    setEditingSubscription(subscription);
+    setSubscriptionForm({
+      planId: subscription.planId,
+      status: subscription.status,
+      currentPeriodStart: toDateTimeLocalValue(subscription.currentPeriodStart),
+      currentPeriodEnd: toDateTimeLocalValue(subscription.currentPeriodEnd),
+      aiCvQuotaLimit: subscription.aiCvQuotaLimit === null ? "" : String(subscription.aiCvQuotaLimit),
+      aiCvQuotaUsed: String(subscription.aiCvQuotaUsed),
+    });
+  }
+
+  const onCancelSubscription = async (subscription: SubscriptionRow) => {
+    if (!user) return;
+
+    try {
+      await cancelSubscriptionMutation.mutateAsync({
+        userId: user.id,
+        subscriptionId: subscription.id,
+      });
+      toast.success("Đã hủy gói đăng ký");
+      await detailQuery.refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể hủy gói đăng ký");
+    }
+  };
+
+  const onSaveSubscription = async () => {
+    if (!user || !editingSubscription) return;
+
+    const aiCvQuotaLimit = subscriptionForm.aiCvQuotaLimit.trim()
+      ? Number(subscriptionForm.aiCvQuotaLimit)
+      : null;
+    const aiCvQuotaUsed = subscriptionForm.aiCvQuotaUsed.trim()
+      ? Number(subscriptionForm.aiCvQuotaUsed)
+      : 0;
+
+    try {
+      await updateSubscriptionMutation.mutateAsync({
+        userId: user.id,
+        subscriptionId: editingSubscription.id,
+        planId: subscriptionForm.planId,
+        status: subscriptionForm.status,
+        currentPeriodStart: new Date(subscriptionForm.currentPeriodStart),
+        currentPeriodEnd: new Date(subscriptionForm.currentPeriodEnd),
+        aiCvQuotaLimit,
+        aiCvQuotaUsed,
+      });
+      toast.success("Đã cập nhật gói đăng ký");
+      setEditingSubscription(null);
+      await detailQuery.refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể cập nhật gói đăng ký");
+    }
+  };
 
   if (detailQuery.isLoading) {
     return (
@@ -479,6 +608,7 @@ function AdminUserDetailPage() {
               <Tabs defaultValue="activity" className="w-full">
                 <TabsList variant="line" className="mb-4">
                   <TabsTrigger value="activity">Lịch sử hoạt động</TabsTrigger>
+                  <TabsTrigger value="subscriptions">Gói đăng ký</TabsTrigger>
                   <TabsTrigger value="notes">Ghi chú Admin</TabsTrigger>
                   <TabsTrigger value="roles">Lịch sử vai trò</TabsTrigger>
                 </TabsList>
@@ -501,6 +631,84 @@ function AdminUserDetailPage() {
                           </span>
                         </div>
                         <p className="text-sm">{item.label}</p>
+                      </div>
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="subscriptions" className="space-y-3">
+                  {subscriptions.length === 0 ? (
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      Người dùng chưa có gói đăng ký.
+                    </div>
+                  ) : (
+                    subscriptions.map((subscription) => (
+                      <div key={subscription.id} className="rounded-md border p-3">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div className="flex min-w-0 gap-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted/30">
+                              <CreditCard className="size-4 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-medium">{subscription.plan.name}</p>
+                                <Badge variant={getSubscriptionBadgeVariant(subscription.status)}>
+                                  {formatSubscriptionStatus(subscription.status)}
+                                </Badge>
+                              </div>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {formatDateTime(subscription.currentPeriodStart)} đến{" "}
+                                {formatDateTime(subscription.currentPeriodEnd)}
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                AI CV:{" "}
+                                {subscription.aiCvQuotaLimit === null
+                                  ? "Không có quota"
+                                  : `${subscription.aiCvQuotaUsed}/${subscription.aiCvQuotaLimit} lượt`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2 md:justify-end">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openSubscriptionEditor(subscription)}
+                            >
+                              <Pencil className="mr-2" />
+                              Chỉnh sửa
+                            </Button>
+                            {subscription.status === "ACTIVE" ? (
+                              <AlertDialog>
+                                <AlertDialogTrigger
+                                  render={<Button type="button" variant="outline" size="sm" />}
+                                >
+                                  <Ban className="mr-2" />
+                                  Hủy gói
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Hủy gói đăng ký?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Gói sẽ chuyển sang trạng thái đã hủy và quyền sử dụng sẽ kết
+                                      thúc ngay.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Giữ lại</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      variant="destructive"
+                                      disabled={cancelSubscriptionMutation.isPending}
+                                      onClick={() => onCancelSubscription(subscription)}
+                                    >
+                                      Hủy gói
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}
@@ -574,6 +782,137 @@ function AdminUserDetailPage() {
           </Card>
         </section>
       </div>
+
+      <Dialog open={Boolean(editingSubscription)} onOpenChange={(open) => !open && setEditingSubscription(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa gói đăng ký</DialogTitle>
+            <DialogDescription>
+              Cập nhật gói, trạng thái, kỳ hạn và quota AI CV cho người dùng này.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2 sm:col-span-2">
+              <Label>Gói</Label>
+              <Select
+                value={subscriptionForm.planId}
+                onValueChange={(value) =>
+                  setSubscriptionForm((current) => ({ ...current, planId: value ?? "" }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn gói" />
+                </SelectTrigger>
+                <SelectContent>
+                  {billingPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Trạng thái</Label>
+              <Select
+                value={subscriptionForm.status}
+                onValueChange={(value) =>
+                  setSubscriptionForm((current) => ({
+                    ...current,
+                    status: (value ?? "ACTIVE") as SubscriptionStatus,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Đang hoạt động</SelectItem>
+                  <SelectItem value="EXPIRED">Hết hạn</SelectItem>
+                  <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Lượt AI CV đã dùng</Label>
+              <Input
+                inputMode="numeric"
+                value={subscriptionForm.aiCvQuotaUsed}
+                onChange={(event) =>
+                  setSubscriptionForm((current) => ({
+                    ...current,
+                    aiCvQuotaUsed: event.target.value.replace(/\D/g, ""),
+                  }))
+                }
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Bắt đầu</Label>
+              <Input
+                type="datetime-local"
+                value={subscriptionForm.currentPeriodStart}
+                onChange={(event) =>
+                  setSubscriptionForm((current) => ({
+                    ...current,
+                    currentPeriodStart: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Kết thúc</Label>
+              <Input
+                type="datetime-local"
+                value={subscriptionForm.currentPeriodEnd}
+                onChange={(event) =>
+                  setSubscriptionForm((current) => ({
+                    ...current,
+                    currentPeriodEnd: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 sm:col-span-2">
+              <Label>Giới hạn lượt AI CV</Label>
+              <Input
+                inputMode="numeric"
+                value={subscriptionForm.aiCvQuotaLimit}
+                onChange={(event) =>
+                  setSubscriptionForm((current) => ({
+                    ...current,
+                    aiCvQuotaLimit: event.target.value.replace(/\D/g, ""),
+                  }))
+                }
+                placeholder="Bỏ trống nếu gói không có quota"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setEditingSubscription(null)}>
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              disabled={
+                updateSubscriptionMutation.isPending ||
+                !subscriptionForm.planId ||
+                !subscriptionForm.currentPeriodStart ||
+                !subscriptionForm.currentPeriodEnd
+              }
+              onClick={onSaveSubscription}
+            >
+              Lưu thay đổi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

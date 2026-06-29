@@ -292,7 +292,7 @@ function AdminBillingRoute() {
           <CardDescription>Tạo mã voucher và chọn các gói thanh toán được áp dụng.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="max-w-5xl rounded-xl border bg-surface-wash/70 p-4">
+          <div className="mx-auto w-full max-w-5xl rounded-xl border bg-surface-wash/70 p-4">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
               <div className="grid gap-4 sm:grid-cols-2">
                 <VoucherField label="Mã voucher">
