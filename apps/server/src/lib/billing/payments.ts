@@ -1,11 +1,9 @@
 import { randomInt } from "node:crypto";
 import type { BillingPlanCode, Prisma } from "@07nghiep/db";
-import {
-  backfillEmployerApplicationFitScores,
-  type BackfillPrisma,
-} from "../ai-cv/backfill";
+import { backfillEmployerApplicationFitScores, type BackfillPrisma } from "../ai-cv/backfill";
 import { BILLING_PLAN_AI_CV_QUOTA, BILLING_PLAN_CODES } from "./plans";
 import { createPayosCheckout, verifyPayosWebhookSignature } from "./payos";
+import { resolveVoucherForCheckout, type VoucherPrisma } from "./vouchers";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PAYOS_TIMESTAMP_DIGITS = 10;
@@ -29,7 +27,9 @@ type PaymentWithPlan = {
   userId: string;
   planId: string;
   businessApplicationId: string | null;
+  voucherId?: string | null;
   amountVnd: number;
+  discountAmountVnd?: number;
   status: PaymentStatusValue;
   paymentLinkId: string | null;
   plan: BillingPlanRecord;
@@ -64,10 +64,14 @@ type PaymentCreateResult = {
 type BillingTransaction = {
   payment: {
     findUnique(args: any): Promise<PaymentWithPlan | null>;
+    create(args: any): Promise<PaymentCreateResult>;
     update(args: any): Promise<unknown>;
   };
   subscription: {
     findFirst(args: any): Promise<{ currentPeriodEnd: Date } | null>;
+    create(args: any): Promise<unknown>;
+  };
+  voucherRedemption: {
     create(args: any): Promise<unknown>;
   };
   user: {
@@ -81,32 +85,39 @@ type BillingTransaction = {
   };
 };
 
-type BillingPrisma = BackfillPrisma & {
-  billingPlan: {
-    findFirst(args: { where: { code: BillingPlanCode; active: true } }): Promise<BillingPlanRecord | null>;
+type BillingPrisma = BackfillPrisma &
+  VoucherPrisma & {
+    billingPlan: {
+      findFirst(args: {
+        where: { code: BillingPlanCode; active: true };
+      }): Promise<BillingPlanRecord | null>;
+    };
+    payment: {
+      findUnique(args: {
+        where: { orderCode: bigint };
+        include: { plan: true };
+      }): Promise<PaymentWithPlan | null>;
+      create(args: {
+        data: {
+          userId: string;
+          planId: string;
+          businessApplicationId?: string;
+          provider: "PAYOS";
+          orderCode: bigint;
+          paymentLinkId: string;
+          checkoutUrl: string;
+          originalAmountVnd: number;
+          discountAmountVnd: number;
+          voucherId?: string;
+          amountVnd: number;
+          status: PaymentStatusValue;
+          paidAt?: Date;
+          providerPayload: Prisma.InputJsonValue;
+        };
+      }): Promise<PaymentCreateResult>;
+    };
+    $transaction: any;
   };
-  payment: {
-    findUnique(args: {
-      where: { orderCode: bigint };
-      include: { plan: true };
-    }): Promise<PaymentWithPlan | null>;
-    create(args: {
-      data: {
-        userId: string;
-        planId: string;
-        businessApplicationId?: string;
-        provider: "PAYOS";
-        orderCode: bigint;
-        paymentLinkId: string;
-        checkoutUrl: string;
-        amountVnd: number;
-        status: "PENDING";
-        providerPayload: Prisma.InputJsonValue;
-      };
-    }): Promise<PaymentCreateResult>;
-  };
-  $transaction: any;
-};
 
 export type CreateCheckoutPaymentInput = {
   prisma: BillingPrisma;
@@ -115,6 +126,7 @@ export type CreateCheckoutPaymentInput = {
   businessApplicationId?: string;
   returnUrl: string;
   cancelUrl: string;
+  voucherCode?: string;
 };
 
 export type PayosWebhookBody = {
@@ -159,8 +171,12 @@ export function getNextBillingPeriod({
 }
 
 export function createPayosOrderCode(now = new Date()) {
-  const timestampPart = (now.getTime() % PAYOS_TIMESTAMP_MODULO).toString().padStart(PAYOS_TIMESTAMP_DIGITS, "0");
-  const randomPart = randomInt(0, PAYOS_RANDOM_MODULO).toString().padStart(PAYOS_RANDOM_DIGITS, "0");
+  const timestampPart = (now.getTime() % PAYOS_TIMESTAMP_MODULO)
+    .toString()
+    .padStart(PAYOS_TIMESTAMP_DIGITS, "0");
+  const randomPart = randomInt(0, PAYOS_RANDOM_MODULO)
+    .toString()
+    .padStart(PAYOS_RANDOM_DIGITS, "0");
 
   return Math.max(1, Number(`${timestampPart}${randomPart}`));
 }
@@ -198,7 +214,9 @@ function getAmount(data: Record<string, unknown>) {
 }
 
 function getPaymentLinkId(data: Record<string, unknown>, fallback: string | null) {
-  return typeof data.paymentLinkId === "string" && data.paymentLinkId.length > 0 ? data.paymentLinkId : fallback;
+  return typeof data.paymentLinkId === "string" && data.paymentLinkId.length > 0
+    ? data.paymentLinkId
+    : fallback;
 }
 
 function getAiCvQuotaLimit(planCode: BillingPlanCode) {
@@ -206,7 +224,12 @@ function getAiCvQuotaLimit(planCode: BillingPlanCode) {
 }
 
 function getWebhookPayload(body: unknown) {
-  if (!isRecord(body) || !isRecord(body.data) || typeof body.signature !== "string" || body.signature.length === 0) {
+  if (
+    !isRecord(body) ||
+    !isRecord(body.data) ||
+    typeof body.signature !== "string" ||
+    body.signature.length === 0
+  ) {
     return null;
   }
 
@@ -227,6 +250,17 @@ function buildBusinessVerificationNote(application: BusinessApplicationRecord) {
   ].filter(Boolean);
 
   return `Đã xác minh qua yêu cầu doanh nghiệp. ${parts.join(" | ")}`;
+}
+
+function withPaymentId(url: string, paymentId: string) {
+  try {
+    const nextUrl = new URL(url);
+    nextUrl.searchParams.set("paymentId", paymentId);
+    return nextUrl.toString();
+  } catch {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}paymentId=${encodeURIComponent(paymentId)}`;
+  }
 }
 
 async function upsertVerifiedOrganizationFromBusinessApplication({
@@ -281,6 +315,61 @@ async function upsertVerifiedOrganizationFromBusinessApplication({
   });
 }
 
+async function activatePaidPaymentEntitlements({
+  tx,
+  payment,
+  paidAt,
+}: {
+  tx: BillingTransaction;
+  payment: PaymentWithPlan;
+  paidAt: Date;
+}) {
+  const currentSubscription = await tx.subscription.findFirst({
+    where: { userId: payment.userId, planId: payment.planId, status: "ACTIVE" },
+    orderBy: { currentPeriodEnd: "desc" },
+    select: { currentPeriodEnd: true },
+  });
+  const billingPeriod = getNextBillingPeriod({
+    now: paidAt,
+    durationDays: payment.plan.durationDays,
+    currentPeriodEnd: currentSubscription?.currentPeriodEnd ?? null,
+  });
+
+  await tx.subscription.create({
+    data: {
+      userId: payment.userId,
+      planId: payment.planId,
+      status: "ACTIVE",
+      currentPeriodStart: billingPeriod.currentPeriodStart,
+      currentPeriodEnd: billingPeriod.currentPeriodEnd,
+      aiCvQuotaLimit: getAiCvQuotaLimit(payment.plan.code),
+      aiCvQuotaUsed: 0,
+    },
+  });
+
+  if (payment.voucherId && (payment.discountAmountVnd ?? 0) > 0) {
+    await tx.voucherRedemption.create({
+      data: {
+        voucherId: payment.voucherId,
+        paymentId: payment.id,
+        userId: payment.userId,
+        discountAmountVnd: payment.discountAmountVnd ?? 0,
+      },
+    });
+  }
+
+  if (payment.plan.code === "EMPLOYER_MONTHLY") {
+    await tx.user.update({
+      where: { id: payment.userId },
+      data: { role: "EMPLOYER" },
+    });
+    await upsertVerifiedOrganizationFromBusinessApplication({
+      tx,
+      payment,
+    });
+  }
+}
+
 export async function createCheckoutPayment({
   prisma,
   userId,
@@ -288,6 +377,7 @@ export async function createCheckoutPayment({
   businessApplicationId,
   returnUrl,
   cancelUrl,
+  voucherCode,
 }: CreateCheckoutPaymentInput) {
   const plan = await prisma.billingPlan.findFirst({
     where: { code: planCode, active: true },
@@ -297,10 +387,95 @@ export async function createCheckoutPayment({
     throw new Error(`Active billing plan not found: ${planCode}`);
   }
 
+  const voucherSnapshot = voucherCode
+    ? await resolveVoucherForCheckout({
+        prisma,
+        userId,
+        planId: plan.id,
+        originalAmountVnd: plan.priceVnd,
+        voucherCode,
+      })
+    : {
+        voucherId: null,
+        originalAmountVnd: plan.priceVnd,
+        discountAmountVnd: 0,
+        finalAmountVnd: plan.priceVnd,
+      };
   const orderCode = createPayosOrderCode();
+
+  if (voucherSnapshot.finalAmountVnd === 0) {
+    const paidAt = new Date();
+    const providerPayload = {
+      checkoutRequest: {
+        orderCode,
+        amount: 0,
+        description: `07nghiep ${orderCode}`,
+        returnUrl,
+        cancelUrl,
+        items: [
+          {
+            name: plan.name,
+            quantity: 1,
+            price: 0,
+          },
+        ],
+      },
+      checkout: {
+        skipped: true,
+        reason: "FULL_VOUCHER_DISCOUNT",
+      },
+    } as Prisma.InputJsonObject;
+
+    const payment = await prisma.$transaction(async (tx: BillingTransaction) => {
+      const createdPayment = await tx.payment.create({
+        data: {
+          userId,
+          planId: plan.id,
+          ...(businessApplicationId ? { businessApplicationId } : {}),
+          provider: "PAYOS",
+          orderCode: BigInt(orderCode),
+          paymentLinkId: "",
+          checkoutUrl: returnUrl,
+          originalAmountVnd: voucherSnapshot.originalAmountVnd,
+          discountAmountVnd: voucherSnapshot.discountAmountVnd,
+          ...(voucherSnapshot.voucherId ? { voucherId: voucherSnapshot.voucherId } : {}),
+          amountVnd: 0,
+          status: "PAID",
+          paidAt,
+          providerPayload,
+        },
+      });
+      const paymentForActivation: PaymentWithPlan = {
+        id: createdPayment.id,
+        userId,
+        planId: plan.id,
+        businessApplicationId: businessApplicationId ?? null,
+        voucherId: voucherSnapshot.voucherId,
+        amountVnd: 0,
+        discountAmountVnd: voucherSnapshot.discountAmountVnd,
+        status: "PAID",
+        paymentLinkId: "",
+        plan,
+      };
+
+      await activatePaidPaymentEntitlements({
+        tx,
+        payment: paymentForActivation,
+        paidAt,
+      });
+
+      return createdPayment;
+    });
+
+    return {
+      ...payment,
+      checkoutUrl: withPaymentId(returnUrl, payment.id),
+    };
+  }
+
   const checkoutRequest = {
     orderCode,
-    amount: plan.priceVnd,
+    amount: voucherSnapshot.finalAmountVnd,
     description: `07nghiep ${orderCode}`,
     returnUrl,
     cancelUrl,
@@ -308,7 +483,7 @@ export async function createCheckoutPayment({
       {
         name: plan.name,
         quantity: 1,
-        price: plan.priceVnd,
+        price: voucherSnapshot.finalAmountVnd,
       },
     ],
   };
@@ -327,7 +502,10 @@ export async function createCheckoutPayment({
       orderCode: BigInt(orderCode),
       paymentLinkId: checkout.paymentLinkId,
       checkoutUrl: checkout.checkoutUrl,
-      amountVnd: plan.priceVnd,
+      originalAmountVnd: voucherSnapshot.originalAmountVnd,
+      discountAmountVnd: voucherSnapshot.discountAmountVnd,
+      ...(voucherSnapshot.voucherId ? { voucherId: voucherSnapshot.voucherId } : {}),
+      amountVnd: voucherSnapshot.finalAmountVnd,
       status: "PENDING",
       providerPayload,
     },
@@ -412,17 +590,7 @@ export async function handlePayosWebhook({
       return { ok: true, paymentId: currentPayment.id, status: "FAILED" };
     }
 
-    const currentSubscription = await tx.subscription.findFirst({
-      where: { userId: currentPayment.userId, planId: currentPayment.planId, status: "ACTIVE" },
-      orderBy: { currentPeriodEnd: "desc" },
-      select: { currentPeriodEnd: true },
-    });
     const paidAt = new Date();
-    const billingPeriod = getNextBillingPeriod({
-      now: paidAt,
-      durationDays: currentPayment.plan.durationDays,
-      currentPeriodEnd: currentSubscription?.currentPeriodEnd ?? null,
-    });
 
     await tx.payment.update({
       where: { id: currentPayment.id },
@@ -434,28 +602,7 @@ export async function handlePayosWebhook({
       },
     });
 
-    await tx.subscription.create({
-      data: {
-        userId: currentPayment.userId,
-        planId: currentPayment.planId,
-        status: "ACTIVE",
-        currentPeriodStart: billingPeriod.currentPeriodStart,
-        currentPeriodEnd: billingPeriod.currentPeriodEnd,
-        aiCvQuotaLimit: getAiCvQuotaLimit(currentPayment.plan.code),
-        aiCvQuotaUsed: 0,
-      },
-    });
-
-    if (currentPayment.plan.code === "EMPLOYER_MONTHLY") {
-      await tx.user.update({
-        where: { id: currentPayment.userId },
-        data: { role: "EMPLOYER" },
-      });
-      await upsertVerifiedOrganizationFromBusinessApplication({
-        tx,
-        payment: currentPayment,
-      });
-    }
+    await activatePaidPaymentEntitlements({ tx, payment: currentPayment, paidAt });
 
     return { ok: true, paymentId: currentPayment.id };
   });

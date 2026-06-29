@@ -120,6 +120,11 @@ enum PaymentStatus {
   REVIEW_REQUIRED
 }
 
+enum VoucherDiscountType {
+  PERCENT
+  FIXED_AMOUNT
+}
+
 enum BusinessApplicationStatus {
   PENDING
   APPROVED
@@ -405,8 +410,43 @@ model BillingPlan {
 
   subscriptions Subscription[]
   payments      Payment[]
+  vouchers      VoucherPlan[]
 
   @@index([active])
+}
+
+model Voucher {
+  id             String              @id @default(cuid())
+  code           String              @unique
+  description    String?
+  discountType   VoucherDiscountType
+  discountValue  Int
+  maxDiscountVnd Int?
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  usageLimit     Int?
+  perUserLimit   Int?
+  active         Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  plans       VoucherPlan[]
+  payments    Payment[]
+  redemptions VoucherRedemption[]
+
+  @@index([active, startsAt, expiresAt])
+}
+
+model VoucherPlan {
+  id        String @id @default(cuid())
+  voucherId String
+  planId    String
+
+  voucher Voucher     @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  plan    BillingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([voucherId, planId])
+  @@index([planId])
 }
 
 model Subscription {
@@ -434,10 +474,13 @@ model Payment {
   userId                String
   planId                String
   businessApplicationId String?
+  voucherId             String?
   provider              PaymentProvider @default(PAYOS)
   orderCode             BigInt          @unique
   paymentLinkId         String?
   checkoutUrl           String
+  originalAmountVnd     Int?
+  discountAmountVnd     Int             @default(0)
   amountVnd             Int
   status                PaymentStatus   @default(PENDING)
   providerPayload       Json?
@@ -447,12 +490,31 @@ model Payment {
 
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan                BillingPlan          @relation(fields: [planId], references: [id], onDelete: Restrict)
+  voucher             Voucher?             @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  voucherRedemption   VoucherRedemption?
   businessApplication            BusinessApplication? @relation("BusinessApplicationPayments", fields: [businessApplicationId], references: [id], onDelete: SetNull)
   approvedForBusinessApplication BusinessApplication? @relation("BusinessApplicationApprovedPayment")
 
   @@index([userId, status, createdAt])
   @@index([planId])
   @@index([businessApplicationId])
+  @@index([voucherId])
+}
+
+model VoucherRedemption {
+  id                String   @id @default(cuid())
+  voucherId         String
+  paymentId         String   @unique
+  userId            String
+  discountAmountVnd Int
+  createdAt         DateTime @default(now())
+
+  voucher Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([voucherId, createdAt])
+  @@index([userId, voucherId])
 }
 
 model BusinessApplication {

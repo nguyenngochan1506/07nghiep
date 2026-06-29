@@ -17,8 +17,8 @@ import { PageHero } from "@/components/page-hero";
 import { SearchBar } from "@/components/search-bar";
 import { authClient } from "@/lib/auth-client";
 import { useLocalSavedJobs } from "@/lib/saved-jobs";
-import { mapJob } from "@/routes/__root";
-import { queryClient, trpc } from "@/utils/trpc";
+import { mapJob, type PublicJob } from "@/routes/__root";
+import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/jobs/")({
   validateSearch: (
@@ -67,13 +67,12 @@ function JobsPage() {
   );
   const savedJobsQuery = useQuery(savedJobsOptions);
   const localSavedJobs = useLocalSavedJobs();
-  const toggleSavedJob = useMutation(
-    trpc.savedJob.toggle.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
-      },
-    }),
-  );
+  const toggleSavedJob = useMutation({
+    mutationFn: (input: { jobId: string }) => trpcClient.savedJob.toggle.mutate(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
+    },
+  });
 
   const [keyword, setKeyword] = useState(search.keyword ?? "");
   const [locations, setLocations] = useState(() => splitMultiSearchParam(search.location));
@@ -119,11 +118,9 @@ function JobsPage() {
     [navigate],
   );
 
-  const jobs = useMemo(
-    () => jobsQuery.data?.jobs.map((job) => mapJob(job)) ?? [],
-    [jobsQuery.data],
-  );
-  const totalJobs = jobsQuery.data?.total ?? 0;
+  const jobsData = jobsQuery.data as { jobs?: PublicJob[]; total?: number } | undefined;
+  const jobs = useMemo(() => (jobsData?.jobs ?? []).map((job) => mapJob(job)), [jobsData]);
+  const totalJobs = jobsData?.total ?? 0;
   const totalPages = Math.ceil(totalJobs / ITEMS_PER_PAGE);
   const handlePageChange = useCallback(
     (nextPage: number) => {
@@ -148,10 +145,9 @@ function JobsPage() {
     shouldScrollResultsRef.current = false;
     resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [jobsQuery.isFetching]);
-  const dbSavedIds = useMemo(
-    () => new Set((savedJobsQuery.data?.jobs ?? []).map((job) => job.id)),
-    [savedJobsQuery.data?.jobs],
-  );
+  const savedJobsData = savedJobsQuery.data as { jobs?: { id: string }[] } | undefined;
+  const savedJobRows = savedJobsData?.jobs ?? [];
+  const dbSavedIds = useMemo(() => new Set(savedJobRows.map((job) => job.id)), [savedJobRows]);
   const savedIds = isLoggedIn ? dbSavedIds : localSavedJobs.savedIds;
   const paginatedJobs: JobCardItemProps["job"][] = jobs.map((job) => ({
     ...job,

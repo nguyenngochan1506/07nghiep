@@ -12,7 +12,7 @@ import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
 import { authorizedRoles } from "@/lib/role-guard";
 import { authClient } from "@/lib/auth-client";
-import { trpc } from "@/utils/trpc";
+import { trpc, trpcClient } from "@/utils/trpc";
 import { JobFormStepper } from "@/components/jobs/job-form-stepper";
 import { JobStep1, type Step1Data } from "@/components/jobs/job-step-1";
 import { JobStep2, type Step2Data } from "@/components/jobs/job-step-2";
@@ -147,15 +147,14 @@ function EditJobPage() {
   }, [jobQuery.data]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
-  const updateMutation = useMutation(
-    trpc.job.update.mutationOptions({
-      onSuccess: () => {
-        toast.success("Cập nhật thành công!");
-        navigate({ to: "/my-jobs" });
-      },
-      onError: (err) => toast.error(err.message),
-    }),
-  );
+  const updateMutation = useMutation({
+    mutationFn: (input: JobUpdateInput) => trpcClient.job.update.mutate(input),
+    onSuccess: () => {
+      toast.success("Cập nhật thành công!");
+      navigate({ to: "/my-jobs" });
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   function handleSave(status?: "DRAFT" | "OPEN") {
     const payload: JobUpdateInput = {

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@07nghiep/ui/components/card";
+import { Input } from "@07nghiep/ui/components/input";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
 import { trpc, trpcClient } from "@/utils/trpc";
@@ -45,6 +46,13 @@ type BillingPlanRow = {
   durationDays: number;
 };
 
+type VoucherPreview = {
+  code: string;
+  originalAmountVnd: number;
+  discountAmountVnd: number;
+  finalAmountVnd: number;
+};
+
 const EMPLOYER_FALLBACK_PRICE = 299000;
 
 const employerFeatures = [
@@ -58,17 +66,20 @@ const workflowItems = [
   {
     icon: Briefcase,
     title: "Đăng tin tuyển dụng",
-    description: "Tạo và quản lý tin với vị trí, mức lương, kỹ năng, địa điểm và yêu cầu công việc.",
+    description:
+      "Tạo và quản lý tin với vị trí, mức lương, kỹ năng, địa điểm và yêu cầu công việc.",
   },
   {
     icon: UsersRound,
     title: "Chấm phù hợp bằng AI",
-    description: "AI đối chiếu CV, hồ sơ ứng viên và mô tả công việc để đưa ra điểm, nhận định, điểm khớp và rủi ro.",
+    description:
+      "AI đối chiếu CV, hồ sơ ứng viên và mô tả công việc để đưa ra điểm, nhận định, điểm khớp và rủi ro.",
   },
   {
     icon: CalendarClock,
     title: "Vận hành tuyển dụng",
-    description: "Theo dõi trạng thái ứng tuyển, nhắn tin với ứng viên và điều phối lịch phỏng vấn trong một nơi.",
+    description:
+      "Theo dõi trạng thái ứng tuyển, nhắn tin với ứng viên và điều phối lịch phỏng vấn trong một nơi.",
   },
 ];
 
@@ -97,16 +108,63 @@ function formatVnd(value: number) {
   return new Intl.NumberFormat("vi-VN").format(value);
 }
 
+function formatVoucherFinalAmount(value: number) {
+  return value === 0 ? "Miễn phí" : `${formatVnd(value)}đ`;
+}
+
 function EmployerBillingRoute() {
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherPreview, setVoucherPreview] = useState<VoucherPreview | null>(null);
   const plansQuery = useQuery(trpc.billing.plans.queryOptions());
   const billingQuery = useQuery(trpc.billing.me.queryOptions());
   const checkoutMutation = useMutation({
-    mutationFn: () => trpcClient.billing.createEmployerCheckout.mutate(),
+    mutationFn: () =>
+      trpcClient.billing.createEmployerCheckout.mutate({
+        voucherCode: voucherPreview?.code,
+      }),
     onSuccess: (payment) => {
       window.location.href = payment.checkoutUrl;
     },
     onError: (error) => toast.error(error.message),
   });
+  const previewVoucherMutation = useMutation({
+    mutationFn: () =>
+      trpcClient.billing.previewVoucherDiscount.mutate({
+        planCode: "EMPLOYER_MONTHLY",
+        voucherCode: voucherCode.trim(),
+      }),
+    onSuccess: (preview) => {
+      setVoucherPreview(preview);
+      toast.success("Đã áp dụng voucher");
+    },
+    onError: (error) => {
+      setVoucherPreview(null);
+      toast.error(error.message);
+    },
+  });
+
+  function handleVoucherChange(value: string) {
+    setVoucherCode(value.toUpperCase());
+    setVoucherPreview(null);
+  }
+
+  function handleApplyVoucher() {
+    if (!voucherCode.trim()) {
+      toast.error("Vui lòng nhập mã voucher");
+      return;
+    }
+
+    previewVoucherMutation.mutate();
+  }
+
+  function handleCheckout() {
+    if (voucherCode.trim() && !voucherPreview) {
+      toast.error("Vui lòng bấm Áp dụng mã voucher trước khi thanh toán");
+      return;
+    }
+
+    checkoutMutation.mutate();
+  }
 
   const entitlements = billingQuery.data?.entitlements;
   const subscriptions = (billingQuery.data?.subscriptions ?? []) as SubscriptionRow[];
@@ -118,6 +176,14 @@ function EmployerBillingRoute() {
   const employerActive = entitlements?.employer ?? false;
   const employerPrice =
     employerPlan?.priceVnd ?? employerSubscription?.plan.priceVnd ?? EMPLOYER_FALLBACK_PRICE;
+  const checkoutLabel =
+    voucherPreview?.finalAmountVnd === 0
+      ? employerActive
+        ? "Gia hạn miễn phí"
+        : "Kích hoạt miễn phí"
+      : employerActive
+        ? "Gia hạn gói"
+        : "Thanh toán để kích hoạt";
 
   if (plansQuery.isLoading || billingQuery.isLoading) {
     return (
@@ -162,15 +228,45 @@ function EmployerBillingRoute() {
           period="/30 ngày"
           features={employerFeatures}
           action={
-            <Button
-              onClick={() => checkoutMutation.mutate()}
-              disabled={checkoutMutation.isPending}
-              size="lg"
-              className="w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
-            >
-              <CreditCard className="size-4" />
-              {employerActive ? "Gia hạn gói" : "Thanh toán để kích hoạt"}
-            </Button>
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex items-stretch gap-2">
+                <Input
+                  value={voucherCode}
+                  onChange={(event) => handleVoucherChange(event.target.value)}
+                  placeholder="Mã voucher"
+                  className="h-10 min-w-0 flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleApplyVoucher}
+                  disabled={previewVoucherMutation.isPending || !voucherCode.trim()}
+                  className="h-10 min-w-24 shrink-0 px-3"
+                >
+                  Áp dụng
+                </Button>
+              </div>
+              {voucherPreview ? (
+                <div className="rounded-lg border bg-surface-wash p-3 text-sm">
+                  <div className="font-medium text-foreground">
+                    Sau giảm: {formatVoucherFinalAmount(voucherPreview.finalAmountVnd)}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Đã giảm {formatVnd(voucherPreview.discountAmountVnd)}đ từ mã{" "}
+                    {voucherPreview.code}
+                  </div>
+                </div>
+              ) : null}
+              <Button
+                onClick={handleCheckout}
+                disabled={checkoutMutation.isPending}
+                size="lg"
+                className="w-full bg-brand-orange text-brand-orange-foreground hover:bg-brand-orange/90"
+              >
+                <CreditCard className="size-4" />
+                {checkoutLabel}
+              </Button>
+            </div>
           }
         />
 

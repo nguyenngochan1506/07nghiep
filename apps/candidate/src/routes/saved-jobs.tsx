@@ -1,14 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { AppRouter } from "@07nghiep/server/routers/index";
-import type { inferRouterOutputs } from "@trpc/server";
 import type React from "react";
 import { ArrowRight, Heart, Search } from "lucide-react";
 import { JobCardItem } from "@/components/job-card";
 import { PageHero } from "@/components/page-hero";
 import { formatSalaryRangeVnd } from "@/lib/salary";
 import { useLocalSavedJobs } from "@/lib/saved-jobs";
-import { queryClient, trpc } from "@/utils/trpc";
+import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@07nghiep/ui/components/button";
 import { Card, CardContent, CardTitle } from "@07nghiep/ui/components/card";
@@ -18,8 +16,23 @@ export const Route = createFileRoute("/saved-jobs")({
   component: SavedJobsPage,
 });
 
-type RouterOutputs = inferRouterOutputs<AppRouter>;
-type SavedJob = RouterOutputs["savedJob"]["list"]["jobs"][number];
+type SavedJob = {
+  id: string;
+  title: string;
+  location: string | null;
+  workType: string | null;
+  jobType: string | null;
+  salaryMin: string | number | null;
+  salaryMax: string | number | null;
+  skills: string[];
+  createdAt: string | Date;
+  expiresAt: string | null;
+  organization?: {
+    name: string | null;
+    logoUrl: string | null;
+    verified: boolean | null;
+  } | null;
+};
 type JobCardItemProps = React.ComponentProps<typeof JobCardItem>;
 
 function mapSavedJob(raw: SavedJob): JobCardItemProps["job"] {
@@ -62,15 +75,14 @@ function SavedJobsPage() {
     { enabled: isLoggedIn },
   );
   const savedJobsQuery = useQuery(savedJobsOptions);
-  const toggleSavedJob = useMutation(
-    trpc.savedJob.toggle.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
-      },
-    }),
-  );
+  const toggleSavedJob = useMutation({
+    mutationFn: (input: { jobId: string }) => trpcClient.savedJob.toggle.mutate(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: savedJobsOptions.queryKey });
+    },
+  });
   const savedJobs = isLoggedIn
-    ? (savedJobsQuery.data?.jobs ?? []).map(mapSavedJob)
+    ? ((savedJobsQuery.data as { jobs?: SavedJob[] } | undefined)?.jobs ?? []).map(mapSavedJob)
     : localSavedJobs.savedJobs;
 
   return (

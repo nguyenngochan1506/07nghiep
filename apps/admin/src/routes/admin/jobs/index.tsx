@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@07nghiep/ui/components/table";
 
-import { queryClient, trpc } from "@/utils/trpc";
+import { queryClient, trpc, trpcClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/admin/jobs/")({
   component: AdminJobsRoute,
@@ -61,25 +61,23 @@ function AdminJobsRoute() {
   });
   const query = useQuery(queryOptions);
 
-  const approveMutation = useMutation(
-    trpc.admin.jobs.approve.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã duyệt tin tuyển dụng");
-        queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
-      },
-      onError: (error) => toast.error(error.message),
-    }),
-  );
+  const approveMutation = useMutation({
+    mutationFn: (input: { id: string }) => trpcClient.admin.jobs.approve.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã duyệt tin tuyển dụng");
+      queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
-  const rejectMutation = useMutation(
-    trpc.admin.jobs.reject.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã trả tin về nháp");
-        queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
-      },
-      onError: (error) => toast.error(error.message),
-    }),
-  );
+  const rejectMutation = useMutation({
+    mutationFn: (input: { id: string }) => trpcClient.admin.jobs.reject.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã trả tin về nháp");
+      queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
   const jobs = (query.data?.jobs ?? []) as PendingJobRow[];
 

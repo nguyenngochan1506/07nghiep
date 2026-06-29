@@ -24,6 +24,7 @@ model User {
   sentMessages            Message[]
   subscriptions           Subscription[]
   payments                Payment[]
+  voucherRedemptions      VoucherRedemption[]
   businessApplications    BusinessApplication[] @relation("BusinessApplicationUser")
   reviewedBusinessApplications BusinessApplication[] @relation("BusinessApplicationReviewer")
   candidateCvAnalyses     CandidateCvAnalysis[]

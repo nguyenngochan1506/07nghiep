@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@07nghiep/ui/components/card";
+import { Input } from "@07nghiep/ui/components/input";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
 import { trpc, trpcClient } from "@/utils/trpc";
@@ -43,6 +44,13 @@ type BillingPlanRow = {
   code: string;
   priceVnd: number;
   durationDays: number;
+};
+
+type VoucherPreview = {
+  code: string;
+  originalAmountVnd: number;
+  discountAmountVnd: number;
+  finalAmountVnd: number;
 };
 
 const CANDIDATE_PLUS_FALLBACK_PRICE = 49000;
@@ -108,9 +116,15 @@ function formatVnd(value: number) {
   return new Intl.NumberFormat("vi-VN").format(value);
 }
 
+function formatVoucherFinalAmount(value: number) {
+  return value === 0 ? "Miễn phí" : `${formatVnd(value)}đ`;
+}
+
 function BillingRoute() {
   const { data: session } = authClient.useSession();
   const isLoggedIn = !!session;
+  const [plusVoucherCode, setPlusVoucherCode] = useState("");
+  const [plusVoucherPreview, setPlusVoucherPreview] = useState<VoucherPreview | null>(null);
   const plansQuery = useQuery(trpc.billing.plans.queryOptions());
   const billingQuery = useQuery(
     trpc.billing.me.queryOptions(undefined, {
@@ -118,16 +132,58 @@ function BillingRoute() {
     }),
   );
   const checkoutMutation = useMutation({
-    mutationFn: () => trpcClient.billing.createCandidatePlusCheckout.mutate(),
+    mutationFn: () =>
+      trpcClient.billing.createCandidatePlusCheckout.mutate({
+        voucherCode: plusVoucherPreview?.code,
+      }),
     onSuccess: (payment) => {
       window.location.href = payment.checkoutUrl;
     },
     onError: (error) => toast.error(error.message),
   });
+  const previewVoucherMutation = useMutation({
+    mutationFn: () =>
+      trpcClient.billing.previewVoucherDiscount.mutate({
+        planCode: "CANDIDATE_PLUS_MONTHLY",
+        voucherCode: plusVoucherCode.trim(),
+      }),
+    onSuccess: (preview) => {
+      setPlusVoucherPreview(preview);
+      toast.success("Đã áp dụng voucher");
+    },
+    onError: (error) => {
+      setPlusVoucherPreview(null);
+      toast.error(error.message);
+    },
+  });
+
+  function handlePlusVoucherChange(value: string) {
+    setPlusVoucherCode(value.toUpperCase());
+    setPlusVoucherPreview(null);
+  }
+
+  function handleApplyPlusVoucher() {
+    if (!isLoggedIn) {
+      window.location.href = "/login?redirect=/billing";
+      return;
+    }
+
+    if (!plusVoucherCode.trim()) {
+      toast.error("Vui lòng nhập mã voucher");
+      return;
+    }
+
+    previewVoucherMutation.mutate();
+  }
 
   function handleCandidatePlusCheckout() {
     if (!isLoggedIn) {
       window.location.href = "/login?redirect=/billing";
+      return;
+    }
+
+    if (plusVoucherCode.trim() && !plusVoucherPreview) {
+      toast.error("Vui lòng bấm Áp dụng mã voucher trước khi thanh toán");
       return;
     }
 
@@ -146,6 +202,14 @@ function BillingRoute() {
     plusPlan?.priceVnd ?? plusSubscription?.plan.priceVnd ?? CANDIDATE_PLUS_FALLBACK_PRICE;
   const employerPrice = employerPlan?.priceVnd ?? EMPLOYER_FALLBACK_PRICE;
   const plusIsActive = entitlements?.candidatePlus ?? false;
+  const plusCheckoutLabel =
+    plusVoucherPreview?.finalAmountVnd === 0
+      ? plusIsActive
+        ? "Gia hạn miễn phí"
+        : "Kích hoạt miễn phí"
+      : plusIsActive
+        ? "Gia hạn Plus"
+        : "Nâng cấp Plus";
 
   if (plansQuery.isLoading || billingQuery.isLoading) {
     return (
@@ -226,15 +290,45 @@ function BillingRoute() {
             badge={plusIsActive ? "Đang dùng" : "Khuyên dùng"}
             features={plusFeatures}
             action={
-              <Button
-                onClick={handleCandidatePlusCheckout}
-                disabled={checkoutMutation.isPending}
-                size="lg"
-                className="w-full"
-              >
-                <CreditCard className="size-4" />
-                {plusIsActive ? "Gia hạn Plus" : "Nâng cấp Plus"}
-              </Button>
+              <div className="flex w-full flex-col gap-3">
+                <div className="flex items-stretch gap-2">
+                  <Input
+                    value={plusVoucherCode}
+                    onChange={(event) => handlePlusVoucherChange(event.target.value)}
+                    placeholder="Mã voucher"
+                    className="h-10 min-w-0 flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleApplyPlusVoucher}
+                    disabled={previewVoucherMutation.isPending || !plusVoucherCode.trim()}
+                    className="h-10 min-w-24 shrink-0 px-3"
+                  >
+                    Áp dụng
+                  </Button>
+                </div>
+                {plusVoucherPreview ? (
+                  <div className="rounded-lg border bg-surface-wash p-3 text-sm">
+                    <div className="font-medium text-foreground">
+                      Sau giảm: {formatVoucherFinalAmount(plusVoucherPreview.finalAmountVnd)}
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Đã giảm {formatVnd(plusVoucherPreview.discountAmountVnd)}đ từ mã{" "}
+                      {plusVoucherPreview.code}
+                    </div>
+                  </div>
+                ) : null}
+                <Button
+                  onClick={handleCandidatePlusCheckout}
+                  disabled={checkoutMutation.isPending}
+                  size="lg"
+                  className="w-full"
+                >
+                  <CreditCard className="size-4" />
+                  {plusCheckoutLabel}
+                </Button>
+              </div>
             }
           />
 

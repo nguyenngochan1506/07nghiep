@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { backfillEmployerApplicationFitScores } from "../ai-cv/backfill";
 import { createPayosCheckout, verifyPayosWebhookSignature } from "./payos";
-import { createCheckoutPayment, createPayosOrderCode, getNextBillingPeriod, handlePayosWebhook } from "./payments";
+import {
+  createCheckoutPayment,
+  createPayosOrderCode,
+  getNextBillingPeriod,
+  handlePayosWebhook,
+} from "./payments";
 
 vi.mock("./payos", async () => {
   const actual = await vi.importActual<typeof import("./payos")>("./payos");
@@ -66,11 +71,15 @@ function createMockPrisma(paymentOverrides: Record<string, unknown> = {}) {
   const tx = {
     payment: {
       findUnique: vi.fn().mockResolvedValue(payment),
+      create: vi.fn().mockImplementation(async ({ data }) => ({ id: "payment_1", ...data })),
       update: vi.fn().mockImplementation(async ({ data }) => ({ ...payment, ...data })),
     },
     subscription: {
       findFirst: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockImplementation(async ({ data }) => ({ id: "subscription_1", ...data })),
+    },
+    voucherRedemption: {
+      create: vi.fn().mockResolvedValue({ id: "redemption_1" }),
     },
     user: {
       update: vi.fn().mockResolvedValue({ id: payment.userId, role: "EMPLOYER" }),
@@ -101,6 +110,12 @@ function createMockPrisma(paymentOverrides: Record<string, unknown> = {}) {
   const prisma = {
     billingPlan: {
       findFirst: vi.fn().mockResolvedValue(plan),
+    },
+    voucher: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
+    voucherRedemption: {
+      count: vi.fn().mockResolvedValue(0),
     },
     payment: {
       findUnique: vi.fn().mockResolvedValue(payment),
@@ -207,6 +222,114 @@ describe("createCheckoutPayment", () => {
     });
     expect(payment.status).toBe("PENDING");
   });
+
+  it("creates checkout with a valid voucher discount snapshot", async () => {
+    const { prisma, plan } = createMockPrisma();
+    prisma.voucher.findUnique.mockResolvedValue({
+      id: "voucher_1",
+      code: "SUMMER30",
+      discountType: "PERCENT",
+      discountValue: 30,
+      maxDiscountVnd: 10_000,
+      startsAt: new Date("2026-06-01T00:00:00.000Z"),
+      expiresAt: new Date("2026-07-01T00:00:00.000Z"),
+      usageLimit: null,
+      perUserLimit: null,
+      active: true,
+      plans: [{ planId: plan.id }],
+      _count: { redemptions: 0 },
+    });
+    mockedCreatePayosCheckout.mockResolvedValue({
+      checkoutUrl: "https://pay.payos.vn/checkout/123",
+      paymentLinkId: "plink_123",
+    });
+
+    const payment = await createCheckoutPayment({
+      prisma,
+      userId: "user_1",
+      planCode: "EMPLOYER_MONTHLY",
+      returnUrl: "https://example.com/return",
+      cancelUrl: "https://example.com/cancel",
+      voucherCode: " summer30 ",
+    });
+
+    expect(mockedCreatePayosCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: plan.priceVnd - 10_000,
+        items: [{ name: plan.name, quantity: 1, price: plan.priceVnd - 10_000 }],
+      }),
+    );
+    expect(prisma.payment.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        amountVnd: plan.priceVnd - 10_000,
+        discountAmountVnd: 10_000,
+        originalAmountVnd: plan.priceVnd,
+        voucherId: "voucher_1",
+      }),
+    });
+    expect(payment.status).toBe("PENDING");
+  });
+
+  it("activates a fully discounted checkout without creating a payOS checkout", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedNow);
+    const { prisma, plan, tx } = createMockPrisma();
+    prisma.voucher.findUnique.mockResolvedValue({
+      id: "voucher_1",
+      code: "FREE100",
+      discountType: "PERCENT",
+      discountValue: 100,
+      maxDiscountVnd: null,
+      startsAt: new Date("2026-06-01T00:00:00.000Z"),
+      expiresAt: new Date("2026-07-01T00:00:00.000Z"),
+      usageLimit: null,
+      perUserLimit: null,
+      active: true,
+      plans: [{ planId: plan.id }],
+      _count: { redemptions: 0 },
+    });
+
+    const payment = await createCheckoutPayment({
+      prisma,
+      userId: "user_1",
+      planCode: "EMPLOYER_MONTHLY",
+      returnUrl: "https://example.com/return",
+      cancelUrl: "https://example.com/cancel",
+      voucherCode: "free100",
+    });
+
+    expect(mockedCreatePayosCheckout).not.toHaveBeenCalled();
+    expect(tx.payment.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        amountVnd: 0,
+        checkoutUrl: "https://example.com/return",
+        discountAmountVnd: plan.priceVnd,
+        originalAmountVnd: plan.priceVnd,
+        paymentLinkId: "",
+        status: "PAID",
+        voucherId: "voucher_1",
+      }),
+    });
+    expect(tx.subscription.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "user_1",
+        planId: plan.id,
+        status: "ACTIVE",
+        currentPeriodStart: fixedNow,
+        currentPeriodEnd: new Date("2026-07-27T10:00:00.000Z"),
+      }),
+    });
+    expect(tx.voucherRedemption.create).toHaveBeenCalledWith({
+      data: {
+        voucherId: "voucher_1",
+        paymentId: "payment_1",
+        userId: "user_1",
+        discountAmountVnd: plan.priceVnd,
+      },
+    });
+    expect(payment.status).toBe("PAID");
+    expect(payment.checkoutUrl).toBe("https://example.com/return?paymentId=payment_1");
+  });
 });
 
 describe("handlePayosWebhook", () => {
@@ -276,6 +399,28 @@ describe("handlePayosWebhook", () => {
       data: { role: "EMPLOYER" },
     });
     expect(mockedBackfillEmployerApplicationFitScores).toHaveBeenCalledWith(prisma, "user_1");
+  });
+
+  it("creates a voucher redemption when a discounted payment is paid", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedNow);
+    const { prisma, tx } = createMockPrisma({
+      voucherId: "voucher_1",
+      discountAmountVnd: 10_000,
+    });
+    const body = createWebhookBody();
+
+    const result = await handlePayosWebhook({ prisma, body });
+
+    expect(result).toEqual({ ok: true, paymentId: "payment_1" });
+    expect(tx.voucherRedemption.create).toHaveBeenCalledWith({
+      data: {
+        voucherId: "voucher_1",
+        paymentId: "payment_1",
+        userId: "user_1",
+        discountAmountVnd: 10_000,
+      },
+    });
   });
 
   it("creates a verified organization profile from the approved business application after employer payment", async () => {

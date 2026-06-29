@@ -77,7 +77,9 @@ describe("billingRouter", () => {
       status: "PENDING",
     });
 
-    const result = await billingRouter.createCaller(createAuthedCtx({})).createCandidatePlusCheckout();
+    const result = await billingRouter
+      .createCaller(createAuthedCtx({}))
+      .createCandidatePlusCheckout();
 
     expect(mockedCreateCheckoutPayment).toHaveBeenCalledWith({
       prisma: {},
@@ -87,6 +89,79 @@ describe("billingRouter", () => {
       cancelUrl: "http://localhost:3003/billing/return",
     });
     expect(result.checkoutUrl).toBe("https://pay.payos.vn/checkout/plus");
+  });
+
+  it("passes voucher code when creating a Candidate Plus checkout", async () => {
+    mockedCreateCheckoutPayment.mockResolvedValue({
+      id: "payment_plus",
+      checkoutUrl: "https://pay.payos.vn/checkout/plus",
+      orderCode: 123456789012345n,
+      status: "PENDING",
+    });
+
+    await billingRouter
+      .createCaller(createAuthedCtx({}))
+      .createCandidatePlusCheckout({ voucherCode: "SUMMER30" });
+
+    expect(mockedCreateCheckoutPayment).toHaveBeenCalledWith({
+      prisma: {},
+      userId: "user_1",
+      planCode: "CANDIDATE_PLUS_MONTHLY",
+      returnUrl: "http://localhost:3003/billing/return",
+      cancelUrl: "http://localhost:3003/billing/return",
+      voucherCode: "SUMMER30",
+    });
+  });
+
+  it("previews voucher discount before checkout", async () => {
+    const prisma = {
+      billingPlan: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "plan_plus",
+          code: "CANDIDATE_PLUS_MONTHLY",
+          name: "Candidate Plus Monthly",
+          priceVnd: 49_000,
+          durationDays: 30,
+          active: true,
+        }),
+      },
+      voucher: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "voucher_1",
+          code: "SUMMER10",
+          discountType: "FIXED_AMOUNT",
+          discountValue: 10_000,
+          maxDiscountVnd: null,
+          startsAt: new Date("2026-06-01T00:00:00.000Z"),
+          expiresAt: new Date("2026-07-01T00:00:00.000Z"),
+          usageLimit: null,
+          perUserLimit: null,
+          active: true,
+          plans: [{ planId: "plan_plus" }],
+          _count: { redemptions: 0 },
+        }),
+      },
+      voucherRedemption: {
+        count: vi.fn().mockResolvedValue(0),
+      },
+    };
+
+    const result = await billingRouter
+      .createCaller(createAuthedCtx(prisma))
+      .previewVoucherDiscount({
+        planCode: "CANDIDATE_PLUS_MONTHLY",
+        voucherCode: " summer10 ",
+      });
+
+    expect(prisma.billingPlan.findFirst).toHaveBeenCalledWith({
+      where: { code: "CANDIDATE_PLUS_MONTHLY", active: true },
+    });
+    expect(result).toEqual({
+      code: "SUMMER10",
+      originalAmountVnd: 49_000,
+      discountAmountVnd: 10_000,
+      finalAmountVnd: 39_000,
+    });
   });
 
   it("creates a checkout for Candidate AI CV credit add-ons", async () => {
@@ -125,6 +200,7 @@ describe("billingRouter", () => {
       planCode: "CANDIDATE_AI_CV_CREDITS",
       returnUrl: "http://localhost:3003/cv-analysis",
       cancelUrl: "http://localhost:3003/cv-analysis",
+      voucherCode: undefined,
     });
     expect(result).toEqual({
       paymentId: "payment_credits",
@@ -151,6 +227,7 @@ describe("billingRouter", () => {
       planCode: "EMPLOYER_MONTHLY",
       returnUrl: "http://localhost:3002/billing",
       cancelUrl: "http://localhost:3002/billing",
+      voucherCode: undefined,
     });
     expect(result.checkoutUrl).toBe("https://pay.payos.vn/checkout/employer");
   });

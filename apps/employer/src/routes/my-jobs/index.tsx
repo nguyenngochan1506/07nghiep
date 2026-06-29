@@ -9,7 +9,7 @@ import { Card } from "@07nghiep/ui/components/card";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 import { authorizedRoles } from "@/lib/role-guard";
 import { authClient } from "@/lib/auth-client";
-import { trpc } from "@/utils/trpc";
+import { trpc, trpcClient } from "@/utils/trpc";
 import { JobsTable, type JobRow } from "@/components/jobs/jobs-table";
 
 export const Route = createFileRoute("/my-jobs/")({
@@ -52,45 +52,41 @@ function MyJobsPage() {
   }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
-  const publishMutation = useMutation(
-    trpc.job.publish.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã gửi tin tuyển dụng để duyệt");
-        invalidateAll();
-      },
-      onError: (e) => toast.error(e.message),
-    }),
-  );
+  const publishMutation = useMutation({
+    mutationFn: (input: { id: string }) => trpcClient.job.publish.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã gửi tin tuyển dụng để duyệt");
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
-  const closeMutation = useMutation(
-    trpc.job.close.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã đóng tin tuyển dụng");
-        invalidateAll();
-      },
-      onError: (e) => toast.error(e.message),
-    }),
-  );
+  const closeMutation = useMutation({
+    mutationFn: (input: { id: string }) => trpcClient.job.close.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã đóng tin tuyển dụng");
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
-  const cloneMutation = useMutation(
-    trpc.job.clone.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã nhân bản tin tuyển dụng → Nháp mới");
-        invalidateAll();
-      },
-      onError: (e) => toast.error(e.message),
-    }),
-  );
+  const cloneMutation = useMutation({
+    mutationFn: (input: { id: string }) => trpcClient.job.clone.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã nhân bản tin tuyển dụng → Nháp mới");
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
-  const deleteMutation = useMutation(
-    trpc.job.delete.mutationOptions({
-      onSuccess: () => {
-        toast.success("Đã xóa tin tuyển dụng");
-        invalidateAll();
-      },
-      onError: (e) => toast.error(e.message),
-    }),
-  );
+  const deleteMutation = useMutation({
+    mutationFn: (input: { id: string }) => trpcClient.job.delete.mutate(input),
+    onSuccess: () => {
+      toast.success("Đã xóa tin tuyển dụng");
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const stats = statsQuery.data;
   const jobs = (jobsQuery.data?.jobs ?? []) as JobRow[];

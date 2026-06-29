@@ -14,9 +14,7 @@ import { trpc } from "@/utils/trpc";
 
 import "../index.css";
 
-import type { AppRouter } from "@07nghiep/server/routers/index";
 import { useQuery } from "@tanstack/react-query";
-import type { inferRouterOutputs } from "@trpc/server";
 import { createContext, useContext, useMemo } from "react";
 
 export type JobType = {
@@ -54,8 +52,25 @@ export interface RouterAppContext {
   queryClient: QueryClient;
 }
 
-type RouterOutputs = inferRouterOutputs<AppRouter>;
-type PublicJob = RouterOutputs["job"]["getPublicList"]["jobs"][number];
+export type PublicJob = {
+  id: string;
+  title: string;
+  location: string | null;
+  workType: string | null;
+  jobType: string | null;
+  experienceLevel: string | null;
+  salaryMin: string | number | null;
+  salaryMax: string | number | null;
+  skills: string[];
+  createdAt: string | Date;
+  expiresAt: string | null;
+  views: number | null;
+  organization?: {
+    name: string | null;
+    logoUrl: string | null;
+    verified: boolean | null;
+  } | null;
+};
 const PUBLIC_JOBS_PREVIEW_LIMIT = 15;
 
 export function mapJob(raw: PublicJob): JobType {
@@ -83,7 +98,7 @@ export function mapJob(raw: PublicJob): JobType {
     location: raw.location ?? "",
     workType: raw.workType ?? "",
     jobType: raw.jobType ?? "",
-    experience: raw.experience ?? "",
+    experience: raw.experienceLevel ?? "",
     salaryRange,
     skills: raw.skills ?? [],
     postedDate,
@@ -121,10 +136,9 @@ function RootComponent() {
     trpc.job.getPublicList.queryOptions({ limit: PUBLIC_JOBS_PREVIEW_LIMIT }),
   );
 
-  const jobs: JobType[] = useMemo(() => {
-    if (!data?.jobs) return [];
-    return data.jobs.map((job) => mapJob(job));
-  }, [data]);
+  const publicJobsData = data as { jobs?: PublicJob[] } | undefined;
+  const publicJobs = publicJobsData?.jobs ?? [];
+  const jobs: JobType[] = useMemo(() => publicJobs.map((job) => mapJob(job)), [publicJobs]);
   const isOAuthPopupCallback = location.pathname === "/auth/google/callback";
 
   return (

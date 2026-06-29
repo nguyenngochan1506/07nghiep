@@ -54,6 +54,15 @@ type ErrorWithTRPCCode = {
   };
 };
 
+type RecentJobRow = {
+  id: string;
+  title: string;
+  status: string;
+  updatedAt: Date | string;
+  applicationsCount: number;
+  views: number;
+};
+
 const formatter = new Intl.NumberFormat("vi-VN");
 
 function formatNumber(value?: number) {
@@ -88,6 +97,7 @@ function DashboardComponent() {
 
   const stats = statsQuery.data;
   const organization = orgQuery.data;
+  const recentJobs = (recentJobsQuery.data?.jobs ?? []) as RecentJobRow[];
   const profileComplete = Boolean(
     organization?.name && organization.description && organization.location,
   );
@@ -298,8 +308,8 @@ function DashboardComponent() {
                 Array.from({ length: 4 }).map((_, index) => (
                   <Skeleton key={index} className="h-16 w-full" />
                 ))
-              ) : recentJobsQuery.data?.jobs.length ? (
-                recentJobsQuery.data.jobs.map((job) => (
+              ) : recentJobs.length ? (
+                recentJobs.map((job) => (
                   <Link
                     key={job.id}
                     to="/my-jobs/$jobId/edit"

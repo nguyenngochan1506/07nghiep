@@ -9,7 +9,7 @@ import { Card } from "@07nghiep/ui/components/card";
 
 import { authorizedRoles } from "@/lib/role-guard";
 import { authClient } from "@/lib/auth-client";
-import { trpc } from "@/utils/trpc";
+import { trpcClient } from "@/utils/trpc";
 import { JobFormStepper } from "@/components/jobs/job-form-stepper";
 import { JobStep1, type Step1Data } from "@/components/jobs/job-step-1";
 import { JobStep2, type Step2Data } from "@/components/jobs/job-step-2";
@@ -149,27 +149,25 @@ function NewJobPage() {
   }, [saveDraft]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
-  const createJob = useMutation(
-    trpc.job.create.mutationOptions({
-      onSuccess: () => {
-        localStorage.removeItem(DRAFT_KEY);
-        toast.success("Tin tuyển dụng đã được gửi duyệt!");
-        navigate({ to: "/my-jobs" });
-      },
-      onError: (err) => toast.error(err.message),
-    }),
-  );
+  const createJob = useMutation({
+    mutationFn: (input: ReturnType<typeof buildPayload>) => trpcClient.job.create.mutate(input),
+    onSuccess: () => {
+      localStorage.removeItem(DRAFT_KEY);
+      toast.success("Tin tuyển dụng đã được gửi duyệt!");
+      navigate({ to: "/my-jobs" });
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
-  const saveDraftMutation = useMutation(
-    trpc.job.create.mutationOptions({
-      onSuccess: () => {
-        localStorage.removeItem(DRAFT_KEY);
-        toast.success("Đã lưu nháp thành công!");
-        navigate({ to: "/my-jobs" });
-      },
-      onError: (err) => toast.error(err.message),
-    }),
-  );
+  const saveDraftMutation = useMutation({
+    mutationFn: (input: ReturnType<typeof buildPayload>) => trpcClient.job.create.mutate(input),
+    onSuccess: () => {
+      localStorage.removeItem(DRAFT_KEY);
+      toast.success("Đã lưu nháp thành công!");
+      navigate({ to: "/my-jobs" });
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   // ── Step navigation ───────────────────────────────────────────────────────
   function validateCurrentStep(): boolean {

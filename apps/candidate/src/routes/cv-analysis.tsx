@@ -7,8 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@07nghiep/ui/components/card";
+import { Input } from "@07nghiep/ui/components/input";
 import { Progress } from "@07nghiep/ui/components/progress";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -55,6 +57,13 @@ type RecommendedJob = {
 
 type RecommendedJobs = RecommendedJob[];
 
+type VoucherPreview = {
+  code: string;
+  originalAmountVnd: number;
+  discountAmountVnd: number;
+  finalAmountVnd: number;
+};
+
 const statusLabels: Record<string, string> = {
   PENDING: "Đang chờ",
   PROCESSING: "Đang phân tích",
@@ -73,9 +82,19 @@ function getStatusVariant(status?: string | null) {
   return "secondary";
 }
 
+function formatVnd(value: number) {
+  return new Intl.NumberFormat("vi-VN").format(value);
+}
+
+function formatVoucherFinalAmount(value: number) {
+  return value === 0 ? "Miễn phí" : `${formatVnd(value)}đ`;
+}
+
 function CvAnalysisPage() {
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const isLoggedIn = Boolean(session?.user?.id);
+  const [creditsVoucherCode, setCreditsVoucherCode] = useState("");
+  const [creditsVoucherPreview, setCreditsVoucherPreview] = useState<VoucherPreview | null>(null);
   const profileQuery = useQuery(
     trpc.profile.getMyProfile.queryOptions(undefined, { enabled: isLoggedIn }),
   );
@@ -111,12 +130,53 @@ function CvAnalysisPage() {
     onError: (error) => toast.error(error.message),
   });
   const extraCreditsCheckoutMutation = useMutation({
-    mutationFn: () => trpcClient.billing.createCandidateAiCvCreditsCheckout.mutate(),
+    mutationFn: () =>
+      trpcClient.billing.createCandidateAiCvCreditsCheckout.mutate({
+        voucherCode: creditsVoucherPreview?.code,
+      }),
     onSuccess: (payment) => {
       window.location.href = payment.checkoutUrl;
     },
     onError: (error) => toast.error(error.message),
   });
+  const previewCreditsVoucherMutation = useMutation({
+    mutationFn: () =>
+      trpcClient.billing.previewVoucherDiscount.mutate({
+        planCode: "CANDIDATE_AI_CV_CREDITS",
+        voucherCode: creditsVoucherCode.trim(),
+      }),
+    onSuccess: (preview) => {
+      setCreditsVoucherPreview(preview);
+      toast.success("Đã áp dụng voucher");
+    },
+    onError: (error) => {
+      setCreditsVoucherPreview(null);
+      toast.error(error.message);
+    },
+  });
+
+  function handleCreditsVoucherChange(value: string) {
+    setCreditsVoucherCode(value.toUpperCase());
+    setCreditsVoucherPreview(null);
+  }
+
+  function handleApplyCreditsVoucher() {
+    if (!creditsVoucherCode.trim()) {
+      toast.error("Vui lòng nhập mã voucher");
+      return;
+    }
+
+    previewCreditsVoucherMutation.mutate();
+  }
+
+  function handleExtraCreditsCheckout() {
+    if (creditsVoucherCode.trim() && !creditsVoucherPreview) {
+      toast.error("Vui lòng bấm Áp dụng mã voucher trước khi thanh toán");
+      return;
+    }
+
+    extraCreditsCheckoutMutation.mutate();
+  }
 
   if (sessionPending) {
     return (
@@ -163,6 +223,8 @@ function CvAnalysisPage() {
   const quotaExhausted = isPlus && remaining <= 0;
   const canAnalyze =
     isPlus && remaining > 0 && hasResume && !createAnalysisMutation.isPending && !isAnalysisRunning;
+  const extraCreditsCheckoutLabel =
+    creditsVoucherPreview?.finalAmountVnd === 0 ? "Nhận thêm lượt miễn phí" : "Mua thêm lượt";
   const strengths = asStringArray(latest?.strengths);
   const weaknesses = asStringArray(latest?.weaknesses);
   const suggestions = asStringArray(latest?.suggestions);
@@ -192,9 +254,9 @@ function CvAnalysisPage() {
                   ? "AI đang phân tích CV hiện tại. Vui lòng chờ kết quả trước khi gửi lượt mới."
                   : quotaExhausted
                     ? "Bạn đã dùng hết lượt AI CV trong kỳ hiện tại."
-                  : isPlus
-                    ? `${remaining} lượt còn lại trong kỳ hiện tại`
-                    : "Cần Candidate Plus"}
+                    : isPlus
+                      ? `${remaining} lượt còn lại trong kỳ hiện tại`
+                      : "Cần Candidate Plus"}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
@@ -215,19 +277,52 @@ function CvAnalysisPage() {
                   <Link to="/billing">Nâng cấp Plus</Link>
                 </Button>
               ) : quotaExhausted ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  disabled={extraCreditsCheckoutMutation.isPending}
-                  onClick={() => extraCreditsCheckoutMutation.mutate()}
-                >
-                  {extraCreditsCheckoutMutation.isPending ? (
-                    <Loader2 data-icon="inline-start" className="animate-spin" />
-                  ) : (
-                    <CreditCard data-icon="inline-start" />
-                  )}
-                  Mua thêm lượt
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-stretch gap-2">
+                    <Input
+                      value={creditsVoucherCode}
+                      onChange={(event) => handleCreditsVoucherChange(event.target.value)}
+                      placeholder="Mã voucher"
+                      className="h-10 min-w-0 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 min-w-24 shrink-0 px-3"
+                      disabled={
+                        previewCreditsVoucherMutation.isPending || !creditsVoucherCode.trim()
+                      }
+                      onClick={handleApplyCreditsVoucher}
+                    >
+                      Áp dụng
+                    </Button>
+                  </div>
+                  {creditsVoucherPreview ? (
+                    <div className="rounded-lg border bg-surface-wash p-3 text-sm">
+                      <div className="font-medium text-foreground">
+                        Sau giảm:{" "}
+                        {formatVoucherFinalAmount(creditsVoucherPreview.finalAmountVnd)}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Đã giảm {formatVnd(creditsVoucherPreview.discountAmountVnd)}đ từ mã{" "}
+                        {creditsVoucherPreview.code}
+                      </div>
+                    </div>
+                  ) : null}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={extraCreditsCheckoutMutation.isPending}
+                    onClick={handleExtraCreditsCheckout}
+                  >
+                    {extraCreditsCheckoutMutation.isPending ? (
+                      <Loader2 data-icon="inline-start" className="animate-spin" />
+                    ) : (
+                      <CreditCard data-icon="inline-start" />
+                    )}
+                    {extraCreditsCheckoutLabel}
+                  </Button>
+                </div>
               ) : !hasResume ? (
                 <Button asChild variant="outline" className="w-full">
                   <Link to="/profile/edit">Cập nhật CV</Link>
