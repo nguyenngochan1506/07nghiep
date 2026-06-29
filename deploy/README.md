@@ -4,7 +4,7 @@ This setup runs built artifacts only:
 
 - `server`: `apps/server/dist/index.mjs`
 - `worker`: `apps/worker/dist/index.mjs`
-- `web`: one image containing built Vite `dist` for `admin`, `employer`, and `candidate`, served by `deploy/static-server.mjs`
+- `web`: one image containing built Vite `dist` for `admin`, `employer`, and `candidate`, served by nginx
 - `postgres` and `redis`: official images
 
 ## VPS first-time setup

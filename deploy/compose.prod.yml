@@ -103,8 +103,6 @@ services:
       dockerfile: deploy/Dockerfile.web
       args:
         VITE_SERVER_URL: ${PUBLIC_SERVER_URL:-http://localhost:3000}
-    environment:
-      STATIC_SITES: 3001:/app/admin,3002:/app/employer,3003:/app/candidate
     ports:
       - "127.0.0.1:${ADMIN_PORT:-3001}:3001"
       - "127.0.0.1:${EMPLOYER_PORT:-3002}:3002"
