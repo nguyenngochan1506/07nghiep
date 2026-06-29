@@ -113,4 +113,71 @@ describe("adminBillingRouter vouchers", () => {
       data: { active: false },
     });
   });
+
+  it("updates voucher details and replaces applied plans", async () => {
+    const updatedVoucher = {
+      id: "voucher_1",
+      code: "WINTER50",
+      description: "Winter campaign",
+      discountType: "PERCENT",
+      discountValue: 50,
+      maxDiscountVnd: null,
+      startsAt: null,
+      expiresAt: new Date("2026-12-31T00:00:00.000Z"),
+      usageLimit: 50,
+      perUserLimit: 1,
+      active: true,
+      plans: [
+        { plan: { id: "plan_plus", code: "CANDIDATE_PLUS_MONTHLY", name: "Candidate Plus" } },
+      ],
+      _count: { redemptions: 0 },
+    };
+    const prisma = {
+      voucher: {
+        update: vi.fn().mockResolvedValue(updatedVoucher),
+      },
+    };
+
+    const result = await adminBillingRouter.createCaller(createCtx(prisma)).updateVoucher({
+      id: "voucher_1",
+      code: " winter50 ",
+      description: "Winter campaign",
+      discountType: "PERCENT",
+      discountValue: 50,
+      maxDiscountVnd: null,
+      startsAt: null,
+      expiresAt: new Date("2026-12-31T00:00:00.000Z"),
+      usageLimit: 50,
+      perUserLimit: 1,
+      planIds: ["plan_plus", "plan_plus"],
+    });
+
+    expect(result).toEqual(updatedVoucher);
+    expect(prisma.voucher.update).toHaveBeenCalledWith({
+      where: { id: "voucher_1" },
+      data: {
+        code: "WINTER50",
+        description: "Winter campaign",
+        discountType: "PERCENT",
+        discountValue: 50,
+        maxDiscountVnd: null,
+        startsAt: null,
+        expiresAt: new Date("2026-12-31T00:00:00.000Z"),
+        usageLimit: 50,
+        perUserLimit: 1,
+        plans: {
+          deleteMany: {},
+          create: [{ planId: "plan_plus" }],
+        },
+      },
+      include: {
+        plans: {
+          include: {
+            plan: { select: { id: true, code: true, name: true } },
+          },
+        },
+        _count: { select: { redemptions: true } },
+      },
+    });
+  });
 });

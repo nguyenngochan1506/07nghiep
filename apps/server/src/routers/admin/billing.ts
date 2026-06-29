@@ -78,6 +78,9 @@ const createVoucherSchema = z
       });
     }
   });
+const updateVoucherSchema = createVoucherSchema.extend({
+  id: z.string().min(1),
+});
 
 export const adminBillingRouter = router({
   plans: adminProcedure.query(async ({ ctx }) => {
@@ -116,6 +119,32 @@ export const adminBillingRouter = router({
     });
 
     return { id: voucher.id, code: voucher.code };
+  }),
+
+  updateVoucher: adminProcedure.input(updateVoucherSchema).mutation(async ({ ctx, input }) => {
+    const uniquePlanIds = Array.from(new Set(input.planIds));
+
+    const voucher = await ctx.prisma.voucher.update({
+      where: { id: input.id },
+      data: {
+        code: normalizeVoucherCode(input.code),
+        description: input.description ?? null,
+        discountType: input.discountType,
+        discountValue: input.discountValue,
+        maxDiscountVnd: input.maxDiscountVnd ?? null,
+        startsAt: input.startsAt ?? null,
+        expiresAt: input.expiresAt ?? null,
+        usageLimit: input.usageLimit ?? null,
+        perUserLimit: input.perUserLimit ?? null,
+        plans: {
+          deleteMany: {},
+          create: uniquePlanIds.map((planId) => ({ planId })),
+        },
+      },
+      include: voucherInclude,
+    });
+
+    return toAdminVoucherRow(voucher);
   }),
 
   updateVoucherStatus: adminProcedure
