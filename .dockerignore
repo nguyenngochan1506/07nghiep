@@ -5,7 +5,13 @@
 .cursor
 .copilot
 node_modules
+**/node_modules
+.pnpm-store
+**/.vite
+**/.vite-temp
+**/.output
 dist
+**/dist
 build
 coverage
 logs
@@ -14,6 +20,8 @@ logs
 .env
 .env*.local
 deploy/.env.prod
+*.tar
+*.tar.gz
 backups
 data/crawled-jobs
 tmp

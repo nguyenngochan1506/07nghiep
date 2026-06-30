@@ -3,7 +3,6 @@ import { Card } from "@07nghiep/ui/components/card";
 import { GoogleIcon } from "@07nghiep/ui/components/google-icon";
 import { Input } from "@07nghiep/ui/components/input";
 import { Label } from "@07nghiep/ui/components/label";
-import { startGoogleAuthPopup } from "@07nghiep/ui/lib/oauth-popup";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -27,34 +26,23 @@ export default function SignInForm({
   const { isPending, refetch: refetchSession } = authClient.useSession();
 
   const signInWithGoogle = async () => {
-    await startGoogleAuthPopup({
-      redirectTo,
-      getAuthorizationURL: async (callbackURL) => {
-        const result = await authClient.signIn.social(
-          {
-            provider: "google",
-            callbackURL,
-            newUserCallbackURL: callbackURL,
-            errorCallbackURL: callbackURL,
-            disableRedirect: true,
-          },
-          {
-            onError: (error) => {
-              toast.error(error.error.message || error.error.statusText);
-            },
-          },
-        );
+    const callbackURL = new URL(redirectTo, window.location.origin).toString();
+    const errorCallbackURL = new URL("/login", window.location.origin);
+    errorCallbackURL.searchParams.set("redirect", redirectTo);
 
-        return result.data?.url;
+    await authClient.signIn.social(
+      {
+        provider: "google",
+        callbackURL,
+        newUserCallbackURL: callbackURL,
+        errorCallbackURL: errorCallbackURL.toString(),
       },
-      onSuccess: async () => {
-        await refetchSession();
-        await router.invalidate();
-        navigate({ to: redirectTo });
-        toast.success("Đăng nhập thành công");
+      {
+        onError: (error) => {
+          toast.error(error.error.message || error.error.statusText);
+        },
       },
-      onError: (message) => toast.error(message),
-    });
+    );
   };
 
   const form = useForm({
@@ -69,8 +57,10 @@ export default function SignInForm({
           password: value.password,
         },
         {
-          onSuccess: () => {
-            navigate({
+          onSuccess: async () => {
+            await refetchSession();
+            await router.invalidate();
+            await navigate({
               to: redirectTo,
             });
             toast.success("Đăng nhập thành công");

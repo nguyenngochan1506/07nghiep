@@ -27,16 +27,16 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 ARG VITE_SERVER_URL=http://localhost:3000
+RUN rm -rf apps/candidate/.output apps/candidate/dist \
+  && VITE_APP_ROLE=CANDIDATE VITE_SERVER_URL=${VITE_SERVER_URL} pnpm --filter candidate build \
+  && cp -R apps/candidate/.output /out
 
-RUN VITE_APP_ROLE=ADMIN VITE_SERVER_URL=${VITE_SERVER_URL} pnpm --filter admin build \
-  && VITE_APP_ROLE=EMPLOYER VITE_SERVER_URL=${VITE_SERVER_URL} pnpm --filter employer build
+FROM node:24-alpine AS runner
 
-FROM nginx:1.29-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3003
 
-COPY deploy/nginx-web.conf /etc/nginx/nginx.conf
-COPY --from=builder --chown=nginx:nginx /app/apps/admin/dist /usr/share/nginx/html/admin
-COPY --from=builder --chown=nginx:nginx /app/apps/employer/dist /usr/share/nginx/html/employer
+COPY --from=builder /out /app
 
-USER nginx
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server/index.mjs"]

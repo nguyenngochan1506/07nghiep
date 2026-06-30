@@ -1,13 +1,11 @@
 import { Toaster } from "@07nghiep/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createRootRouteWithContext,
   HeadContent,
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import Header from "@/components/header";
@@ -19,7 +17,23 @@ import { publicQueryOptions, trpc } from "@/utils/trpc";
 import appCss from "../index.css?url";
 
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, lazy, Suspense, useContext, useMemo } from "react";
+
+const TanStackRouterDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import("@tanstack/react-router-devtools").then((module) => ({
+        default: module.TanStackRouterDevtools,
+      })),
+    )
+  : null;
+
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import("@tanstack/react-query-devtools").then((module) => ({
+        default: module.ReactQueryDevtools,
+      })),
+    )
+  : null;
 
 export type JobType = {
   id: string;
@@ -174,8 +188,12 @@ function RootComponent() {
         </div>
         <Toaster richColors />
       </ThemeProvider>
-      <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+      {TanStackRouterDevtools && ReactQueryDevtools ? (
+        <Suspense fallback={null}>
+          <TanStackRouterDevtools position="bottom-left" />
+          <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+        </Suspense>
+      ) : null}
     </RootDocument>
   );
 }
