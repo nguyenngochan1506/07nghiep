@@ -38,6 +38,7 @@ export const Route = createFileRoute("/applications/")({
       title: "Đơn ứng tuyển | 07nghiep",
       description: "Theo dõi trạng thái đơn ứng tuyển và quản lý hồ sơ đã gửi.",
       url: `${SITE_URL}/applications`,
+      noIndex: true,
     }),
   component: ApplicationsPage,
 });

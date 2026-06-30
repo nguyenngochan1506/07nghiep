@@ -52,6 +52,8 @@ function preloadBillingRoute(context: RouterAppContext) {
 
 type SubscriptionRow = {
   id: string;
+  status: string;
+  currentPeriodStart: string | Date;
   currentPeriodEnd: string | Date;
   plan: { name: string; code: string; priceVnd: number };
 };
@@ -141,7 +143,13 @@ function BillingRoute() {
   const [plusVoucherCode, setPlusVoucherCode] = useState("");
   const [plusVoucherPreview, setPlusVoucherPreview] = useState<VoucherPreview | null>(null);
   const { data: session, isPending: sessionPending } = authClient.useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
   const plansQuery = useQuery(trpc.billing.plans.queryOptions(undefined, publicQueryOptions));
+  const billingQuery = useQuery(
+    trpc.billing.me.queryOptions(undefined, {
+      enabled: isLoggedIn,
+    }),
+  );
   const checkoutMutation = useMutation({
     mutationFn: () =>
       trpcClient.billing.createCandidatePlusCheckout.mutate({
@@ -179,10 +187,18 @@ function BillingRoute() {
       return;
     }
 
+    if (!requireBillingLogin({ sessionPending, isLoggedIn })) {
+      return;
+    }
+
     previewVoucherMutation.mutate();
   }
 
   function handleCandidatePlusCheckout() {
+    if (!requireBillingLogin({ sessionPending, isLoggedIn })) {
+      return;
+    }
+
     if (plusVoucherCode.trim() && !plusVoucherPreview) {
       toast.error("Vui lòng bấm Áp dụng mã voucher trước khi thanh toán");
       return;
@@ -191,17 +207,24 @@ function BillingRoute() {
     checkoutMutation.mutate();
   }
 
-  const subscriptions: SubscriptionRow[] = [];
+  const subscriptions = (billingQuery.data?.subscriptions ?? []) as SubscriptionRow[];
   const plans = (plansQuery.data ?? []) as BillingPlanRow[];
   const plusPlan = plans.find((plan) => plan.code === "CANDIDATE_PLUS_MONTHLY");
   const employerPlan = plans.find((plan) => plan.code === "EMPLOYER_MONTHLY");
-  const plusSubscription = subscriptions.find(
-    (subscription) => subscription.plan.code === "CANDIDATE_PLUS_MONTHLY",
-  );
+  const now = new Date();
+  const plusSubscription =
+    subscriptions.find(
+      (subscription) =>
+        subscription.plan.code === "CANDIDATE_PLUS_MONTHLY" &&
+        subscription.status === "ACTIVE" &&
+        new Date(subscription.currentPeriodStart) <= now &&
+        now < new Date(subscription.currentPeriodEnd),
+    ) ??
+    subscriptions.find((subscription) => subscription.plan.code === "CANDIDATE_PLUS_MONTHLY");
   const plusPrice =
     plusPlan?.priceVnd ?? plusSubscription?.plan.priceVnd ?? CANDIDATE_PLUS_FALLBACK_PRICE;
   const employerPrice = employerPlan?.priceVnd ?? EMPLOYER_FALLBACK_PRICE;
-  const plusIsActive = false;
+  const plusIsActive = billingQuery.data?.entitlements.candidatePlus ?? false;
   const plusCheckoutLabel =
     plusVoucherPreview?.finalAmountVnd === 0
       ? plusIsActive
@@ -390,6 +413,26 @@ function BillingRoute() {
       </section>
     </main>
   );
+}
+
+function requireBillingLogin({
+  sessionPending,
+  isLoggedIn,
+}: {
+  sessionPending: boolean;
+  isLoggedIn: boolean;
+}) {
+  if (sessionPending) {
+    toast.info("Đang kiểm tra phiên đăng nhập");
+    return false;
+  }
+
+  if (!isLoggedIn) {
+    window.location.href = "/login?redirect=%2Fbilling";
+    return false;
+  }
+
+  return true;
 }
 
 function Metric({ value, label }: { value: string; label: string }) {

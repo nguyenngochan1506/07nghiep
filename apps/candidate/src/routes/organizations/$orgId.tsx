@@ -436,6 +436,71 @@ function OrganizationDetailPage() {
           )}
         </section>
       </div>
+      <OrganizationStructuredData org={org} totalJobs={totalJobs} />
     </div>
+  );
+}
+
+function OrganizationStructuredData({
+  org,
+  totalJobs,
+}: {
+  org: OrganizationDetail;
+  totalJobs: number;
+}) {
+  const sameAs = [org.website, org.linkedinUrl]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeExternalUrl);
+  const organizationUrl = `${SITE_URL}/organizations/${org.id}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: org.name,
+      url: organizationUrl,
+      logo: org.logoUrl || undefined,
+      description: org.description || undefined,
+      sameAs: sameAs.length > 0 ? sameAs : undefined,
+      address: org.location
+        ? {
+            "@type": "PostalAddress",
+            streetAddress: org.location,
+            addressCountry: org.country || "VN",
+          }
+        : undefined,
+      foundingDate: org.foundedYear ? `${org.foundedYear}-01-01` : undefined,
+      knowsAbout: org.industry || undefined,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "07nghiep",
+          item: SITE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Công ty",
+          item: `${SITE_URL}/organizations`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: org.name,
+          item: organizationUrl,
+        },
+      ],
+    },
+  ];
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
   );
 }

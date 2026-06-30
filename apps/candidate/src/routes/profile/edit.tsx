@@ -27,6 +27,7 @@ export const Route = createFileRoute("/profile/edit")({
       title: "Chỉnh sửa hồ sơ | 07nghiep",
       description: "Cập nhật thông tin cá nhân, CV, kỹ năng và kinh nghiệm làm việc.",
       url: `${SITE_URL}/profile/edit`,
+      noIndex: true,
     }),
   component: ProfileEditPage,
 });

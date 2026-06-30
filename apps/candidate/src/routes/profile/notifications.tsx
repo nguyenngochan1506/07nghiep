@@ -17,6 +17,7 @@ export const Route = createFileRoute("/profile/notifications")({
       title: "Cài đặt thông báo | 07nghiep",
       description: "Quản lý thông báo việc làm, ứng tuyển và cập nhật từ hệ thống.",
       url: `${SITE_URL}/profile/notifications`,
+      noIndex: true,
     }),
   component: NotificationPreferencesPage,
 });

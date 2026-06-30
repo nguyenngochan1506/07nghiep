@@ -1,7 +1,8 @@
 export const SITE_URL = "https://07nghiep.site";
 export const SITE_NAME = "07nghiep";
 export const DEFAULT_IMAGE = `${SITE_URL}/07logo.png`;
-export const DEFAULT_KEYWORDS = "tìm việc, việc làm, tuyển dụng, ứng tuyển, công ty, 07nghiep";
+export const DEFAULT_KEYWORDS =
+  "07nghiep, 07 nghiệp, 07 nghiệp việc làm, tìm việc, tìm việc làm, việc làm, tuyển dụng, ứng tuyển, thất nghiệp tìm việc làm, công ty";
 
 export function createSeoHead({
   title,

@@ -20,6 +20,7 @@ export const Route = createFileRoute("/messages/$conversationId")({
       title: "Tin nhắn | 07nghiep",
       description: "Xem hội thoại với nhà tuyển dụng.",
       url: `${SITE_URL}/messages`,
+      noIndex: true,
     }),
   component: ConversationDetail,
 });

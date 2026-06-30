@@ -19,6 +19,7 @@ export const Route = createFileRoute("/messages")({
       title: "Tin nhắn | 07nghiep",
       description: "Trao đổi tin nhắn với nhà tuyển dụng và quản lý hội thoại ứng tuyển.",
       url: `${SITE_URL}/messages`,
+      noIndex: true,
     }),
   component: MessagesLayout,
 });

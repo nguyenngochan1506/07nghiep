@@ -24,8 +24,9 @@ import { createSeoHead, SITE_URL } from "@/lib/seo";
 export const Route = createFileRoute("/jobs/")({
   head: () =>
     createSeoHead({
-      title: "Việc làm | 07nghiep",
-      description: "Tìm kiếm việc làm phù hợp với kỹ năng và kinh nghiệm của bạn. Hàng ngàn cơ hội việc làm đang chờ đón.",
+      title: "Tìm việc làm | 07nghiep",
+      description:
+        "Tìm việc làm phù hợp trên 07nghiep, còn được tìm là 07 nghiệp việc làm. Lọc theo kỹ năng, địa điểm, ngành nghề và ứng tuyển nhanh.",
       url: `${SITE_URL}/jobs`,
     }),
   validateSearch: (

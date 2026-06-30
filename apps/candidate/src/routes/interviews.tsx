@@ -31,6 +31,7 @@ export const Route = createFileRoute("/interviews")({
       title: "Phỏng vấn | 07nghiep",
       description: "Quản lý lịch phỏng vấn và theo dõi trạng thái ứng tuyển.",
       url: `${SITE_URL}/interviews`,
+      noIndex: true,
     }),
   component: CandidateInterviewsPage,
 });

@@ -47,6 +47,7 @@ export const Route = createFileRoute("/applications/$applicationId")({
       title: "Chi tiết đơn ứng tuyển | 07nghiep",
       description: "Xem chi tiết trạng thái đơn ứng tuyển và phản hồi từ nhà tuyển dụng.",
       url: `${SITE_URL}/applications`,
+      noIndex: true,
     }),
   component: ApplicationDetailPage,
 });

@@ -506,6 +506,7 @@ function JobDetailPage() {
         </section>
       </div>
       <JobPostingJsonLd job={job} />
+      <JobDetailBreadcrumbJsonLd job={job} />
     </div>
   );
 }
@@ -561,6 +562,40 @@ function JobPostingJsonLd({ job }: { job: JobDetailView }) {
         }
       : undefined,
     directApply: job.directApply ?? true,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+function JobDetailBreadcrumbJsonLd({ job }: { job: JobDetailView }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "07nghiep",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Việc làm",
+        item: `${SITE_URL}/jobs`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: job.title,
+        item: `${SITE_URL}/jobs/${job.id}`,
+      },
+    ],
   };
 
   return (

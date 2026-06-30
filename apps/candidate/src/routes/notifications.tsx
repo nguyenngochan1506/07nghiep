@@ -16,6 +16,7 @@ export const Route = createFileRoute("/notifications")({
       title: "Thông báo | 07nghiep",
       description: "Xem thông báo việc làm, ứng tuyển và cập nhật từ nhà tuyển dụng.",
       url: `${SITE_URL}/notifications`,
+      noIndex: true,
     }),
   component: NotificationsPage,
 });

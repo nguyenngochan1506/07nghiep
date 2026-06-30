@@ -1,4 +1,14 @@
 User-agent: *
 Allow: /
+Disallow: /applications
+Disallow: /auth
+Disallow: /billing/return
+Disallow: /dashboard
+Disallow: /interviews
+Disallow: /login
+Disallow: /messages
+Disallow: /notifications
+Disallow: /profile
+Disallow: /saved-jobs
 
 Sitemap: https://07nghiep.site/sitemap.xml

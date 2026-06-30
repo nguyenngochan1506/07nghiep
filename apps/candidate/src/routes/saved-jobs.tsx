@@ -14,6 +14,7 @@ export const Route = createFileRoute("/saved-jobs")({
       title: "Việc đã lưu | 07nghiep",
       description: "Danh sách việc làm đã lưu - quản lý và ứng tuyển nhanh chóng.",
       url: `${SITE_URL}/saved-jobs`,
+      noIndex: true,
     }),
   component: SavedJobsPage,
 });

@@ -35,6 +35,7 @@ export const Route = createFileRoute("/dashboard")({
       title: "Dashboard | 07nghiep",
       description: "Tổng quan hoạt động - quản lý hồ sơ, việc đã lưu và đơn ứng tuyển.",
       url: `${SITE_URL}/dashboard`,
+      noIndex: true,
     }),
   beforeLoad: async () => {
     const session = await authClient.getSession();

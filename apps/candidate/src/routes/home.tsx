@@ -37,9 +37,9 @@ const SEO_IMAGE = `${SITE_URL}/images/candidate-home/hero.webp`;
 
 export function homeSeoHead() {
   return createSeoHead({
-    title: "07nghiep - Tìm việc làm phù hợp, ứng tuyển nhanh tại Việt Nam",
+    title: "07nghiep (07 nghiệp) - Tìm việc làm phù hợp tại Việt Nam",
     description:
-      "07nghiep giúp ứng viên tìm việc, so sánh công ty, lưu cơ hội phù hợp và theo dõi ứng tuyển trong một workspace rõ ràng.",
+      "07nghiep, còn được tìm là 07 nghiệp, giúp ứng viên tìm việc làm, so sánh công ty, lưu cơ hội phù hợp và theo dõi ứng tuyển trong một workspace rõ ràng.",
     image: SEO_IMAGE,
     url: SITE_URL,
   });
@@ -439,7 +439,42 @@ export function HomeComponent() {
           </div>
         </div>
       </section>
+      <HomeStructuredData />
     </main>
+  );
+}
+
+function HomeStructuredData() {
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "07nghiep",
+      alternateName: ["07 nghiệp", "07 nghiệp việc làm", "07nghiep việc làm"],
+      url: SITE_URL,
+      description:
+        "Nền tảng tìm việc làm, so sánh công ty, lưu cơ hội phù hợp và theo dõi ứng tuyển tại Việt Nam.",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${SITE_URL}/jobs?keyword={search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "07nghiep",
+      alternateName: ["07 nghiệp", "07 nghiệp việc làm"],
+      url: SITE_URL,
+      logo: `${SITE_URL}/07logo.png`,
+    },
+  ];
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
   );
 }
 

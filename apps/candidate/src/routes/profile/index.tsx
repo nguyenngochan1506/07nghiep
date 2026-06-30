@@ -141,6 +141,7 @@ export const Route = createFileRoute("/profile/")({
       title: "Hồ sơ | 07nghiep",
       description: "Quản lý hồ sơ cá nhân, CV và thông tin ứng tuyển.",
       url: `${SITE_URL}/profile`,
+      noIndex: true,
     }),
   component: ProfilePage,
 });
