@@ -27,10 +27,11 @@ services:
     restart: unless-stopped
 
   migrate:
-    image: 07nghiep-server:prod
+    image: 07nghiep-migrate:prod
     build:
       context: ..
       dockerfile: deploy/Dockerfile.app
+      target: migrate
       args:
         APP_FILTER: "@07nghiep/server"
         APP_NAME: server
@@ -57,6 +58,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.app
+      target: runner
       args:
         APP_FILTER: "@07nghiep/server"
         APP_NAME: server
@@ -80,6 +82,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.app
+      target: runner
       args:
         APP_FILTER: "@07nghiep/worker"
         APP_NAME: worker
@@ -115,6 +118,8 @@ services:
       dockerfile: deploy/Dockerfile.candidate
       args:
         VITE_SERVER_URL: ${PUBLIC_SERVER_URL:-http://localhost:3000}
+    environment:
+      SERVER_INTERNAL_URL: http://server:3000
     ports:
       - "127.0.0.1:${CANDIDATE_PORT:-3003}:3003"
     restart: unless-stopped

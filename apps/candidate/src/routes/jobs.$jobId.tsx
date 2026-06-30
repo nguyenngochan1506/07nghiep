@@ -34,12 +34,19 @@ import {
 type JobDetailView = {
   id: string;
   title: string;
+  organizationId: string | null;
   companyName: string;
   companyLogo: string;
   location: string;
   workType: string;
   jobType: string;
   experience: string;
+  salaryMin: number | string | null;
+  salaryMax: number | string | null;
+  salaryType: string | null;
+  salaryCurrency: string | null;
+  salaryUnit: string | null;
+  salaryNegotiable: boolean | null;
   salaryRange: string;
   skills: string[];
   description: string;
@@ -50,6 +57,12 @@ type JobDetailView = {
   industry: string;
   publishedAt: string | null;
   expiresAt: string | null;
+  streetAddress: string | null;
+  addressLocality: string | null;
+  addressRegion: string | null;
+  addressCountry: string | null;
+  directApply: boolean | null;
+  applicantLocation: string | null;
   sourceSite: string;
   status: string;
   applicationsCount: number;
@@ -62,8 +75,11 @@ type PublicJobDetail = {
   workType: string | null;
   jobType: string | null;
   experience: string | null;
-  salaryMin: number | null;
-  salaryMax: number | null;
+  salaryMin: number | string | null;
+  salaryMax: number | string | null;
+  salaryType: string | null;
+  salaryCurrency: string | null;
+  salaryUnit: string | null;
   salaryNegotiable: boolean | null;
   skills: string[];
   description: string | null;
@@ -74,10 +90,17 @@ type PublicJobDetail = {
   industry: string | null;
   publishedAt: string | null;
   expiresAt: string | null;
+  streetAddress: string | null;
+  addressLocality: string | null;
+  addressRegion: string | null;
+  addressCountry: string | null;
+  directApply: boolean | null;
+  applicantLocation: string | null;
   sourceSite: string | null;
   status: string;
   applicationsCount: number;
   organization: {
+    id: string;
     name: string | null;
     logoUrl: string | null;
   } | null;
@@ -89,12 +112,19 @@ function mapJob(raw: PublicJobDetail): JobDetailView {
   return {
     id: raw.id,
     title: raw.title,
+    organizationId: raw.organization?.id ?? null,
     companyName: raw.organization?.name ?? "Unknown",
     companyLogo: raw.organization?.logoUrl ?? "",
     location: raw.location ?? "",
     workType: raw.workType ?? "",
     jobType: raw.jobType ?? "",
     experience: raw.experience ?? "",
+    salaryMin: raw.salaryMin,
+    salaryMax: raw.salaryMax,
+    salaryType: raw.salaryType,
+    salaryCurrency: raw.salaryCurrency,
+    salaryUnit: raw.salaryUnit,
+    salaryNegotiable: raw.salaryNegotiable,
     salaryRange,
     skills: raw.skills ?? [],
     description: raw.description ?? "",
@@ -105,6 +135,12 @@ function mapJob(raw: PublicJobDetail): JobDetailView {
     industry: raw.industry ?? "",
     publishedAt: raw.publishedAt ?? null,
     expiresAt: raw.expiresAt ?? null,
+    streetAddress: raw.streetAddress ?? null,
+    addressLocality: raw.addressLocality ?? null,
+    addressRegion: raw.addressRegion ?? null,
+    addressCountry: raw.addressCountry ?? null,
+    directApply: raw.directApply ?? null,
+    applicantLocation: raw.applicantLocation ?? null,
     sourceSite: raw.sourceSite ?? "",
     status: raw.status,
     applicationsCount: raw.applicationsCount ?? 0,
@@ -192,8 +228,21 @@ function JobDetailPage() {
         experienceLevel: contextJob.experience,
         experienceMonths: null,
         industry: "",
+        organizationId: null,
+        salaryMin: null,
+        salaryMax: null,
+        salaryType: null,
+        salaryCurrency: null,
+        salaryUnit: null,
+        salaryNegotiable: null,
         publishedAt: null,
         expiresAt: null,
+        streetAddress: null,
+        addressLocality: null,
+        addressRegion: null,
+        addressCountry: null,
+        directApply: null,
+        applicantLocation: null,
         sourceSite: "",
         status: "OPEN",
         applicationsCount: 0,
@@ -462,27 +511,56 @@ function JobDetailPage() {
 }
 
 function JobPostingJsonLd({ job }: { job: JobDetailView }) {
+  const salaryMin = toNumber(job.salaryMin);
+  const salaryMax = toNumber(job.salaryMax);
+  const hasSalary = !job.salaryNegotiable && (salaryMin !== null || salaryMax !== null);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: job.title,
     description: job.description || job.title,
     identifier: { "@type": "PropertyValue", name: "07nghiep", value: job.id },
-    datePosted: job.publishedAt || new Date().toISOString(),
+    datePosted: job.publishedAt || undefined,
     validThrough: job.expiresAt || undefined,
     hiringOrganization: {
       "@type": "Organization",
       name: job.companyName,
       logo: job.companyLogo || undefined,
+      sameAs: job.organizationId ? `${SITE_URL}/organizations/${job.organizationId}` : undefined,
     },
     jobLocation: job.location
       ? {
           "@type": "Place",
-          address: { "@type": "PostalAddress", addressLocality: job.location },
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: job.streetAddress || undefined,
+            addressLocality: job.addressLocality || job.location,
+            addressRegion: job.addressRegion || undefined,
+            addressCountry: job.addressCountry || "VN",
+          },
         }
       : undefined,
-    employmentType: job.jobType || undefined,
-    directApply: true,
+    applicantLocationRequirements: job.applicantLocation
+      ? {
+          "@type": "Country",
+          name: job.applicantLocation,
+        }
+      : undefined,
+    employmentType: mapEmploymentType(job.jobType),
+    baseSalary: hasSalary
+      ? {
+          "@type": "MonetaryAmount",
+          currency: job.salaryCurrency || "VND",
+          value: {
+            "@type": "QuantitativeValue",
+            minValue: salaryMin ?? undefined,
+            maxValue: salaryMax ?? undefined,
+            value: salaryMin === salaryMax ? salaryMin : undefined,
+            unitText: mapSalaryUnit(job.salaryType || job.salaryUnit),
+          },
+        }
+      : undefined,
+    directApply: job.directApply ?? true,
   };
 
   return (
@@ -491,4 +569,33 @@ function JobPostingJsonLd({ job }: { job: JobDetailView }) {
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
     />
   );
+}
+
+function toNumber(value: number | string | null) {
+  if (value === null) return null;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function mapEmploymentType(jobType: string) {
+  const employmentTypes: Record<string, string> = {
+    FULLTIME: "FULL_TIME",
+    PARTIME: "PART_TIME",
+    CONTRACT: "CONTRACTOR",
+    INTERNSHIP: "INTERN",
+    FREELANCE: "CONTRACTOR",
+  };
+
+  return employmentTypes[jobType] ?? undefined;
+}
+
+function mapSalaryUnit(unit: string | null) {
+  const salaryUnits: Record<string, string> = {
+    HOURLY: "HOUR",
+    MONTHLY: "MONTH",
+    YEARLY: "YEAR",
+  };
+
+  return unit ? (salaryUnits[unit] ?? unit) : undefined;
 }

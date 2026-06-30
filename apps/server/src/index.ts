@@ -1,5 +1,6 @@
 import { createContext } from "./lib/api/context";
 import { handlePayosWebhook } from "./lib/billing/payments";
+import { getPublicSitemapEntries } from "./lib/seo/sitemap";
 import { appRouter } from "./routers";
 import { auth } from "@07nghiep/auth";
 import prisma from "@07nghiep/db";
@@ -124,6 +125,13 @@ app.post("/api/payments/payos/webhook", async (c) => {
   }
 
   return c.json({ success: true });
+});
+
+app.get("/api/seo/sitemap-entries", async (c) => {
+  const entries = await getPublicSitemapEntries(prisma);
+
+  c.header("Cache-Control", "public, max-age=900");
+  return c.json({ entries });
 });
 
 app.all("/trpc/:path(*)", async (c) => {
