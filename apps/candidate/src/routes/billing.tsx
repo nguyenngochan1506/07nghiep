@@ -26,16 +26,18 @@ import {
 import { Input } from "@07nghiep/ui/components/input";
 import { Skeleton } from "@07nghiep/ui/components/skeleton";
 
-import { type RouterAppContext } from "@/routes/__root";
+import type { RouterAppContext } from "@/routes/__root";
 import { publicQueryOptions, trpc, trpcClient } from "@/utils/trpc";
 
+import { authClient } from "@/lib/auth-client";
 import { createSeoHead, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/billing")({
   head: () =>
     createSeoHead({
       title: "Gói dịch vụ | 07nghiep",
-      description: "Nâng cấp tài khoản để mở khóa tính năng phân tích CV, xem số lượng ứng viên và hơn thế nữa.",
+      description:
+        "Nâng cấp tài khoản để mở khóa tính năng phân tích CV, xem số lượng ứng viên và hơn thế nữa.",
       url: `${SITE_URL}/billing`,
     }),
   loader: ({ context }) => preloadBillingRoute(context),
@@ -138,6 +140,7 @@ function formatVoucherFinalAmount(value: number) {
 function BillingRoute() {
   const [plusVoucherCode, setPlusVoucherCode] = useState("");
   const [plusVoucherPreview, setPlusVoucherPreview] = useState<VoucherPreview | null>(null);
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const plansQuery = useQuery(trpc.billing.plans.queryOptions(undefined, publicQueryOptions));
   const checkoutMutation = useMutation({
     mutationFn: () =>
@@ -207,6 +210,9 @@ function BillingRoute() {
       : plusIsActive
         ? "Gia hạn Plus"
         : "Nâng cấp Plus";
+  const employerApplicationHref = session
+    ? "/business-application"
+    : "/login?redirect=%2Fbusiness-application";
 
   if (plansQuery.isLoading) {
     return (
@@ -338,8 +344,8 @@ function BillingRoute() {
             features={employerFeatures}
             action={
               <Button asChild variant="outline" size="lg" className="w-full">
-                <a href="/login?redirect=%2Fbusiness-application">
-                  Đăng ký nhà tuyển dụng
+                <a href={employerApplicationHref} aria-disabled={sessionPending}>
+                  {sessionPending ? "Đang kiểm tra tài khoản..." : "Đăng ký nhà tuyển dụng"}
                 </a>
               </Button>
             }

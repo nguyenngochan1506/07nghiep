@@ -12,11 +12,13 @@ import { authClient } from "@/lib/auth-client";
 
 import Loader from "./loader";
 
+export type LoginRedirectTarget = "/home" | "/business-application" | "/billing" | "/cv-analysis";
+
 export default function SignInForm({
   redirectTo = "/home",
   onSwitchToSignUp,
 }: {
-  redirectTo?: "/home" | "/business-application" | "/billing";
+  redirectTo?: LoginRedirectTarget;
   onSwitchToSignUp: () => void;
 }) {
   const navigate = useNavigate({

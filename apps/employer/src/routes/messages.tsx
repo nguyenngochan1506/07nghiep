@@ -13,7 +13,7 @@ export const Route = createFileRoute("/messages")({
 });
 
 function MessagesLayout() {
-  const { data: sessionData } = authClient.useSession();
+  const { data: sessionData, isPending: sessionPending } = authClient.useSession();
   const currentUserId = sessionData?.user?.id ?? "";
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -43,10 +43,10 @@ function MessagesLayout() {
   );
 
   useEffect(() => {
-    if (!sessionData?.user) {
+    if (!sessionPending && !sessionData?.user) {
       navigate({ to: "/login" });
     }
-  }, [sessionData, navigate]);
+  }, [sessionData, sessionPending, navigate]);
 
   useEffect(() => {
     if (!env.VITE_SERVER_URL) return;
